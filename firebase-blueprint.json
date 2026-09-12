@@ -1,0 +1,215 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "System personnel user profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "MANAGER", "STAFF", "VIEWER"] },
+        "teamId": { "type": "string" },
+        "phone": { "type": "string" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["email", "displayName", "role"]
+    },
+    "school": {
+      "title": "School",
+      "description": "Target school in Uttaradit province",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolName": { "type": "string" },
+        "district": { "type": "string" },
+        "subdistrict": { "type": "string" },
+        "studentCountM3": { "type": "number" },
+        "studentCountM6": { "type": "number" },
+        "assignedTeam": { "type": "string", "enum": ["team1", "team2"] },
+        "status": { "type": "string" },
+        "contactPerson": { "type": "string" },
+        "phone": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" }
+      },
+      "required": ["schoolName", "district", "assignedTeam", "status"]
+    },
+    "documentSubmission": {
+      "title": "DocumentSubmission",
+      "description": "Official letter delivery record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "schoolName": { "type": "string" },
+        "documentNumber": { "type": "string" },
+        "submissionDate": { "type": "string" },
+        "receiverName": { "type": "string" },
+        "status": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "teamId": { "type": "string" }
+      },
+      "required": ["schoolId", "schoolName", "submissionDate", "status"]
+    },
+    "appointment": {
+      "title": "Appointment",
+      "description": "Guidance activity appointment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "schoolName": { "type": "string" },
+        "date": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "teamId": { "type": "string" },
+        "status": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["schoolId", "schoolName", "date", "status", "teamId"]
+    },
+    "fieldTrip": {
+      "title": "FieldTrip",
+      "description": "Guidance execution trip log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "schoolName": { "type": "string" },
+        "tripDate": { "type": "string" },
+        "teamId": { "type": "string" },
+        "status": { "type": "string" },
+        "summary": { "type": "string" },
+        "studentAttendees": { "type": "number" }
+      },
+      "required": ["schoolId", "schoolName", "tripDate", "teamId", "status"]
+    },
+    "activityPhoto": {
+      "title": "ActivityPhoto",
+      "description": "Photos from field activities",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tripId": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "caption": { "type": "string" },
+        "uploadedAt": { "type": "string" }
+      },
+      "required": ["schoolId", "photoUrl", "uploadedAt"]
+    },
+    "activityLog": {
+      "title": "ActivityLog",
+      "description": "Audit log of system actions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "action": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["action", "timestamp"]
+    },
+    "notificationLog": {
+      "title": "NotificationLog",
+      "description": "Log of email and app notifications",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "sentAt": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["title", "sentAt", "status"]
+    },
+    "vehicle": {
+      "title": "Vehicle",
+      "description": "College transport vehicles for trips",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "plateNumber": { "type": "string" },
+        "brand": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["plateNumber", "type", "status"]
+    },
+    "team": {
+      "title": "Team",
+      "description": "Operational guidance team",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "zone": { "type": "string" },
+        "leader": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "systemSettings": {
+      "title": "SystemSettings",
+      "description": "Global application configuration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "academicYear": { "type": "string" },
+        "targetTotalM3": { "type": "number" },
+        "targetTotalM6": { "type": "number" }
+      },
+      "required": ["academicYear"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Collection of user profiles"
+    },
+    "/schools/{schoolId}": {
+      "schema": "school",
+      "description": "Target schools directory"
+    },
+    "/documentSubmissions/{submissionId}": {
+      "schema": "documentSubmission",
+      "description": "Letter delivery tracking"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "appointment",
+      "description": "Guidance appointments schedule"
+    },
+    "/fieldTrips/{tripId}": {
+      "schema": "fieldTrip",
+      "description": "Field guidance visits"
+    },
+    "/activityPhotos/{photoId}": {
+      "schema": "activityPhoto",
+      "description": "Guidance gallery photos"
+    },
+    "/activityLogs/{logId}": {
+      "schema": "activityLog",
+      "description": "Action audit logs"
+    },
+    "/notificationLogs/{logId}": {
+      "schema": "notificationLog",
+      "description": "Reminders and notification logs"
+    },
+    "/vehicles/{vehicleId}": {
+      "schema": "vehicle",
+      "description": "Vehicle fleet"
+    },
+    "/teams/{teamId}": {
+      "schema": "team",
+      "description": "Operational teams"
+    },
+    "/systemSettings/{settingId}": {
+      "schema": "systemSettings",
+      "description": "System settings configuration"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "ระบบบริหารงานแนะแนวการศึกษา วิทยาลัยเทคโนโลยีอุตรดิตถ์",
+  "description": "ระบบบริหารงานแนะแนวการศึกษา วิทยาลัยเทคโนโลยีอุตรดิตถ์ (Uttaradit Technological College Guidance Management System)",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

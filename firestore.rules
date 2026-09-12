@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check authentication
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to get current user data
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // Helper function for user role
+    function hasRole(role) {
+      return isAuthenticated() && (
+        request.auth.token.role == role || 
+        getUserData().role == role
+      );
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'ADMIN' || 
+        getUserData().role == 'ADMIN' ||
+        request.auth.token.email == 'iceepiya@gmail.com'
+      );
+    }
+    
+    function isManagerOrAdmin() {
+      return isAdmin() || hasRole('MANAGER');
+    }
+    
+    function isStaffOrAbove() {
+      return isAdmin() || hasRole('MANAGER') || hasRole('STAFF');
+    }
+    
+    // Users collection: can be read to display active personnel & login options
+    match /users/{userId} {
+      allow read: true;
+      allow create: if true;
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+    
+    // Operational collections
+    match /schools/{schoolId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isStaffOrAbove();
+      allow delete: if isAdmin();
+    }
+    
+    match /documentSubmissions/{submissionId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isStaffOrAbove();
+      allow delete: if isAdmin();
+    }
+    
+    match /appointments/{appointmentId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isStaffOrAbove();
+      allow delete: if isAdmin() || isManagerOrAdmin();
+    }
+    
+    match /fieldTrips/{tripId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isStaffOrAbove();
+      allow delete: if isAdmin() || isManagerOrAdmin();
+    }
+    
+    match /activityPhotos/{photoId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isStaffOrAbove();
+      allow delete: if isStaffOrAbove();
+    }
+    
+    match /activityLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+    
+    match /notificationLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+    
+    match /vehicles/{vehicleId} {
+      allow read: if isAuthenticated();
+      allow write: if isManagerOrAdmin();
+    }
+    
+    match /teams/{teamId} {
+      allow read: if isAuthenticated();
+      allow write: if isManagerOrAdmin();
+    }
+    
+    match /systemSettings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}
