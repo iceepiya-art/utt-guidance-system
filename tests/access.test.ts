@@ -9,3 +9,10 @@ describe('organization membership', () => {
     expect(validProfile(profile as UserProfile)).toBe(false);
   });
 });
+
+import { getBuddhistYear } from '../src/utils/dateUtils';
+it('formats numeric report years and date inputs as Buddhist years', () => {
+  expect(getBuddhistYear(2026)).toBe(2569);
+  expect(getBuddhistYear(new Date(2026, 8, 13))).toBe(2569);
+  expect(getBuddhistYear('2026-09-13')).toBe(2569);
+});

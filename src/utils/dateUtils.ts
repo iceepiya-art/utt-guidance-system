@@ -19,7 +19,8 @@ export const THAI_DAYS_SHORT = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', '�
 /**
  * Converts a date string or Date object to Thai Buddhist Year
  */
-export function getBuddhistYear(date: Date | string): number {
+export function getBuddhistYear(date: Date | string | number): number {
+  if (typeof date === 'number') return date + 543;
   const d = typeof date === 'string' ? new Date(date) : date;
   return d.getFullYear() + 543;
 }
