@@ -24,7 +24,6 @@ import { ActivityGalleryView } from './components/gallery/ActivityGalleryView';
 import { MonthlyReportsView } from './components/reports/MonthlyReportsView';
 import { SettingsView } from './components/settings/SettingsView';
 import {
-  seedInitialDataIfEmpty,
   createDocumentSubmission,
   createAppointment,
   createFieldTrip,
@@ -40,6 +39,7 @@ function MainApplication() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [fieldTrips, setFieldTrips] = useState<FieldTrip[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [dataError, setDataError] = useState<string | null>(null);
 
   // Global modals and quick action state
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
@@ -64,10 +64,8 @@ function MainApplication() {
       return;
     }
 
-    seedInitialDataIfEmpty(currentUser).catch((err) => {
-      console.warn('Initial seeding deferred:', err?.message || err);
-    });
-
+    setDataError(null);
+    const reportError = () => setDataError('โหลดข้อมูลบางส่วนไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อและสิทธิ์ แล้วโหลดหน้าใหม่');
     // Subscribe to schools
     const unsubSchools = onSnapshot(
       query(collection(db, 'schools'), orderBy('schoolName', 'asc')),
@@ -80,7 +78,7 @@ function MainApplication() {
         setDataLoaded(true);
       },
       (err) => {
-        console.warn('Real-time schools subscription notice:', err?.message || err);
+        reportError();
         setDataLoaded(true);
       }
     );
@@ -95,7 +93,7 @@ function MainApplication() {
         });
         setSubmissions(list);
       },
-      (err) => console.warn('Real-time submissions subscription notice:', err?.message || err)
+      reportError
     );
 
     // Subscribe to appointments
@@ -108,12 +106,12 @@ function MainApplication() {
         });
         setAppointments(list);
       },
-      (err) => console.warn('Real-time appointments subscription notice:', err?.message || err)
+      reportError
     );
 
     // Subscribe to fieldTrips
     const unsubFieldTrips = onSnapshot(
-      query(collection(db, 'fieldTrips'), orderBy('tripDate', 'desc')),
+      query(collection(db, 'fieldTrips'), orderBy('date', 'desc')),
       (snapshot) => {
         const list: FieldTrip[] = [];
         snapshot.forEach((doc) => {
@@ -121,7 +119,7 @@ function MainApplication() {
         });
         setFieldTrips(list);
       },
-      (err) => console.warn('Real-time fieldTrips subscription notice:', err?.message || err)
+      reportError
     );
 
     return () => {
@@ -187,6 +185,8 @@ function MainApplication() {
 
   return (
     <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
+      {dataError && <div role="alert" className="p-4 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-700">{dataError}<button className="ml-3 underline" onClick={() => window.location.reload()}>โหลดใหม่</button></div>}
+      {!dataLoaded && !dataError && <p role="status" className="p-4 text-slate-500">กำลังโหลดข้อมูล...</p>}
       {/* Dynamic Tab Content */}
       {activeTab === 'dashboard' && (
         <DashboardView

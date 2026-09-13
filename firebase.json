@@ -1,0 +1,30 @@
+{
+  "firestore": [
+    {
+      "database": "ai-studio-8fc73ebf-4b79-4218-9abe-c0c98ecdd272",
+      "rules": "firestore.rules"
+    }
+  ],
+  "hosting": {
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": false
+    }
+  }
+}

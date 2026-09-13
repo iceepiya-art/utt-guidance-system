@@ -21,12 +21,13 @@ import { UserProfile, UserRole, TeamId } from '../../types';
 import { createUser, updateUser, deleteUser } from '../../firebase/dbService';
 
 export const UserManagerSection: React.FC = () => {
-  const { currentUser, isAdmin, users, switchUser, updateCurrentUserProfile } = useAuth();
+  const { currentUser, isAdmin, users, updateCurrentUserProfile } = useAuth();
 
   // State for Add/Edit Modal
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({
+    uid: '',
     displayName: '',
     email: '',
     phone: '',
@@ -53,7 +54,8 @@ export const UserManagerSection: React.FC = () => {
   const handleOpenAdd = () => {
     setEditingUser(null);
     setFormData({
-      displayName: '',
+      uid: '',
+    displayName: '',
       email: '',
       phone: '',
       role: 'STAFF',
@@ -67,6 +69,7 @@ export const UserManagerSection: React.FC = () => {
   const handleOpenEdit = (user: UserProfile) => {
     setEditingUser(user);
     setFormData({
+      uid: user.id,
       displayName: user.displayName,
       email: user.email,
       phone: user.phone || '',
@@ -131,7 +134,7 @@ export const UserManagerSection: React.FC = () => {
         showToast(`อัปเดตข้อมูล ${userPayload.displayName} เรียบร้อยแล้ว`);
       } else {
         // Create new user
-        await createUser(userPayload, currentUser);
+        await createUser(userPayload, currentUser, formData.uid.trim());
         showToast(`เพิ่มผู้ใช้งาน ${userPayload.displayName} สำเร็จ`);
       }
 
@@ -158,11 +161,6 @@ export const UserManagerSection: React.FC = () => {
         alert('เกิดข้อผิดพลาดในการลบผู้ใช้งาน');
       }
     }
-  };
-
-  const handleQuickSwitch = (u: UserProfile) => {
-    switchUser(u);
-    showToast(`สลับใช้งานในฐานะ: ${u.displayName} (${u.role})`);
   };
 
   const getRoleBadge = (role: UserRole) => {
@@ -271,54 +269,6 @@ export const UserManagerSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Role Simulator / Quick Switcher for testing */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-5 h-5 text-[#087CC1]" />
-            <h3 className="font-bold text-slate-800 text-sm sm:text-base">
-              สลับสิทธิ์ทดสอบมุมมองระบบ (Role Switcher)
-            </h3>
-          </div>
-          <span className="text-[11px] text-slate-500">
-            กดเพื่อเปลี่ยนมุมมองการทำงานตามระดับสิทธิ์ทันที
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 pt-1">
-          {users.map((u) => {
-            const isCurrent = currentUser?.id === u.id || currentUser?.email.toLowerCase() === u.email.toLowerCase();
-            return (
-              <button
-                key={u.id}
-                type="button"
-                onClick={() => handleQuickSwitch(u)}
-                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                  isCurrent
-                    ? 'border-[#087CC1] bg-[#EAF6FD] shadow-2xs ring-2 ring-[#087CC1]/20'
-                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[10px] font-bold uppercase text-slate-600">
-                    {u.role}
-                  </span>
-                  {isCurrent && (
-                    <span className="w-2 h-2 rounded-full bg-[#087CC1]" />
-                  )}
-                </div>
-                <div className="text-xs font-semibold text-slate-800 truncate">
-                  {u.displayName}
-                </div>
-                <div className="text-[10px] text-slate-500 truncate mt-0.5">
-                  {u.teamId === 'team1' ? 'สาย 1 (เมือง)' : u.teamId === 'team2' ? 'สาย 2 (รอบนอก)' : 'ส่วนกลาง'}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Personnel & Roles Management Section */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
@@ -405,13 +355,7 @@ export const UserManagerSection: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => handleQuickSwitch(u)}
-                          title="สลับใช้งานสิทธิ์นี้"
-                          className="px-2 py-1 bg-slate-100 hover:bg-[#EAF6FD] hover:text-[#075A9C] text-slate-700 rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
-                        >
-                          สลับ
-                        </button>
+
                         <button
                           onClick={() => handleOpenEdit(u)}
                           title="แก้ไขข้อมูลและสิทธิ์"
@@ -507,6 +451,10 @@ export const UserManagerSection: React.FC = () => {
                 </div>
               </div>
 
+              {!editingUser && <label className="block text-sm text-slate-700">Firebase Authentication UID
+                <input required value={formData.uid} onChange={(e) => setFormData({ ...formData, uid: e.target.value })} className="w-full border border-slate-300 rounded-xl p-3 mt-2" />
+                <span className="text-xs text-slate-500">สร้างบัญชีใน Firebase Authentication ก่อน แล้วคัดลอก UID เพื่อกำหนดสิทธิ์</span>
+              </label>}
               {/* Role Selection */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">

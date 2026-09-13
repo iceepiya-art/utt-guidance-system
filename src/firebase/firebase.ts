@@ -5,12 +5,12 @@ import { getStorage } from 'firebase/storage';
 import firebaseConfigJson from '../../firebase-applet-config.json';
 
 const firebaseConfig = {
-  apiKey: firebaseConfigJson.apiKey,
-  authDomain: firebaseConfigJson.authDomain,
-  projectId: firebaseConfigJson.projectId,
-  storageBucket: firebaseConfigJson.storageBucket,
-  messagingSenderId: firebaseConfigJson.messagingSenderId,
-  appId: firebaseConfigJson.appId,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigJson.appId,
 };
 
 // Initialize Firebase App
@@ -19,9 +19,10 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 // Initialize Auth
 export const auth = getAuth(app);
 
-// Initialize Firestore with custom databaseId if defined
-export const db = firebaseConfigJson.firestoreDatabaseId
-  ? getFirestore(app, firebaseConfigJson.firestoreDatabaseId)
+const databaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseConfigJson.firestoreDatabaseId;
+// Preserve the existing named database unless explicitly configured.
+export const db = databaseId && databaseId !== '(default)'
+  ? getFirestore(app, databaseId)
   : getFirestore(app);
 
 // Initialize Storage
