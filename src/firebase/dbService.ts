@@ -69,6 +69,7 @@ export async function logActivity(
 // Database Auto-Initialization / Seeding
 // -------------------------------------------------------------
 export async function ensureInitialDataSeeded(currentUser?: UserProfile | null) {
+  if (currentUser?.role !== 'ADMIN') throw new Error('เฉพาะผู้ดูแลระบบเท่านั้น');
   try {
     const schoolsCol = collection(db, 'schools');
     const snap = await getDocs(query(schoolsCol));
@@ -183,7 +184,7 @@ export async function updateSchool(
   const docRef = doc(db, 'schools', id);
   const now = new Date().toISOString();
   await updateDoc(docRef, {
-    ...data,
+    ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)),
     updatedAt: now,
     updatedBy: user?.displayName || 'เจ้าหน้าที่',
   });
@@ -293,7 +294,7 @@ export async function updateDocumentSubmission(
   const docRef = doc(db, 'documentSubmissions', id);
   const now = new Date().toISOString();
   await updateDoc(docRef, {
-    ...data,
+    ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)),
     updatedAt: now,
     updatedBy: user?.displayName || 'เจ้าหน้าที่',
   });
@@ -438,7 +439,7 @@ export async function updateAppointment(
   const docRef = doc(db, 'appointments', id);
   const now = new Date().toISOString();
   await updateDoc(docRef, {
-    ...data,
+    ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)),
     updatedAt: now,
     updatedBy: user?.displayName || 'เจ้าหน้าที่',
   });
@@ -537,7 +538,7 @@ export async function updateFieldTrip(
   const docRef = doc(db, 'fieldTrips', id);
   const now = new Date().toISOString();
   await updateDoc(docRef, {
-    ...data,
+    ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)),
     updatedAt: now,
     updatedBy: user?.displayName || 'เจ้าหน้าที่',
   });
@@ -656,21 +657,8 @@ export async function uploadImageFile(
       storagePath: path,
     };
   } catch (storageErr) {
-    console.warn('Firebase Storage upload warning, falling back to client URL representation:', storageErr);
-    // Fallback: Read as ObjectURL or DataURL so staff work is never lost!
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (onProgress) onProgress(100);
-        resolve({
-          url: reader.result as string,
-          fileName: file.name,
-          storagePath: path,
-        });
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+    console.error('Image upload failed:', storageErr);
+    throw new Error('อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่ ข้อมูลรูปยังไม่ได้ถูกบันทึก');
   }
 }
 
@@ -682,21 +670,6 @@ export function subscribeUsers(callback: (users: UserProfile[]) => void) {
   return onSnapshot(
     colRef,
     async (snapshot) => {
-      if (snapshot.empty) {
-        // Automatically seed initial preset users into Firestore
-        try {
-          const batch = writeBatch(db);
-          for (const u of INITIAL_USERS) {
-            batch.set(doc(db, 'users', u.id), u);
-          }
-          await batch.commit();
-          callback(INITIAL_USERS);
-          return;
-        } catch {
-          callback(INITIAL_USERS);
-          return;
-        }
-      }
       const list: UserProfile[] = [];
       snapshot.forEach((docSnap) => {
         list.push({ id: docSnap.id, ...docSnap.data() } as UserProfile);
@@ -708,17 +681,20 @@ export function subscribeUsers(callback: (users: UserProfile[]) => void) {
     },
     (err) => {
       console.warn('Error listening to users collection, using fallback:', err);
-      callback(INITIAL_USERS);
+      callback([]);
     }
   );
 }
 
 export async function createUser(
   userData: Omit<UserProfile, 'id'>,
-  currentUser?: UserProfile | null
+  currentUser?: UserProfile | null,
+  authUid?: string
 ): Promise<UserProfile> {
   const colRef = collection(db, 'users');
-  const newDocRef = doc(colRef);
+  if (!authUid || authUid.includes('/')) throw new Error('กรุณาระบุ Firebase Authentication UID ที่ถูกต้อง');
+  const newDocRef = doc(colRef, authUid);
+  if ((await getDoc(newDocRef)).exists()) throw new Error('UID นี้มีสิทธิ์ในระบบแล้ว');
   const now = new Date().toISOString();
   const user: UserProfile = {
     ...userData,
@@ -728,7 +704,7 @@ export async function createUser(
     updatedAt: now,
   };
 
-  await setDoc(newDocRef, user);
+  await setDoc(newDocRef, Object.fromEntries(Object.entries(user).filter(([, value]) => value !== undefined)));
 
   if (currentUser) {
     await logActivity(
@@ -752,7 +728,7 @@ export async function updateUser(
   const userRef = doc(db, 'users', userId);
   const now = new Date().toISOString();
   await updateDoc(userRef, {
-    ...data,
+    ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)),
     updatedAt: now,
   });
 

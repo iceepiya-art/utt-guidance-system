@@ -1,9 +1,45 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+    function signedIn() { return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
+    function member() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['ADMIN', 'MANAGER', 'STAFF', 'VIEWER'];
+    }
+    function admin() { return member() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN'; }
+    function editor() { return member() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['ADMIN', 'STAFF']; }
+    function validUser(uid) {
+      return request.resource.data.id == uid
+        && request.resource.data.role in ['ADMIN', 'MANAGER', 'STAFF', 'VIEWER']
+        && request.resource.data.active is bool
+        && request.resource.data.email is string
+        && request.resource.data.displayName is string;
+    }
+    match /users/{uid} {
+      allow get: if (signedIn() && request.auth.uid == uid) || member();
+      allow list: if member();
+      allow create: if admin() && validUser(uid);
+      allow update: if validUser(uid) && (
+        (admin() && (uid != request.auth.uid || (request.resource.data.role == 'ADMIN' && request.resource.data.active == true)))
+        || (member() && request.auth.uid == uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'phone', 'updatedAt']))
+      );
+      allow delete: if admin() && uid != request.auth.uid;
+    }
+    match /{collection}/{id} {
+      allow read: if member() && collection in ['schools', 'documentSubmissions', 'appointments', 'fieldTrips', 'teams', 'vehicles', 'systemSettings'];
+      allow create, update: if editor() && collection in ['schools', 'documentSubmissions', 'appointments', 'fieldTrips'];
+      allow delete: if admin() && collection in ['schools', 'documentSubmissions', 'appointments', 'fieldTrips'];
+      allow write: if admin() && collection in ['teams', 'vehicles', 'systemSettings'];
+    }
+    match /activityLogs/{id} {
+      allow read: if admin();
+      allow create: if editor() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+    match /notificationLogs/{id} {
+      allow read: if admin();
+      allow write: if false;
     }
   }
 }
-

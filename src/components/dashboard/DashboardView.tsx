@@ -1,3 +1,4 @@
+import { useAuth } from '../../context/AuthContext';
 import React from 'react';
 import {
   GraduationCap,
@@ -41,6 +42,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNewSubmission,
   onNewAppointment,
 }) => {
+  const { canEdit } = useAuth();
   // Statistics calculations from real data
   const totalSchools = schools.length;
   const submittedSchools = schools.filter(
@@ -103,7 +105,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={onNewSubmission}
+            disabled={!canEdit} onClick={onNewSubmission}
             id="btn-quick-submit"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
           >
@@ -111,7 +113,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span>ยื่นหนังสือใหม่</span>
           </button>
           <button
-            onClick={onNewAppointment}
+            disabled={!canEdit} onClick={onNewAppointment}
             id="btn-quick-appointment"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-xl shadow-xs transition-colors"
           >
@@ -335,7 +337,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <Calendar className="w-8 h-8 text-slate-400 mx-auto mb-2" />
             <p className="text-sm text-slate-500">ยังไม่มีรายการนัดหมายที่กำลังจะถึง</p>
             <button
-              onClick={onNewAppointment}
+              disabled={!canEdit} onClick={onNewAppointment}
               className="mt-3 px-3 py-1.5 bg-[#087CC1] text-white text-xs font-medium rounded-lg hover:bg-[#075A9C]"
             >
               + เพิ่มนัดหมายใหม่

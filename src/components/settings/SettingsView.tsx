@@ -1,3 +1,4 @@
+import { ActivityLogSection } from './ActivityLogSection';
 import React, { useState, useEffect } from 'react';
 import {
   Settings,
@@ -19,7 +20,7 @@ import { collection, getDocs, orderBy, query, limit } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
 import { NotificationLog, School, Appointment } from '../../types';
 import { formatThaiShortDate, formatThaiFullDate } from '../../utils/dateUtils';
-import { useAuth, PRESET_ACCOUNTS } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { seedInitialDataIfEmpty } from '../../firebase/dbService';
 import { processPendingReminders, sendManualNotificationTest } from '../../services/reminderService';
 import { UserManagerSection } from './UserManagerSection';
@@ -54,8 +55,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
   };
 
   useEffect(() => {
-    fetchLogs();
-  }, []);
+    if (isAdmin) fetchLogs();
+  }, [isAdmin]);
 
   const handleTestReminders = async () => {
     setTestStatus('กำลังตรวจสอบและประมวลผลการแจ้งเตือน...');
@@ -64,7 +65,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
       await fetchLogs();
       setTestStatus(`ส่งแจ้งเตือนเรียบร้อยแล้ว (${result.processed} รายการ)`);
     } catch (e: any) {
-      setTestStatus('เกิดข้อผิดพลาดในการประมวลผลการแจ้งเตือน');
+      setTestStatus(e.message || 'เกิดข้อผิดพลาดในการประมวลผลการแจ้งเตือน');
     }
   };
 
@@ -79,7 +80,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
       await fetchLogs();
       setTestStatus(`ส่งอีเมลแจ้งเตือนทดสอบไปยัง guidance@utt.ac.th สำเร็จแล้ว`);
     } catch (e) {
-      setTestStatus('ส่งอีเมลทดสอบไม่สำเร็จ');
+      setTestStatus('ยังไม่ได้เชื่อมต่อบริการส่งอีเมลฝั่งเซิร์ฟเวอร์');
     }
   };
 
@@ -87,7 +88,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
     if (confirm('คุณต้องการโหลดข้อมูลตัวอย่างโรงเรียนและนัดหมายเริ่มต้นหรือไม่?')) {
       setSeedingStatus('กำลังบันทึกข้อมูลเริ่มต้น...');
       try {
-        await seedInitialDataIfEmpty();
+        await seedInitialDataIfEmpty(currentUser);
         setSeedingStatus('โหลดข้อมูลเริ่มต้นสำเร็จแล้ว กรุณารีเฟรชหรือสลับแท็บ');
       } catch (e: any) {
         setSeedingStatus('เกิดข้อผิดพลาด: ' + e.message);
@@ -110,6 +111,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
 
       {/* User Accounts & Role Management */}
       <UserManagerSection />
+      {isAdmin && <ActivityLogSection />}
 
       {/* Roles & Permissions Explanation */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
