@@ -76,7 +76,7 @@ firebase emulators:exec --only firestore --project demo-utt-enterprise "npm run 
 
 งานครั้งนี้ยังเป็นฐานสำหรับทดลองภายใน ไม่ใช่การรับรอง production readiness:
 
-- ทดสอบ rules บน Emulator และ UAT ด้วยบัญชีจริงทุกบทบาท ก่อน deploy กฎและแอป
+- rules ผ่าน Emulator บน GitHub Actions แล้ว ต้องทำ UAT ด้วยบัญชีจริงทุกบทบาทก่อน deploy กฎและแอป
 - ตรวจ Firebase Storage rules แยกต่างหาก ยังไม่ได้แก้หรือ deploy กฎ Storage ในงานนี้ ตรวจการเข้าถึงรูปและ download token URLs ตามนโยบายองค์กร
 - ประวัติยังบันทึกจาก client ไม่ใช่ audit ที่รับประกันครบทุกการเปลี่ยนแปลง ต้องย้ายไป server ก่อนใช้เป็นหลักฐานตรวจสอบ
 - การป้องกันนัดหมายชนกันยังเป็นการตรวจแล้วค่อยเขียน จึงมี race เมื่อหลายคนจองพร้อมกัน
