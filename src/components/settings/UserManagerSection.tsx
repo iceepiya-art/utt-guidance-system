@@ -355,7 +355,7 @@ export const UserManagerSection: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        
+
                         <button
                           onClick={() => handleOpenEdit(u)}
                           title="แก้ไขข้อมูลและสิทธิ์"
