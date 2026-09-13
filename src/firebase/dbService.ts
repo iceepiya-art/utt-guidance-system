@@ -560,11 +560,18 @@ export async function deleteFieldTrip(id: string, user?: UserProfile | null): Pr
 // -------------------------------------------------------------
 export function subscribeVehicles(callback: (vehicles: Vehicle[]) => void) {
   const colRef = collection(db, 'vehicles');
-  return onSnapshot(colRef, (snap) => {
-    const list: Vehicle[] = [];
-    snap.forEach((d) => list.push({ id: d.id, ...d.data() } as Vehicle));
-    callback(list);
-  });
+  return onSnapshot(
+    colRef,
+    (snap) => {
+      const list: Vehicle[] = [];
+      snap.forEach((d) => list.push({ id: d.id, ...d.data() } as Vehicle));
+      callback(list.length > 0 ? list : INITIAL_VEHICLES);
+    },
+    (err) => {
+      console.warn('Vehicles subscription notice:', err?.message || err);
+      callback(INITIAL_VEHICLES);
+    }
+  );
 }
 
 export async function saveVehicle(vehicle: Vehicle): Promise<void> {
@@ -574,11 +581,18 @@ export async function saveVehicle(vehicle: Vehicle): Promise<void> {
 
 export function subscribeTeams(callback: (teams: Team[]) => void) {
   const colRef = collection(db, 'teams');
-  return onSnapshot(colRef, (snap) => {
-    const list: Team[] = [];
-    snap.forEach((d) => list.push({ id: d.id, ...d.data() } as Team));
-    callback(list);
-  });
+  return onSnapshot(
+    colRef,
+    (snap) => {
+      const list: Team[] = [];
+      snap.forEach((d) => list.push({ id: d.id, ...d.data() } as Team));
+      callback(list.length > 0 ? list : INITIAL_TEAMS);
+    },
+    (err) => {
+      console.warn('Teams subscription notice:', err?.message || err);
+      callback(INITIAL_TEAMS);
+    }
+  );
 }
 
 export async function saveTeam(team: Team): Promise<void> {
@@ -588,13 +602,20 @@ export async function saveTeam(team: Team): Promise<void> {
 
 export function subscribeSystemSettings(callback: (settings: SystemSettings) => void) {
   const docRef = doc(db, 'systemSettings', 'current');
-  return onSnapshot(docRef, (snap) => {
-    if (snap.exists()) {
-      callback({ id: snap.id, ...snap.data() } as SystemSettings);
-    } else {
+  return onSnapshot(
+    docRef,
+    (snap) => {
+      if (snap.exists()) {
+        callback({ id: snap.id, ...snap.data() } as SystemSettings);
+      } else {
+        callback(INITIAL_SETTINGS);
+      }
+    },
+    (err) => {
+      console.warn('System settings subscription notice:', err?.message || err);
       callback(INITIAL_SETTINGS);
     }
-  });
+  );
 }
 
 export async function updateSystemSettings(settings: Partial<SystemSettings>): Promise<void> {

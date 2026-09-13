@@ -32,11 +32,11 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
   onEdit,
   onRecordTrip,
 }) => {
-  if (!appointment) return null;
-
   const { canEdit } = useAuth();
   const [testingEmail, setTestingEmail] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+
+  if (!appointment) return null;
 
   const isTeam1 = appointment.teamId === 'team1';
   const relativeDay = getRelativeThaiDayLabel(appointment.date);

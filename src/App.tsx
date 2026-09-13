@@ -79,7 +79,10 @@ function MainApplication() {
         setSchools(list);
         setDataLoaded(true);
       },
-      (err) => console.warn('Real-time schools subscription notice:', err?.message || err)
+      (err) => {
+        console.warn('Real-time schools subscription notice:', err?.message || err);
+        setDataLoaded(true);
+      }
     );
 
     // Subscribe to documentSubmissions

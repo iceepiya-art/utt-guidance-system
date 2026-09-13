@@ -46,8 +46,6 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
   appointmentToEdit,
   onSave,
 }) => {
-  if (!isOpen) return null;
-
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
   const [date, setDate] = useState<string>(getTodayISO());
   const [startTime, setStartTime] = useState<string>('09:00');
@@ -205,6 +203,8 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">

@@ -38,8 +38,6 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
   tripToEdit,
   onSave,
 }) => {
-  if (!isOpen) return null;
-
   const { currentUser } = useAuth();
 
   const [date, setDate] = useState<string>(getTodayISO());
@@ -192,6 +190,8 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
