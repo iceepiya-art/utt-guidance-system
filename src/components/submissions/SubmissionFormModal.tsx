@@ -41,7 +41,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [submissionTime, setSubmissionTime] = useState(() => new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' }));
   const [teamId, setTeamId] = useState<TeamId>(preselectedSchool?.teamId || 'team1');
   const [submitterNames, setSubmitterNames] = useState<string[]>([currentUser?.displayName || '']);
-  const submittedByNames = [...new Set(submitterNames.map(name => name.trim()).filter(Boolean))];
+  const submittedByNames = [...new Set<string>(submitterNames.map(name => name.trim()).filter(Boolean))];
   const submittedByName = submittedByNames.join(', ');
 
   // Guidance Teacher Contacts
