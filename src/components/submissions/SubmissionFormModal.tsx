@@ -30,12 +30,13 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   onSave,
   onOpenInstantAppointment,
 }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, users } = useAuth();
+  const teacherChoices = [...new Set([...users.filter(user => user.active).map(user => user.displayName.trim()), currentUser?.displayName?.trim() || ''].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
 
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>(preselectedSchool?.id || '');
   const [documentNumber, setDocumentNumber] = useState<string>('วท.อต. /2569');
   const [submissionDate, setSubmissionDate] = useState<string>(getTodayISO());
-  const submissionTime = '';
+  const [submissionTime, setSubmissionTime] = useState(() => new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' }));
   const [teamId, setTeamId] = useState<TeamId>(preselectedSchool?.teamId || 'team1');
   const [submitterNames, setSubmitterNames] = useState<string[]>([currentUser?.displayName || '']);
   const submittedByNames = [...new Set(submitterNames.map(name => name.trim()).filter(Boolean))];
@@ -86,6 +87,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!submissionTime) { setError('กรุณาระบุเวลายื่นหนังสือ'); return; }
     if (submitterNames.some(name => !name.trim())) { setError('กรุณาระบุชื่ออาจารย์ผู้ยื่นให้ครบทุกคน หรือลบช่องที่ไม่ใช้'); return; }
     const targetSchool = getTargetSchool();
     if (!targetSchool) {
@@ -127,6 +129,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
 
   // Instant Appointment click handler: carries values forward seamlessly
   const handleInstantSchedule = async () => {
+    if (!submissionTime) { setError('กรุณาระบุเวลายื่นหนังสือ'); return; }
     if (submitterNames.some(name => !name.trim())) { setError('กรุณาระบุชื่ออาจารย์ผู้ยื่นให้ครบทุกคน หรือลบช่องที่ไม่ใช้'); return; }
     const targetSchool = getTargetSchool();
     if (!targetSchool) {
@@ -252,7 +255,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
           </div>
 
           {/* Date, Time, Team & Submitter */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 วันที่ยื่น
@@ -264,6 +267,10 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
                 required
               />
+            </div>
+            <div>
+              <label htmlFor="submission-time" className="block text-xs font-semibold text-slate-700 mb-1">เวลายื่นหนังสือ *</label>
+              <input id="submission-time" type="time" required value={submissionTime} onChange={e => setSubmissionTime(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -278,16 +285,20 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                 <option value="team2">สุโขทัย</option>
               </select>
             </div>
-            <div className="col-span-2 space-y-2">
+            <div className="sm:col-span-3 space-y-2">
               <label className="block text-xs font-semibold text-slate-700">อาจารย์ผู้ยื่น (เพิ่มได้หลายคน) *</label>
-              {submitterNames.map((name, index) => <div key={index} className="flex gap-2">
+              {submitterNames.map((name, index) => <div key={index} className="flex flex-wrap sm:flex-nowrap gap-2">
+                <select aria-label={`เลือกอาจารย์จากระบบคนที่ ${index + 1}`} disabled={isSubmitting} value={teacherChoices.includes(name) ? name : ''} onChange={e => setSubmitterNames(names => names.map((n, i) => i === index ? e.target.value : n))} className="w-full sm:w-1/2 px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm">
+                  <option value="">พิมพ์ชื่อเอง / เลือกจากระบบ</option>
+                  {teacherChoices.map(choice => <option key={choice} value={choice}>{choice}</option>)}
+                </select>
                 <input type="text" required aria-label={`อาจารย์ผู้ยื่นคนที่ ${index + 1}`} value={name} disabled={isSubmitting} placeholder="ชื่อ–นามสกุลอาจารย์"
                   onChange={e => setSubmitterNames(names => names.map((n, i) => i === index ? e.target.value : n))}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm" />
                 {submitterNames.length > 1 && <button type="button" disabled={isSubmitting} aria-label={`ลบอาจารย์คนที่ ${index + 1}`} onClick={() => setSubmitterNames(names => names.filter((_, i) => i !== index))} className="px-3 text-sm text-red-600">ลบ</button>}
               </div>)}
               <button type="button" disabled={isSubmitting} onClick={() => setSubmitterNames(names => [...names, ''])} className="text-sm font-semibold text-sky-700">+ เพิ่มอาจารย์ผู้ยื่น</button>
-              <p className="text-xs text-slate-500">ระบุชื่อแยกคน เพื่อแสดงรายชื่อครบในรายงานสรุป</p>
+              <p className="text-xs text-slate-500">เลือกชื่อจากระบบ หรือพิมพ์ชื่อเพิ่มเติมในช่องชื่อ รายชื่อทุกคนจะแสดงในรายงานสรุป</p>
             </div>
           </div>
 
