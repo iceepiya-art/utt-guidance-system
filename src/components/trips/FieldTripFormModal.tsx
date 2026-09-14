@@ -1,3 +1,4 @@
+import type { DocumentSubmission } from '../../types';
 import { TripVehiclePicker } from '../common/TripVehiclePicker';
 import { SchoolPicker } from '../common/SchoolPicker';
 import React, { useState, useEffect } from 'react';
@@ -12,6 +13,7 @@ interface FieldTripFormModalProps {
   onClose: () => void;
   schools: School[];
   prefilledAppointment?: Appointment | null;
+  prefilledSubmission?: Omit<DocumentSubmission, 'id'> | null;
   tripToEdit?: FieldTrip | null;
   onSave: (tripData: Omit<FieldTrip, 'id'>) => Promise<string | void>;
 }
@@ -37,6 +39,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
   onClose,
   schools,
   prefilledAppointment,
+  prefilledSubmission,
   tripToEdit,
   onSave,
 }) => {
@@ -80,6 +83,11 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       setIssues(tripToEdit.issues || '');
       setPhotos(tripToEdit.photos || []);
       setTripSchools(tripToEdit.schools || []);
+    } else if (prefilledSubmission) {
+      setDate(prefilledSubmission.submissionDate);
+      setTeamId(prefilledSubmission.teamId);
+      setTeamMemberNames(prefilledSubmission.submittedByNames?.join(', ') || prefilledSubmission.submittedByName);
+      setTripSchools([{ schoolId: prefilledSubmission.schoolId, schoolName: prefilledSubmission.schoolName, timeSlot: '', studentCount: 0 }]);
     } else if (prefilledAppointment) {
       setDate(prefilledAppointment.date);
       setTeamId(prefilledAppointment.teamId);
@@ -108,7 +116,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
         },
       ]);
     }
-  }, [tripToEdit, prefilledAppointment, schools]);
+  }, [tripToEdit, prefilledAppointment, prefilledSubmission, schools]);
 
   const handleAddSchoolRow = () => {
     if (schools.length === 0) return;

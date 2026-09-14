@@ -324,7 +324,7 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
         <h3 className="p-4 font-bold text-slate-800">สรุปการยื่นหนังสือ ({monthlySubmissions.length} รายการ)</h3>
         <div className="overflow-x-auto"><table className="w-full text-sm text-left">
           <thead className="bg-slate-50 text-slate-600"><tr><th className="p-3">วันที่ยื่น</th><th className="p-3">โรงเรียน</th><th className="p-3">อาจารย์ผู้ยื่น</th></tr></thead>
-          <tbody>{monthlySubmissions.map(s => <tr key={s.id} className="border-t border-slate-100"><td className="p-3 whitespace-nowrap">{s.submissionDate}</td><td className="p-3">{s.schoolName}</td><td className="p-3">{s.submittedByNames?.length ? s.submittedByNames.join(', ') : s.submittedByName}</td></tr>)}
+          <tbody>{monthlySubmissions.map(s => <tr key={s.id} className="border-t border-slate-100"><td className="p-3 whitespace-nowrap">{s.submissionDate}</td><td className="p-3">{s.schoolName}{s.sameDayGuidance && <span className="block text-xs text-sky-700">ยื่นหนังสือ + แนะแนว</span>}</td><td className="p-3">{s.submittedByNames?.length ? s.submittedByNames.join(', ') : s.submittedByName}</td></tr>)}
           {!monthlySubmissions.length && <tr><td colSpan={3} className="p-4 text-center text-slate-500">ไม่มีการยื่นหนังสือในเดือนและสายที่เลือก</td></tr>}</tbody>
         </table></div>
       </section>

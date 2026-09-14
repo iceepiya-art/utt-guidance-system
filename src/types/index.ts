@@ -76,6 +76,8 @@ export type PostSubmissionStatus =
   | 'NOT_READY';           // โรงเรียนยังไม่พร้อม
 
 export interface DocumentSubmission {
+  sameDayGuidance?: boolean;
+  fieldTripId?: string;
   id: string;
   schoolId: string;
   schoolName: string;
@@ -153,6 +155,7 @@ export interface FieldTripSchool {
 }
 
 export interface FieldTrip {
+  submissionId?: string;
   id: string;
   date: string; // YYYY-MM-DD
   departureTime?: string;
