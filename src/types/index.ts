@@ -85,6 +85,7 @@ export interface DocumentSubmission {
   teamId: TeamId;
   submittedById: string;
   submittedByName: string;
+  submittedByNames?: string[];
   teacherName: string;
   teacherPosition?: string;
   teacherPhone: string;

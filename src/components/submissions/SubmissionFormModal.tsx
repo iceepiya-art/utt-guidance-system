@@ -37,7 +37,9 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [submissionDate, setSubmissionDate] = useState<string>(getTodayISO());
   const [submissionTime, setSubmissionTime] = useState<string>('10:00');
   const [teamId, setTeamId] = useState<TeamId>(preselectedSchool?.teamId || 'team1');
-  const [submittedByName, setSubmittedByName] = useState<string>(currentUser?.displayName || 'อ.ปิยะ สุขสมบูรณ์');
+  const [submitterNames, setSubmitterNames] = useState<string[]>([currentUser?.displayName || '']);
+  const submittedByNames = [...new Set(submitterNames.map(name => name.trim()).filter(Boolean))];
+  const submittedByName = submittedByNames.join(', ');
 
   // Guidance Teacher Contacts
   const [teacherName, setTeacherName] = useState<string>('');
@@ -84,6 +86,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitterNames.some(name => !name.trim())) { setError('กรุณาระบุชื่ออาจารย์ผู้ยื่นให้ครบทุกคน หรือลบช่องที่ไม่ใช้'); return; }
     const targetSchool = getTargetSchool();
     if (!targetSchool) {
       setError('กรุณาเลือกโรงเรียน');
@@ -102,6 +105,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         teamId,
         submittedById: currentUser?.id || 'usr_staff',
         submittedByName,
+        submittedByNames,
         teacherName,
         teacherPosition,
         teacherPhone,
@@ -123,6 +127,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
 
   // Instant Appointment click handler: carries values forward seamlessly
   const handleInstantSchedule = async () => {
+    if (submitterNames.some(name => !name.trim())) { setError('กรุณาระบุชื่ออาจารย์ผู้ยื่นให้ครบทุกคน หรือลบช่องที่ไม่ใช้'); return; }
     const targetSchool = getTargetSchool();
     if (!targetSchool) {
       setError('กรุณาเลือกโรงเรียนก่อนนัดหมาย');
@@ -140,6 +145,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         teamId,
         submittedById: currentUser?.id || 'usr_staff',
         submittedByName,
+        submittedByNames,
         teacherName,
         teacherPosition,
         teacherPhone,
@@ -152,7 +158,8 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         updatedAt: new Date().toISOString(),
       });
     } catch (e) {
-      console.warn('Auto-save document before appointment:', e);
+      setError('บันทึกการยื่นหนังสือไม่สำเร็จ กรุณาลองอีกครั้ง');
+      return;
     }
 
     // Now open the calendar/appointment modal with carried-over fields
@@ -283,16 +290,16 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                 <option value="team2">สุโขทัย</option>
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                อาจารย์ผู้ยื่น
-              </label>
-              <input
-                type="text"
-                value={submittedByName}
-                onChange={(e) => setSubmittedByName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-              />
+            <div className="col-span-2 sm:col-span-4 space-y-2">
+              <label className="block text-xs font-semibold text-slate-700">อาจารย์ผู้ยื่น (เพิ่มได้หลายคน) *</label>
+              {submitterNames.map((name, index) => <div key={index} className="flex gap-2">
+                <input type="text" required aria-label={`อาจารย์ผู้ยื่นคนที่ ${index + 1}`} value={name} disabled={isSubmitting} placeholder="ชื่อ–นามสกุลอาจารย์"
+                  onChange={e => setSubmitterNames(names => names.map((n, i) => i === index ? e.target.value : n))}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm" />
+                {submitterNames.length > 1 && <button type="button" disabled={isSubmitting} aria-label={`ลบอาจารย์คนที่ ${index + 1}`} onClick={() => setSubmitterNames(names => names.filter((_, i) => i !== index))} className="px-3 text-sm text-red-600">ลบ</button>}
+              </div>)}
+              <button type="button" disabled={isSubmitting} onClick={() => setSubmitterNames(names => [...names, ''])} className="text-sm font-semibold text-sky-700">+ เพิ่มอาจารย์ผู้ยื่น</button>
+              <p className="text-xs text-slate-500">ระบุชื่อแยกคน เพื่อแสดงรายชื่อครบในรายงานสรุป</p>
             </div>
           </div>
 
