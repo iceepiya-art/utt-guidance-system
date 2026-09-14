@@ -1,3 +1,4 @@
+import { TripVehiclePicker } from '../common/TripVehiclePicker';
 import { SchoolPicker } from '../common/SchoolPicker';
 import React, { useState, useEffect } from 'react';
 import { X, Save, Compass, Plus, Trash2, Calendar, Clock, Car, Users, AlertCircle } from 'lucide-react';
@@ -39,18 +40,18 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
   tripToEdit,
   onSave,
 }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, users } = useAuth();
 
   const [date, setDate] = useState<string>(getTodayISO());
   const [departureTime, setDepartureTime] = useState<string>('08:00');
-  const [returnTime, setReturnTime] = useState<string>('15:30');
+  const [returnTime, setReturnTime] = useState<string>('');
   const [teamId, setTeamId] = useState<TeamId>('team1');
   const [counselorName, setCounselorName] = useState<string>(currentUser?.displayName || 'อ.ปิยะ สุขสมบูรณ์');
   const [counselorId, setCounselorId] = useState<string>(currentUser?.id || 'usr_counselor_1');
   const [teamMemberNames, setTeamMemberNames] = useState<string>('อ.สมศักดิ์ วงศ์สว่าง, นายกิตติ (ฝ่ายโสต)');
   const [workType, setWorkType] = useState<string>('แนะแนวการศึกษา ม.3 และ ม.6');
-  const [vehicleId, setVehicleId] = useState<string>('veh_01');
-  const [vehicleName, setVehicleName] = useState<string>('รถตู้โตโยต้า คอมมิวเตอร์ (นข-4521 อต)');
+  const [vehicleId, setVehicleId] = useState<string>('mitsu-6738');
+  const [vehicleName, setVehicleName] = useState<string>('MITSU บน 6738');
   const [summary, setSummary] = useState<string>('');
   const [issues, setIssues] = useState<string>('');
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -67,14 +68,14 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
     if (tripToEdit) {
       setDate(tripToEdit.date);
       setDepartureTime(tripToEdit.departureTime || '08:00');
-      setReturnTime(tripToEdit.returnTime || '15:30');
+      setReturnTime(tripToEdit.returnTime || '');
       setTeamId(tripToEdit.teamId);
       setCounselorName(tripToEdit.counselorName);
       setCounselorId(tripToEdit.counselorId);
       setTeamMemberNames(tripToEdit.teamMemberNames || '');
       setWorkType(tripToEdit.workType);
-      setVehicleId(tripToEdit.vehicleId || 'veh_01');
-      setVehicleName(tripToEdit.vehicleName || 'รถตู้โตโยต้า คอมมิวเตอร์ (นข-4521 อต)');
+      setVehicleId(tripToEdit.vehicleId || 'mitsu-6738');
+      setVehicleName(tripToEdit.vehicleName || 'MITSU บน 6738');
       setSummary(tripToEdit.summary || '');
       setIssues(tripToEdit.issues || '');
       setPhotos(tripToEdit.photos || []);
@@ -225,7 +226,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
           )}
 
           {/* Date, Times & Team */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 วันที่ออกแนะแนว
@@ -246,17 +247,6 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
                 type="time"
                 value={departureTime}
                 onChange={(e) => setDepartureTime(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                เวลากลับถึงวิทยาลัย
-              </label>
-              <input
-                type="time"
-                value={returnTime}
-                onChange={(e) => setReturnTime(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
               />
             </div>
@@ -297,17 +287,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 ยานพาหนะ
               </label>
-              <select
-                value={vehicleId}
-                onChange={(e) => handleVehicleChange(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-              >
-                {VEHICLES.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
+              <TripVehiclePicker value={vehicleId} name={vehicleName} disabled={isSubmitting} onChange={(id, name) => { setVehicleId(id); setVehicleName(name); }} />
             </div>
           </div>
 
@@ -317,12 +297,10 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 อาจารย์ผู้รับผิดชอบ
               </label>
-              <input
-                type="text"
-                value={counselorName}
-                onChange={(e) => setCounselorName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-              />
+              <select aria-label="อาจารย์ผู้รับผิดชอบ" value={counselorId} onChange={e => { const user = users.find(u => u.id === e.target.value); if(user) { setCounselorId(user.id); setCounselorName(user.displayName); } }} className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs">
+                {!users.some(u => u.active && u.id === counselorId) && <option value={counselorId}>{counselorName || 'เลือกอาจารย์'}</option>}
+                {users.filter(u => u.active).map(u => <option key={u.id} value={u.id}>{u.displayName}</option>)}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
