@@ -1,3 +1,4 @@
+import { SchoolImportModal } from './SchoolImportModal';
 import React, { useState, useMemo } from 'react';
 import {
   Search,
@@ -45,6 +46,7 @@ export const SchoolsView: React.FC<SchoolsViewProps> = ({
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
   const [schoolToEdit, setSchoolToEdit] = useState<School | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Unique districts for filter
   const districts = useMemo(() => {
@@ -309,7 +311,8 @@ export const SchoolsView: React.FC<SchoolsViewProps> = ({
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {canEdit && (
+                        {canEdit && <button type="button" onClick={() => setIsImportModalOpen(true)} className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700">นำเข้าจาก Excel</button>}
+          {canEdit && (
                           <button
                             onClick={() => {
                               setSchoolToEdit(school);
@@ -435,6 +438,7 @@ export const SchoolsView: React.FC<SchoolsViewProps> = ({
         }}
         onSave={handleSaveSchool}
       />
+      <SchoolImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onSuccess={() => {}} existingSchools={schools}/>
     </div>
   );
 };

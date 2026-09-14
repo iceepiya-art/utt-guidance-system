@@ -27,6 +27,15 @@ export interface School {
   id: string;
   schoolId: string; // เช่น SCH-001
   schoolName: string;
+  academicYear?: string;
+  region?: string;
+  subdistrict?: string;
+  schoolType?: string;
+  areaName?: string;
+  schoolSize?: string;
+  totalStudents?: number;
+  postalCode?: string;
+  importSource?: string;
   educationLevels: string; // เช่น ม.1 - ม.3 หรือ ม.1 - ม.6
   studentM3: number;
   studentM6: number;
