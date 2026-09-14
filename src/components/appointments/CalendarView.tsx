@@ -149,7 +149,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 teamFilter === 'team1' ? 'bg-[#1976D2] text-white shadow-2xs' : 'text-[#1976D2]'
               }`}
             >
-              สาย 1 (เมือง)
+              อุตรดิตถ์
             </button>
             <button
               onClick={() => setTeamFilter('team2')}
@@ -157,7 +157,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 teamFilter === 'team2' ? 'bg-[#F59E0B] text-white shadow-2xs' : 'text-[#F59E0B]'
               }`}
             >
-              สาย 2 (รอบนอก)
+              สุโขทัย
             </button>
           </div>
 
@@ -354,7 +354,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                               : 'bg-[#FFF7E0] text-[#F59E0B]'
                           }`}
                         >
-                          {isTeam1 ? 'สาย 1 (เมือง)' : 'สาย 2 (รอบนอก)'}
+                          {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                         </span>
                         <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
                           <Clock className="w-3.5 h-3.5 text-[#087CC1]" />

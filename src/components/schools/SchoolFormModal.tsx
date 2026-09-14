@@ -220,8 +220,8 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
                 onChange={(e) => setFormData({ ...formData, teamId: e.target.value as TeamId })}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1]"
               >
-                <option value="team1">สายที่ 1 (โซนเมือง, ลับแล, ตรอน, พิชัย)</option>
-                <option value="team2">สายที่ 2 (โซนท่าปลา, น้ำปาด, ฟากท่า, บ้านโคก, ทองแสนขัน)</option>
+                <option value="team1">อุตรดิตถ์</option>
+                <option value="team2">สุโขทัย</option>
               </select>
             </div>
           </div>

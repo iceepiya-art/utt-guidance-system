@@ -178,11 +178,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
           <div className="p-4 bg-[#E3F2FD]/30 border border-[#1976D2]/30 rounded-xl space-y-2">
             <div className="flex items-center gap-2 text-sm font-bold text-[#1976D2]">
               <span className="w-2.5 h-2.5 rounded-full bg-[#1976D2]" />
-              <span>สายที่ 1 (โซนเมืองและอำเภอใกล้เคียง)</span>
+              <span>อุตรดิตถ์</span>
             </div>
             <div className="text-xs text-slate-700">
               <span className="font-semibold">พื้นที่รับผิดชอบ: </span>
-              อำเภอเมืองอุตรดิตถ์, อำเภอลับแล, อำเภอตริอน, อำเภอพิชัย
+              จังหวัดอุตรดิตถ์
             </div>
             <div className="text-xs text-slate-500">
               ทีมงานหลัก: อ.ปิยะ สุขสมบูรณ์, อ.สมศักดิ์ วงศ์สว่าง
@@ -192,11 +192,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
           <div className="p-4 bg-[#FFF7E0]/40 border border-[#F59E0B]/30 rounded-xl space-y-2">
             <div className="flex items-center gap-2 text-sm font-bold text-[#F59E0B]">
               <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
-              <span>สายที่ 2 (โซนรอบนอกและแนวชายแดน)</span>
+              <span>สุโขทัย</span>
             </div>
             <div className="text-xs text-slate-700">
               <span className="font-semibold">พื้นที่รับผิดชอบ: </span>
-              อำเภอท่าปลา, อำเภอน้ำปาด, อำเภอฟากท่า, อำเภอบ้านโคก, อำเภอทองแสนขัน
+              จังหวัดสุโขทัย
             </div>
             <div className="text-xs text-slate-500">
               ทีมงานหลัก: อ.นภาพร ใจดี, อ.วรวิทย์ ศิริชัย

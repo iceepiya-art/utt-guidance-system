@@ -116,7 +116,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
               teamFilter === 'team1' ? 'bg-[#1976D2] text-white shadow-2xs' : 'text-[#1976D2]'
             }`}
           >
-            สาย 1 (เมือง)
+            อุตรดิตถ์
           </button>
           <button
             onClick={() => setTeamFilter('team2')}
@@ -124,7 +124,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
               teamFilter === 'team2' ? 'bg-[#F59E0B] text-white shadow-2xs' : 'text-[#F59E0B]'
             }`}
           >
-            สาย 2 (รอบนอก)
+            สุโขทัย
           </button>
         </div>
 
@@ -190,7 +190,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
                         isTeam1 ? 'bg-[#1976D2] text-white' : 'bg-[#F59E0B] text-white'
                       }`}
                     >
-                      {isTeam1 ? 'สาย 1' : 'สาย 2'}
+                      {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                     </span>
                     <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-sm bg-black/60 text-white backdrop-blur-xs">
                       {item.sourceType === 'fieldTrip' ? 'ออกแนะแนว' : 'ยื่นหนังสือ'}

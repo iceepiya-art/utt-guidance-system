@@ -203,7 +203,7 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
               teamFilter === 'team1' ? 'bg-[#1976D2] text-white shadow-2xs' : 'text-[#1976D2]'
             }`}
           >
-            สายที่ 1
+            อุตรดิตถ์
           </button>
           <button
             onClick={() => setTeamFilter('team2')}
@@ -211,7 +211,7 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
               teamFilter === 'team2' ? 'bg-[#F59E0B] text-white shadow-2xs' : 'text-[#F59E0B]'
             }`}
           >
-            สายที่ 2
+            สุโขทัย
           </button>
         </div>
       </div>
@@ -279,7 +279,7 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-[#1976D2]" />
-              <h3 className="font-bold text-slate-800">สายที่ 1 (โซนเมือง)</h3>
+              <h3 className="font-bold text-slate-800">อุตรดิตถ์</h3>
             </div>
             <span className="text-xs font-bold px-2 py-0.5 rounded-sm bg-[#E3F2FD] text-[#1976D2]">
               {team1Trips.length} ทริป
@@ -301,7 +301,7 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-[#F59E0B]" />
-              <h3 className="font-bold text-slate-800">สายที่ 2 (โซนรอบนอก)</h3>
+              <h3 className="font-bold text-slate-800">สุโขทัย</h3>
             </div>
             <span className="text-xs font-bold px-2 py-0.5 rounded-sm bg-[#FFF7E0] text-[#F59E0B]">
               {team2Trips.length} ทริป
@@ -365,7 +365,7 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
                             isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
                           }`}
                         >
-                          {isTeam1 ? 'สาย 1' : 'สาย 2'}
+                          {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                         </span>
                       </td>
                       <td className="py-3 px-4">

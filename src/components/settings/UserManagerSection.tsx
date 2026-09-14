@@ -198,14 +198,14 @@ export const UserManagerSection: React.FC = () => {
     if (teamId === 'team1') {
       return (
         <span className="text-[11px] font-medium text-[#1976D2] bg-[#E3F2FD] px-2 py-0.5 rounded-md border border-[#1976D2]/20">
-          สาย 1 (เมือง/ใกล้เคียง)
+          อุตรดิตถ์
         </span>
       );
     }
     if (teamId === 'team2') {
       return (
         <span className="text-[11px] font-medium text-[#D97706] bg-[#FFF7E0] px-2 py-0.5 rounded-md border border-[#F59E0B]/30">
-          สาย 2 (รอบนอก/ชายแดน)
+          สุโขทัย
         </span>
       );
     }
@@ -521,8 +521,8 @@ export const UserManagerSection: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, teamId: e.target.value as any })}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
                 >
-                  <option value="team1">สายที่ 1 (โซนเมือง, ลับแล, ตรอน, พิชัย)</option>
-                  <option value="team2">สายที่ 2 (โซนท่าปลา, น้ำปาด, ฟากท่า, บ้านโคก, ทองแสนขัน)</option>
+                  <option value="team1">อุตรดิตถ์</option>
+                  <option value="team2">สุโขทัย</option>
                   <option value="none">ส่วนกลาง / ไม่สังกัดสายงาน</option>
                 </select>
               </div>

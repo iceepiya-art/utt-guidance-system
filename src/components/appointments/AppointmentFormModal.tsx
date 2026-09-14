@@ -259,7 +259,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
               <option value="">-- เลือกโรงเรียน --</option>
               {schools.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.schoolName} ({s.teamId === 'team1' ? 'สาย 1' : 'สาย 2'})
+                  {s.schoolName} ({s.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'})
                 </option>
               ))}
             </select>
@@ -316,8 +316,8 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
                 onChange={(e) => setTeamId(e.target.value as TeamId)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
               >
-                <option value="team1">สายที่ 1 (โซนเมือง)</option>
-                <option value="team2">สายที่ 2 (โซนรอบนอก)</option>
+                <option value="team1">อุตรดิตถ์</option>
+                <option value="team2">สุโขทัย</option>
               </select>
             </div>
             <div>
@@ -331,7 +331,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
               >
                 {COUNSELORS.map((c) => (
                   <option key={c.id} value={c.name}>
-                    {c.name} ({c.teamId === 'team1' ? 'สาย 1' : 'สาย 2'})
+                    {c.name} ({c.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'})
                   </option>
                 ))}
               </select>

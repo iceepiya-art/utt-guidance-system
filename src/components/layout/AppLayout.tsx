@@ -110,7 +110,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                         : 'bg-[#FFF7E0] text-[#F59E0B]'
                     }`}
                   >
-                    {currentUser.teamId === 'team1' ? 'สายที่ 1' : 'สายที่ 2'}
+                    {currentUser.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'}
                   </span>
                 )}
               </div>
@@ -201,7 +201,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                         : 'bg-[#FFF7E0] text-[#F59E0B]'
                     }`}
                   >
-                    {currentUser.teamId === 'team1' ? 'สายที่ 1' : 'สายที่ 2'}
+                    {currentUser.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'}
                   </span>
                 )}
               </div>

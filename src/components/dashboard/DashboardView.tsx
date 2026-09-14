@@ -225,7 +225,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-[#1976D2]" />
               <h2 className="font-bold text-slate-800 text-base">
-                สายที่ 1 (โซนเมือง, ลับแล, ตรอน, พิชัย)
+                อุตรดิตถ์
               </h2>
             </div>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#E3F2FD] text-[#1976D2]">
@@ -272,7 +272,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-[#F59E0B]" />
               <h2 className="font-bold text-slate-800 text-base">
-                สายที่ 2 (โซนท่าปลา, น้ำปาด, ฟากท่า, บ้านโคก, ทองแสนขัน)
+                สุโขทัย
               </h2>
             </div>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#FFF7E0] text-[#F59E0B]">
@@ -380,7 +380,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             : 'bg-[#FFF7E0] text-[#F59E0B]'
                         }`}
                       >
-                        {isTeam1 ? 'สายที่ 1' : 'สายที่ 2'}
+                        {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                       </span>
                     </div>
 

@@ -54,7 +54,7 @@ export const INITIAL_USERS: UserProfile[] = [
 export const INITIAL_TEAMS: Team[] = [
   {
     id: 'team1',
-    teamName: 'สายที่ 1 (โซนเมือง, ลับแล, ตรอน, พิชัย)',
+    teamName: 'อุตรดิตถ์',
     color: '#1976D2',
     lightColor: '#E3F2FD',
     active: true,
@@ -62,7 +62,7 @@ export const INITIAL_TEAMS: Team[] = [
   },
   {
     id: 'team2',
-    teamName: 'สายที่ 2 (โซนท่าปลา, น้ำปาด, ฟากท่า, บ้านโคก, ทองแสนขัน)',
+    teamName: 'สุโขทัย',
     color: '#F59E0B',
     lightColor: '#FFF7E0',
     active: true,

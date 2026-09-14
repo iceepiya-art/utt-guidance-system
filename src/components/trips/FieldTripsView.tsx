@@ -122,7 +122,7 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
               teamFilter === 'team1' ? 'bg-[#1976D2] text-white shadow-2xs' : 'text-[#1976D2]'
             }`}
           >
-            สายที่ 1
+            อุตรดิตถ์
           </button>
           <button
             onClick={() => setTeamFilter('team2')}
@@ -130,7 +130,7 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
               teamFilter === 'team2' ? 'bg-[#F59E0B] text-white shadow-2xs' : 'text-[#F59E0B]'
             }`}
           >
-            สายที่ 2
+            สุโขทัย
           </button>
         </div>
       </div>
@@ -168,7 +168,7 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
                           isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
                         }`}
                       >
-                        {isTeam1 ? 'สาย 1' : 'สาย 2'}
+                        {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                       </span>
                     </td>
                     <td className="py-3 px-4">
@@ -281,7 +281,7 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
                           isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
                         }`}
                       >
-                        {isTeam1 ? 'สาย 1' : 'สาย 2'}
+                        {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                       </span>
                       <span className="text-xs font-semibold text-slate-500">
                         {formatThaiShortDate(trip.date)}

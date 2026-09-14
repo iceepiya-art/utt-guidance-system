@@ -7,7 +7,7 @@ interface ExportReportParams {
   monthIndex: number; // 0-11
   academicYear: string; // e.g. "2569"
   teamId: TeamId;
-  teamName: string; // e.g. "สายที่ 1"
+  teamName: string; // e.g. "อุตรดิตถ์"
 }
 
 export function exportMonthlyReportToExcel(
@@ -61,7 +61,7 @@ export function exportMonthlyReportToExcel(
     trips.forEach((trip) => {
       const dayName = getThaiDayOfWeek(trip.date);
       const thaiDate = formatThaiShortDate(trip.date);
-      const teamLabel = trip.teamId === 'team1' ? 'สาย 1 (เมือง)' : 'สาย 2 (รอบนอก)';
+      const teamLabel = trip.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย';
       const vehicle = trip.vehicleName || '-';
       const workType = trip.workType || 'ออกแนะแนว';
       const counselor = trip.counselorName || '-';
@@ -184,7 +184,7 @@ export function exportSchoolsToExcel(schools: School[]) {
       s.teacherLine || '-',
       s.district || '-',
       s.province || 'อุตรดิตถ์',
-      s.teamId === 'team1' ? 'สาย 1 (เมือง)' : 'สาย 2 (รอบนอก)',
+      s.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย',
       statusLabels[s.currentStatus] || s.currentStatus,
       s.note || '',
     ]);

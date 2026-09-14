@@ -81,7 +81,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                   isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
                 }`}
               >
-                {isTeam1 ? 'สายที่ 1 (โซนเมือง)' : 'สายที่ 2 (โซนรอบนอก)'}
+                {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
               </span>
               {getStatusBadge()}
             </div>
