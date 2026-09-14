@@ -35,7 +35,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>(preselectedSchool?.id || '');
   const [documentNumber, setDocumentNumber] = useState<string>('วท.อต. /2569');
   const [submissionDate, setSubmissionDate] = useState<string>(getTodayISO());
-  const [submissionTime, setSubmissionTime] = useState<string>('10:00');
+  const submissionTime = '';
   const [teamId, setTeamId] = useState<TeamId>(preselectedSchool?.teamId || 'team1');
   const [submitterNames, setSubmitterNames] = useState<string[]>([currentUser?.displayName || '']);
   const submittedByNames = [...new Set(submitterNames.map(name => name.trim()).filter(Boolean))];
@@ -43,7 +43,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
 
   // Guidance Teacher Contacts
   const [teacherName, setTeacherName] = useState<string>('');
-  const [teacherPosition, setTeacherPosition] = useState<string>('ครูแนะแนว');
+  const [teacherPosition, setTeacherPosition] = useState<string>('');
   const [teacherPhone, setTeacherPhone] = useState<string>('');
   const [teacherLine, setTeacherLine] = useState<string>('');
   const [preferredContactTime, setPreferredContactTime] = useState<string>('');
@@ -61,7 +61,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
       setSelectedSchoolId(preselectedSchool.id);
       setTeamId(preselectedSchool.teamId);
       setTeacherName(preselectedSchool.teacherName || '');
-      setTeacherPosition(preselectedSchool.teacherPosition || 'ครูแนะแนว');
+      setTeacherPosition(preselectedSchool.teacherPosition || '');
       setTeacherPhone(preselectedSchool.teacherPhone || '');
       setTeacherLine(preselectedSchool.teacherLine || '');
       setPreferredContactTime(preselectedSchool.preferredContactTime || '');
@@ -252,7 +252,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
           </div>
 
           {/* Date, Time, Team & Submitter */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 วันที่ยื่น
@@ -261,18 +261,6 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                 type="date"
                 value={submissionDate}
                 onChange={(e) => setSubmissionDate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                เวลา
-              </label>
-              <input
-                type="time"
-                value={submissionTime}
-                onChange={(e) => setSubmissionTime(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
                 required
               />
@@ -290,7 +278,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                 <option value="team2">สุโขทัย</option>
               </select>
             </div>
-            <div className="col-span-2 sm:col-span-4 space-y-2">
+            <div className="col-span-2 space-y-2">
               <label className="block text-xs font-semibold text-slate-700">อาจารย์ผู้ยื่น (เพิ่มได้หลายคน) *</label>
               {submitterNames.map((name, index) => <div key={index} className="flex gap-2">
                 <input type="text" required aria-label={`อาจารย์ผู้ยื่นคนที่ ${index + 1}`} value={name} disabled={isSubmitting} placeholder="ชื่อ–นามสกุลอาจารย์"
@@ -311,7 +299,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   ชื่อครูแนะแนว
@@ -324,21 +312,9 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                   className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  ตำแหน่ง
-                </label>
-                <input
-                  type="text"
-                  value={teacherPosition}
-                  onChange={(e) => setTeacherPosition(e.target.value)}
-                  placeholder="เช่น หัวหน้างานแนะแนว"
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm"
-                />
-              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   เบอร์โทรศัพท์
@@ -348,18 +324,6 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                   value={teacherPhone}
                   onChange={(e) => setTeacherPhone(e.target.value)}
                   placeholder="08x-xxx-xxxx"
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  LINE ID / ช่องทางติดต่อ
-                </label>
-                <input
-                  type="text"
-                  value={teacherLine}
-                  onChange={(e) => setTeacherLine(e.target.value)}
-                  placeholder="Line ID"
                   className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm"
                 />
               </div>
