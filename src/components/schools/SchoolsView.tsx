@@ -119,6 +119,7 @@ export const SchoolsView: React.FC<SchoolsViewProps> = ({
           </p>
         </div>
 
+        {canEdit && <button type="button" onClick={() => setIsImportModalOpen(true)} className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700">นำเข้าจาก Excel</button>}
         {canEdit && (
           <button
             onClick={() => {
@@ -311,7 +312,6 @@ export const SchoolsView: React.FC<SchoolsViewProps> = ({
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {canEdit && <button type="button" onClick={() => setIsImportModalOpen(true)} className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700">นำเข้าจาก Excel</button>}
           {canEdit && (
                           <button
                             onClick={() => {
