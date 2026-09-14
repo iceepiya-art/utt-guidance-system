@@ -1,3 +1,4 @@
+import { SchoolPicker } from '../common/SchoolPicker';
 import React, { useState, useEffect } from 'react';
 import { X, Save, Compass, Plus, Trash2, Calendar, Clock, Car, Users, AlertCircle } from 'lucide-react';
 import { School, FieldTrip, TeamId, PhotoItem, Appointment } from '../../types';
@@ -365,17 +366,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
                       <label className="block text-[11px] font-medium text-slate-500 mb-0.5">
                         โรงเรียน #{index + 1}
                       </label>
-                      <select
-                        value={item.schoolId}
-                        onChange={(e) => handleUpdateSchoolRow(index, 'schoolId', e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold"
-                      >
-                        {schools.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.schoolName} ({s.district})
-                          </option>
-                        ))}
-                      </select>
+                      <SchoolPicker schools={schools} value={item.schoolId} onChange={id => handleUpdateSchoolRow(index, 'schoolId', id)} disabled={isSubmitting}/>
                     </div>
 
                     <div>

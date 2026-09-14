@@ -1,3 +1,4 @@
+import { SchoolPicker } from '../common/SchoolPicker';
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, AlertTriangle, Bell, Car, Users, Save, Check } from 'lucide-react';
 import { School, Appointment, TeamId, AppointmentStatus } from '../../types';
@@ -97,18 +98,17 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
       if (prefilledData.date) setDate(prefilledData.date);
       if (prefilledData.startTime) setStartTime(prefilledData.startTime);
       if (prefilledData.endTime) setEndTime(prefilledData.endTime);
-    } else if (schools.length > 0 && !selectedSchoolId) {
-      handleSchoolSelect(schools[0].id);
     }
   }, [appointmentToEdit, prefilledData, schools]);
 
   const handleSchoolSelect = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
+    if (!schoolId) { setTeacherName(''); setTeacherPhone(''); }
     const target = schools.find((s) => s.id === schoolId);
     if (target) {
       setTeamId(target.teamId);
-      if (target.teacherName) setTeacherName(target.teacherName);
-      if (target.teacherPhone) setTeacherPhone(target.teacherPhone);
+      setTeacherName(target.teacherName || '');
+      setTeacherPhone(target.teacherPhone || '');
     }
   };
 
@@ -250,19 +250,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               โรงเรียนเป้าหมาย <span className="text-red-500">*</span>
             </label>
-            <select
-              value={selectedSchoolId}
-              onChange={(e) => handleSchoolSelect(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1]"
-              required
-            >
-              <option value="">-- เลือกโรงเรียน --</option>
-              {schools.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.schoolName} ({s.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'})
-                </option>
-              ))}
-            </select>
+            <SchoolPicker schools={schools} value={selectedSchoolId} onChange={handleSchoolSelect} disabled={isSubmitting}/>
           </div>
 
           {/* Date & Time slots */}
