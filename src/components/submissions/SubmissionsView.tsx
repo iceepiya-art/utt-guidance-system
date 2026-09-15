@@ -197,7 +197,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
                       </span>
                     </td>
                     <td className="py-3 px-3.5 text-slate-700">
-                      {sub.submittedByName}{sub.sameDayGuidance && <span className="block text-xs text-sky-700">ยื่นหนังสือ + แนะแนว</span>}
+                      {sub.submittedByName}{sub.appointmentDate && <span className="block text-xs text-sky-700">นัด {sub.appointmentDate} เวลา {sub.appointmentStartTime}–{sub.appointmentEndTime}</span>}{sub.sameDayGuidance && <span className="block text-xs text-sky-700">ยื่นหนังสือ + แนะแนว</span>}
                     </td>
                     <td className="py-3 px-3.5 font-medium text-slate-800">
                       {sub.teacherName || '-'}
@@ -298,7 +298,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
                   )}
                   <div className="flex justify-between">
                     <span className="text-slate-500">ผู้ยื่น:</span>
-                    <span className="text-slate-700">{sub.submittedByName}{sub.sameDayGuidance && <span className="block text-xs text-sky-700">ยื่นหนังสือ + แนะแนว</span>}</span>
+                    <span className="text-slate-700">{sub.submittedByName}{sub.appointmentDate && <span className="block text-xs text-sky-700">นัด {sub.appointmentDate} เวลา {sub.appointmentStartTime}–{sub.appointmentEndTime}</span>}{sub.sameDayGuidance && <span className="block text-xs text-sky-700">ยื่นหนังสือ + แนะแนว</span>}</span>
                   </div>
                 </div>
 

@@ -1,3 +1,4 @@
+import { saveSubmissionAppointment } from '../../firebase/submissionAppointmentService';
 import { SchoolPicker } from '../common/SchoolPicker';
 import React, { useState, useEffect } from 'react';
 import { X, Save, Calendar, Clock, FileText, CalendarCheck, AlertCircle } from 'lucide-react';
@@ -54,6 +55,10 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [appointmentDate, setAppointmentDate] = useState('');
+  const [appointmentStart, setAppointmentStart] = useState('');
+  const [appointmentEnd, setAppointmentEnd] = useState('');
+  const [appointmentNote, setAppointmentNote] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   // Sync when preselectedSchool changes
@@ -119,7 +124,10 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      await onSave(data);
+      if (status === 'APPOINTED') {
+        if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
+        await saveSubmissionAppointment(data, { date: appointmentDate, startTime: appointmentStart, endTime: appointmentEnd, note: appointmentNote }, currentUser);
+      } else { await onSave(data); }
       onClose();
     } catch (err: any) {
       setError(err.message || 'บันทึกการยื่นหนังสือไม่สำเร็จ');
@@ -364,6 +372,17 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
             </div>
           </div>
 
+          {status === 'APPOINTED' && <section className="p-4 rounded-xl border border-sky-200 bg-sky-50 space-y-3">
+            <h3 className="text-sm font-semibold text-sky-800">วันและเวลานัดแนะแนว</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <label className="text-xs font-semibold">วันที่นัด *<input aria-label="วันที่นัดแนะแนว" type="date" required value={appointmentDate} onChange={e => setAppointmentDate(e.target.value)} className="mt-1 w-full p-2 rounded-lg border border-slate-300" /></label>
+              <label className="text-xs font-semibold">เวลาเริ่ม *<input aria-label="เวลาเริ่มนัดแนะแนว" type="time" required value={appointmentStart} onChange={e => setAppointmentStart(e.target.value)} className="mt-1 w-full p-2 rounded-lg border border-slate-300" /></label>
+              <label className="text-xs font-semibold">เวลาสิ้นสุด *<input aria-label="เวลาสิ้นสุดนัดแนะแนว" type="time" required value={appointmentEnd} onChange={e => setAppointmentEnd(e.target.value)} className="mt-1 w-full p-2 rounded-lg border border-slate-300" /></label>
+            </div>
+            <label className="block text-xs font-semibold">รายละเอียดนัดหมาย / สถานที่<textarea aria-label="รายละเอียดนัดหมาย" value={appointmentNote} onChange={e => setAppointmentNote(e.target.value)} placeholder="เช่น ห้องประชุม แนะแนวนักเรียน ม.3" className="mt-1 w-full p-2 rounded-lg border border-slate-300" /></label>
+            <p className="text-xs text-slate-600">บันทึกการยื่นหนังสือและนัดหมายลงปฏิทินพร้อมกัน ผู้รับผิดชอบ: {currentUser?.displayName}</p>
+          </section>}
+
           {/* Photo Evidence Upload (Camera & Gallery) */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
@@ -392,7 +411,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              <span>{isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการยื่นหนังสือ'}</span>
+              <span>{isSubmitting ? 'กำลังบันทึก...' : status === 'APPOINTED' ? 'บันทึกการยื่นหนังสือและนัดหมาย' : 'บันทึกการยื่นหนังสือ'}</span>
             </button>
           </div>
         </form>

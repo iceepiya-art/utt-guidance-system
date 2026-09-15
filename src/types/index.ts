@@ -76,6 +76,10 @@ export type PostSubmissionStatus =
   | 'NOT_READY';           // โรงเรียนยังไม่พร้อม
 
 export interface DocumentSubmission {
+  appointmentId?: string;
+  appointmentDate?: string;
+  appointmentStartTime?: string;
+  appointmentEndTime?: string;
   sameDayGuidance?: boolean;
   fieldTripId?: string;
   id: string;
@@ -119,6 +123,7 @@ export interface ReminderConfig {
 }
 
 export interface Appointment {
+  submissionId?: string;
   id: string;
   schoolId: string;
   schoolName: string;
