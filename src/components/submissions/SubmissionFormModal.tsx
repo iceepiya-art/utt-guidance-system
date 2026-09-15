@@ -1,5 +1,3 @@
-import { FieldTripFormModal } from '../trips/FieldTripFormModal';
-import { saveSubmissionWithGuidance } from '../../firebase/submissionGuidanceService';
 import { SchoolPicker } from '../common/SchoolPicker';
 import React, { useState, useEffect } from 'react';
 import { X, Save, Calendar, Clock, FileText, CalendarCheck, AlertCircle } from 'lucide-react';
@@ -56,8 +54,6 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sameDayGuidance, setSameDayGuidance] = useState(false);
-  const [guidanceDraft, setGuidanceDraft] = useState<Omit<DocumentSubmission, 'id'> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Sync when preselectedSchool changes
@@ -123,7 +119,6 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      if (sameDayGuidance) { setGuidanceDraft(data); return; }
       await onSave(data);
       onClose();
     } catch (err: any) {
@@ -184,11 +179,6 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   };
 
   if (!isOpen) return null;
-  if (guidanceDraft) return <FieldTripFormModal isOpen onClose={() => setGuidanceDraft(null)} schools={schools} prefilledSubmission={guidanceDraft} onSave={async trip => {
-    if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
-    await saveSubmissionWithGuidance(guidanceDraft, trip, currentUser);
-    setGuidanceDraft(null); onClose();
-  }} />;
 
 
   return (
@@ -222,12 +212,6 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
             </div>
           )}
 
-          <fieldset className="rounded-xl border border-sky-200 bg-sky-50 p-3 space-y-2">
-            <legend className="text-sm font-semibold">ลักษณะการไปโรงเรียน</legend>
-            <label className="flex items-center gap-2 text-sm"><input type="radio" name="submission-mode" checked={!sameDayGuidance} onChange={() => setSameDayGuidance(false)} />ยื่นหนังสือ</label>
-            <label className="flex items-center gap-2 text-sm"><input type="radio" name="submission-mode" checked={sameDayGuidance} onChange={() => setSameDayGuidance(true)} />ยื่นหนังสือ + แนะแนว</label>
-            {sameDayGuidance && <p className="text-xs text-slate-600">ขั้นถัดไปกรอกผลแนะแนว ระบบจะบันทึกทั้งสองรายการพร้อมกัน ไม่ต้องสร้างนัดหมาย</p>}
-          </fieldset>
           {/* Quick Schedule Prompt Callout */}
           <div className="p-3.5 bg-gradient-to-r from-[#E3F2FD] to-[#EAF6FD] border border-[#1976D2]/30 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -242,7 +226,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               type="button"
               onClick={handleInstantSchedule}
               id="btn-instant-schedule"
-              disabled={sameDayGuidance || isSubmitting}
+              disabled={isSubmitting}
               className="px-4 py-2 bg-[#1976D2] hover:bg-[#075A9C] text-white text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-1.5 shrink-0 transition-colors"
             >
               <CalendarCheck className="w-4 h-4" />
@@ -433,7 +417,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              <span>{isSubmitting ? 'กำลังบันทึก...' : sameDayGuidance ? 'ถัดไป: บันทึกผลแนะแนว' : 'บันทึกการยื่นหนังสือ'}</span>
+              <span>{isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการยื่นหนังสือ'}</span>
             </button>
           </div>
         </form>
