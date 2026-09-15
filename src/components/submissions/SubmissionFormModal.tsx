@@ -199,7 +199,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
           <div>
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <FileText className="w-5 h-5 text-[#087CC1]" />
-              <span>บันทึกการยื่นหนังสือประสานงาน</span>
+              <span>ยื่นหนังสือ</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               บันทึกหลักฐานและข้อมูลติดต่อครูแนะแนว (อัปเดตเข้าโปรไฟล์โรงเรียนอัตโนมัติ)
@@ -224,7 +224,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
 
           <fieldset className="rounded-xl border border-sky-200 bg-sky-50 p-3 space-y-2">
             <legend className="text-sm font-semibold">ลักษณะการไปโรงเรียน</legend>
-            <label className="flex items-center gap-2 text-sm"><input type="radio" name="submission-mode" checked={!sameDayGuidance} onChange={() => setSameDayGuidance(false)} />ยื่นหนังสืออย่างเดียว</label>
+            <label className="flex items-center gap-2 text-sm"><input type="radio" name="submission-mode" checked={!sameDayGuidance} onChange={() => setSameDayGuidance(false)} />ยื่นหนังสือ</label>
             <label className="flex items-center gap-2 text-sm"><input type="radio" name="submission-mode" checked={sameDayGuidance} onChange={() => setSameDayGuidance(true)} />ยื่นหนังสือ + แนะแนว</label>
             {sameDayGuidance && <p className="text-xs text-slate-600">ขั้นถัดไปกรอกผลแนะแนว ระบบจะบันทึกทั้งสองรายการพร้อมกัน ไม่ต้องสร้างนัดหมาย</p>}
           </fieldset>
