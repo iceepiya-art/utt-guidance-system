@@ -212,28 +212,6 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
             </div>
           )}
 
-          {/* Quick Schedule Prompt Callout */}
-          <div className="p-3.5 bg-gradient-to-r from-[#E3F2FD] to-[#EAF6FD] border border-[#1976D2]/30 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div className="text-xs font-bold text-[#075A9C]">
-                โรงเรียนพร้อมนัดหมายทันทีหรือไม่?
-              </div>
-              <div className="text-[11px] text-slate-600">
-                หากโรงเรียนแจ้งกำหนดการแล้ว สามารถกดตรวจสอบคิวว่างและลงนัดหมายได้ทันที
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleInstantSchedule}
-              id="btn-instant-schedule"
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-[#1976D2] hover:bg-[#075A9C] text-white text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-1.5 shrink-0 transition-colors"
-            >
-              <CalendarCheck className="w-4 h-4" />
-              <span>ดูคิวว่าง / นัดหมายเลย</span>
-            </button>
-          </div>
-
           {/* School Picker & Document Number */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
