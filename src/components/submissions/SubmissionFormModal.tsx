@@ -346,11 +346,8 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium"
               >
                 <option value="DOCUMENT_SUBMITTED">ยื่นหนังสือแล้ว</option>
+                <option value="APPOINTED">นัดหมาย</option>
                 <option value="WAITING_CONTACT">รอติดต่อกลับ</option>
-                <option value="CALL_LATER">ขอให้ติดต่อภายหลัง</option>
-                <option value="WAITING_APPOINTMENT">รอนัดหมาย</option>
-                <option value="APPOINTED">นัดหมายแล้ว</option>
-                <option value="NOT_READY">โรงเรียนยังไม่พร้อม</option>
               </select>
             </div>
             <div>
