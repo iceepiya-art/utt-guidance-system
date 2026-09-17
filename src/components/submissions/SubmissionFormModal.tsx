@@ -54,7 +54,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [preferredContactTime, setPreferredContactTime] = useState<string>('');
 
   const [status, setStatus] = useState<PostSubmissionStatus>('DOCUMENT_SUBMITTED');
-  const [note, setNote] = useState<string>('');
+  const [note, setNote] = useState<string>('รอติดต่อกลับ');
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,8 +80,8 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     setTeamId(data.teamId); setSubmitterNames(data.submittedByNames?.length ? data.submittedByNames : [data.submittedByName]);
     setTeacherName(data.teacherName || ''); setTeacherPhone(data.teacherPhone || '');
     setTeacherPosition(data.teacherPosition || ''); setTeacherLine(data.teacherLine || '');
-    setPreferredContactTime(data.preferredContactTime || ''); setStatus(data.status);
-    setNote(data.note || ''); setPhotos(data.photos || []);
+    setPreferredContactTime(data.preferredContactTime || ''); setStatus(data.status === 'APPOINTED' ? 'APPOINTED' : 'DOCUMENT_SUBMITTED');
+    setNote(data.note || (data.status === 'APPOINTED' ? '' : 'รอติดต่อกลับ')); setPhotos(data.photos || []);
     setAppointmentDate(data.appointmentDate || ''); setAppointmentStart(data.appointmentStartTime || '');
     setAppointmentEnd(data.appointmentEndTime || ''); setAppointmentNote(data.appointmentNote || '');
   }, [submissionToEdit]);
@@ -385,13 +385,11 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               <select
                 value={status}
                 disabled={!!submissionToEdit?.appointmentId}
-                onChange={(e) => setStatus(e.target.value as PostSubmissionStatus)}
+                onChange={(e) => { const next = e.target.value as PostSubmissionStatus; setStatus(next); if (next === 'DOCUMENT_SUBMITTED' && !note.trim()) setNote('รอติดต่อกลับ'); else if (next === 'APPOINTED' && note === 'รอติดต่อกลับ') setNote(''); }}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium"
               >
-                {!['DOCUMENT_SUBMITTED', 'APPOINTED', 'WAITING_CONTACT'].includes(status) && <option value={status}>สถานะเดิม ({status})</option>}
                 <option value="DOCUMENT_SUBMITTED">ยื่นหนังสือแล้ว</option>
                 <option value="APPOINTED">นัดหมาย</option>
-                <option value="WAITING_CONTACT">รอติดต่อกลับ</option>
               </select>
             </div>
             <div>
