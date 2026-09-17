@@ -78,6 +78,7 @@ export type PostSubmissionStatus =
 export interface DocumentSubmission {
   appointmentId?: string;
   appointmentDate?: string;
+  appointmentNote?: string;
   appointmentStartTime?: string;
   appointmentEndTime?: string;
   sameDayGuidance?: boolean;

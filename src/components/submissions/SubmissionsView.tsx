@@ -39,6 +39,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
   const { currentUser, canEdit } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [teamFilter, setTeamFilter] = useState<'all' | TeamId>('all');
+  const [submissionToEdit, setSubmissionToEdit] = useState<DocumentSubmission | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedPhotoModal, setSelectedPhotoModal] = useState<string | null>(null);
 
@@ -57,6 +58,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
   }, [submissions, searchTerm, teamFilter]);
 
   const handleSave = async (data: Omit<DocumentSubmission, 'id'>) => {
+    if (submissionToEdit) { await updateDocumentSubmission(submissionToEdit.id, data, currentUser); return submissionToEdit.id; }
     return await createDocumentSubmission(data, currentUser);
   };
 
@@ -93,7 +95,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
 
         {canEdit && (
           <button
-            onClick={() => setIsFormOpen(true)}
+            onClick={() => { setSubmissionToEdit(null); setIsFormOpen(true); }}
             id="btn-add-submission"
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
           >
@@ -159,7 +161,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
               <th className="py-3 px-3.5">เบอร์โทร</th>
               <th className="py-3 px-3.5 text-center">หลักฐาน</th>
               <th className="py-3 px-3.5 text-center">สถานะ</th>
-              <th className="py-3 px-3.5">หมายเหตุ</th>
+              <th className="py-3 px-3.5">หมายเหตุ</th>{canEdit && <th className="py-3 px-3.5">จัดการ</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -235,6 +237,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
                     <td className="py-3 px-3.5 text-slate-500 max-w-[150px] truncate" title={sub.note}>
                       {sub.note || '-'}
                     </td>
+                    {canEdit && <td className="py-3 px-3.5"><button type="button" onClick={() => { setSubmissionToEdit(sub); setIsFormOpen(true); }} className="text-sky-700 font-semibold">แก้ไข</button></td>}
                   </tr>
                 );
               })
@@ -278,6 +281,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
                   </div>
                 </div>
 
+                {canEdit && <button type="button" onClick={() => { setSubmissionToEdit(sub); setIsFormOpen(true); }} className="text-sm font-semibold text-sky-700">แก้ไข</button>}
                 {/* Teacher contact */}
                 <div className="p-2.5 bg-slate-50 rounded-xl text-xs space-y-1">
                   <div className="flex justify-between">
@@ -340,6 +344,8 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
 
       {/* Form Modal */}
       <SubmissionFormModal
+        key={isFormOpen ? submissionToEdit?.id || "new" : "closed"}
+        submissionToEdit={submissionToEdit}
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         schools={schools}

@@ -12,6 +12,7 @@ interface SubmissionFormModalProps {
   onClose: () => void;
   schools: School[];
   preselectedSchool?: School | null;
+  submissionToEdit?: DocumentSubmission | null;
   onSave: (data: Omit<DocumentSubmission, 'id'>) => Promise<string>;
   onOpenInstantAppointment: (submissionData: {
     schoolId: string;
@@ -28,6 +29,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   onClose,
   schools,
   preselectedSchool,
+  submissionToEdit,
   onSave,
   onOpenInstantAppointment,
 }) => {
@@ -60,6 +62,20 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [appointmentEnd, setAppointmentEnd] = useState('');
   const [appointmentNote, setAppointmentNote] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!submissionToEdit) return;
+    const data = submissionToEdit;
+    setSelectedSchoolId(data.schoolId); setDocumentNumber(data.documentNumber);
+    setSubmissionDate(data.submissionDate); setSubmissionTime(data.submissionTime || '');
+    setTeamId(data.teamId); setSubmitterNames(data.submittedByNames?.length ? data.submittedByNames : [data.submittedByName]);
+    setTeacherName(data.teacherName || ''); setTeacherPhone(data.teacherPhone || '');
+    setTeacherPosition(data.teacherPosition || ''); setTeacherLine(data.teacherLine || '');
+    setPreferredContactTime(data.preferredContactTime || ''); setStatus(data.status);
+    setNote(data.note || ''); setPhotos(data.photos || []);
+    setAppointmentDate(data.appointmentDate || ''); setAppointmentStart(data.appointmentStartTime || '');
+    setAppointmentEnd(data.appointmentEndTime || ''); setAppointmentNote(data.appointmentNote || '');
+  }, [submissionToEdit]);
 
   // Sync when preselectedSchool changes
   useEffect(() => {
@@ -110,7 +126,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         submissionDate,
         submissionTime,
         teamId,
-        submittedById: currentUser?.id || 'usr_staff',
+        submittedById: submissionToEdit?.submittedById || currentUser?.id || 'usr_staff',
         submittedByName,
         submittedByNames,
         teacherName,
@@ -121,12 +137,12 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         status,
         note,
         photos,
-        createdAt: new Date().toISOString(),
+        createdAt: submissionToEdit?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       if (status === 'APPOINTED') {
         if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
-        await saveSubmissionAppointment(data, { date: appointmentDate, startTime: appointmentStart, endTime: appointmentEnd, note: appointmentNote }, currentUser);
+        await saveSubmissionAppointment(data, { date: appointmentDate, startTime: appointmentStart, endTime: appointmentEnd, note: appointmentNote }, currentUser, submissionToEdit || undefined);
       } else { await onSave(data); }
       onClose();
     } catch (err: any) {
@@ -155,7 +171,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         submissionDate,
         submissionTime,
         teamId,
-        submittedById: currentUser?.id || 'usr_staff',
+        submittedById: submissionToEdit?.submittedById || currentUser?.id || 'usr_staff',
         submittedByName,
         submittedByNames,
         teacherName,
@@ -166,7 +182,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         status: 'APPOINTED',
         note,
         photos,
-        createdAt: new Date().toISOString(),
+        createdAt: submissionToEdit?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
     } catch (e) {
@@ -197,7 +213,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
           <div>
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <FileText className="w-5 h-5 text-[#087CC1]" />
-              <span>ยื่นหนังสือ</span>
+              <span>{submissionToEdit ? 'แก้ไขการยื่นหนังสือ' : 'ยื่นหนังสือ'}</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               บันทึกหลักฐานและข้อมูลติดต่อครูแนะแนว (อัปเดตเข้าโปรไฟล์โรงเรียนอัตโนมัติ)
@@ -226,7 +242,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 โรงเรียนเป้าหมาย <span className="text-red-500">*</span>
               </label>
-              <SchoolPicker schools={schools} value={selectedSchoolId} onChange={handleSchoolSelect} disabled={isSubmitting}/>
+              <SchoolPicker schools={schools} value={selectedSchoolId} onChange={handleSchoolSelect} disabled={isSubmitting || !!submissionToEdit}/>
             </div>
 
             <div>
@@ -350,9 +366,11 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               </label>
               <select
                 value={status}
+                disabled={!!submissionToEdit?.appointmentId}
                 onChange={(e) => setStatus(e.target.value as PostSubmissionStatus)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium"
               >
+                {!['DOCUMENT_SUBMITTED', 'APPOINTED', 'WAITING_CONTACT'].includes(status) && <option value={status}>สถานะเดิม ({status})</option>}
                 <option value="DOCUMENT_SUBMITTED">ยื่นหนังสือแล้ว</option>
                 <option value="APPOINTED">นัดหมาย</option>
                 <option value="WAITING_CONTACT">รอติดต่อกลับ</option>

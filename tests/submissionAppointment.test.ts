@@ -1,8 +1,8 @@
 import { expect, it, vi, beforeEach } from 'vitest';
-const mocks = vi.hoisted(() => ({ set: vi.fn(), update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined), conflict: vi.fn(), sequence: 0 }));
+const mocks = vi.hoisted(() => ({ set: vi.fn(), update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined), conflict: vi.fn(), getDoc: vi.fn(), sequence: 0 }));
 vi.mock('../src/firebase/firebase', () => ({ db: {} }));
 vi.mock('../src/firebase/dbService', () => ({ checkAppointmentConflict: mocks.conflict }));
-vi.mock('firebase/firestore', () => ({ collection: (_db: unknown, path: string) => path, doc: (_parent: unknown, ...parts: string[]) => ({ id: parts.at(-1) || `auto-${++mocks.sequence}` }), writeBatch: () => mocks }));
+vi.mock('firebase/firestore', () => ({ getDoc: mocks.getDoc, collection: (_db: unknown, path: string) => path, doc: (_parent: unknown, ...parts: string[]) => ({ id: parts.at(-1) || `auto-${++mocks.sequence}` }), writeBatch: () => mocks }));
 import { saveSubmissionAppointment } from '../src/firebase/submissionAppointmentService';
 import type { DocumentSubmission, UserProfile } from '../src/types';
 const submission = { schoolId: 'school', schoolName: 'Test', teacherName: '', teacherPhone: '', submittedByName: 'A', teamId: 'team1' } as DocumentSubmission;
@@ -22,4 +22,14 @@ it('rejects invalid time and conflicts without writes', async () => {
  mocks.conflict.mockResolvedValue({hasConflict:true,reason:'Busy'});
  await expect(saveSubmissionAppointment(submission, schedule, user)).rejects.toThrow('Busy');
  expect(mocks.commit).not.toHaveBeenCalled();
+});
+
+it('edits the existing submission and appointment without duplicating either', async () => {
+ mocks.getDoc.mockResolvedValue({ data: () => ({ counselorId: 'original', counselorName: 'Original', createdAt: 'old', reminders: [] }) });
+ await saveSubmissionAppointment(submission, schedule, user, { ...submission, id: 'submission-existing', appointmentId: 'appointment-existing', createdAt: 'original-date' });
+ expect(mocks.set.mock.calls[0][0].id).toBe('submission-existing');
+ expect(mocks.set.mock.calls[1][0].id).toBe('appointment-existing');
+ expect(mocks.set.mock.calls[0][1].createdAt).toBe('original-date');
+ expect(mocks.set.mock.calls[1][1].counselorId).toBe('original');
+ expect(mocks.conflict.mock.calls[0].at(-1)).toBe('appointment-existing');
 });
