@@ -61,15 +61,20 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [appointmentDate, setAppointmentDate] = useState('');
   const [appointmentStart, setAppointmentStart] = useState('');
   const [appointmentEnd, setAppointmentEnd] = useState('');
-  const [vehicleId, setVehicleId] = useState('');
-  const [vehicleName, setVehicleName] = useState('');
+  const defaultVehicle = (team: TeamId) => team === 'team2' ? { id: 'mitsu-6738', name: 'MITSU บน 6738' } : { id: 'vigo-9914', name: 'VIGO กข 9914' };
+  const [vehicleId, setVehicleId] = useState(defaultVehicle(teamId).id);
+  const [vehicleName, setVehicleName] = useState(defaultVehicle(teamId).name);
+  const selectTeam = (nextTeam: TeamId) => {
+    setTeamId(nextTeam);
+    if (nextTeam !== teamId) { const vehicle = defaultVehicle(nextTeam); setVehicleId(vehicle.id); setVehicleName(vehicle.name); }
+  };
   const [appointmentNote, setAppointmentNote] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!submissionToEdit) return;
     const data = submissionToEdit;
-    setVehicleId(data.vehicleId || ''); setVehicleName(data.vehicleName || '');
+    setVehicleId(data.vehicleId || defaultVehicle(data.teamId).id); setVehicleName(data.vehicleName || defaultVehicle(data.teamId).name);
     setSelectedSchoolId(data.schoolId); setDocumentNumber(data.documentNumber);
     setSubmissionDate(data.submissionDate); setSubmissionTime(data.submissionTime || '');
     setTeamId(data.teamId); setSubmitterNames(data.submittedByNames?.length ? data.submittedByNames : [data.submittedByName]);
@@ -85,7 +90,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   useEffect(() => {
     if (preselectedSchool) {
       setSelectedSchoolId(preselectedSchool.id);
-      setTeamId(preselectedSchool.teamId);
+      selectTeam(preselectedSchool.teamId);
       setTeacherName(preselectedSchool.teacherName || '');
       setTeacherPosition(preselectedSchool.teacherPosition || '');
       setTeacherPhone(preselectedSchool.teacherPhone || '');
@@ -99,7 +104,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     if (!schoolId) { setTeacherName(''); setTeacherPhone(''); }
     const target = schools.find((s) => s.id === schoolId);
     if (target) {
-      setTeamId(target.teamId);
+      selectTeam(target.teamId);
       setTeacherName(target.teacherName || '');
       setTeacherPosition(target.teacherPosition || '');
       setTeacherPhone(target.teacherPhone || '');
@@ -291,7 +296,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               </label>
               <select
                 value={teamId}
-                onChange={(e) => setTeamId(e.target.value as TeamId)}
+                onChange={(e) => selectTeam(e.target.value as TeamId)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
               >
                 <option value="team1">อุตรดิตถ์</option>
