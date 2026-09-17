@@ -1,3 +1,6 @@
+import { Pencil, Trash2, X } from 'lucide-react';
+import { deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../../firebase/firebase';
 import React, { useState, useMemo } from 'react';
 import {
   FileText,
@@ -36,7 +39,16 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
   schools,
   onOpenInstantAppointment,
 }) => {
-  const { currentUser, canEdit } = useAuth();
+  const { currentUser, canEdit, isAdmin } = useAuth();
+  const [detail, setDetail] = useState<DocumentSubmission | null>(null);
+  const [deleting, setDeleting] = useState<DocumentSubmission | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const actions = (sub: DocumentSubmission) => <div className="flex items-center gap-1">
+    <button type="button" aria-label={`ดูรายละเอียด ${sub.schoolName}`} title="ดูรายละเอียด" onClick={() => setDetail(sub)} className="p-2 text-slate-500 hover:bg-sky-50 rounded-lg"><Eye size={16}/></button>
+    {canEdit && <button type="button" aria-label={`แก้ไข ${sub.schoolName}`} title="แก้ไข" onClick={() => { setSubmissionToEdit(sub); setIsFormOpen(true); }} className="p-2 text-slate-500 hover:bg-sky-50 rounded-lg"><Pencil size={16}/></button>}
+    {isAdmin && <button type="button" aria-label={`ลบ ${sub.schoolName}`} title="ลบ" onClick={() => { setDeleteError(''); setDeleting(sub); }} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16}/></button>}
+  </div>;
   const [searchTerm, setSearchTerm] = useState('');
   const [teamFilter, setTeamFilter] = useState<'all' | TeamId>('all');
   const [submissionToEdit, setSubmissionToEdit] = useState<DocumentSubmission | null>(null);
@@ -161,7 +173,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
               <th className="py-3 px-3.5">เบอร์โทร</th>
               <th className="py-3 px-3.5 text-center">หลักฐาน</th>
               <th className="py-3 px-3.5 text-center">สถานะ</th>
-              <th className="py-3 px-3.5">หมายเหตุ</th>{canEdit && <th className="py-3 px-3.5">จัดการ</th>}
+              <th className="py-3 px-3.5">หมายเหตุ</th><th className="py-3 px-3.5">จัดการ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -237,7 +249,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
                     <td className="py-3 px-3.5 text-slate-500 max-w-[150px] truncate" title={sub.note}>
                       {sub.note || '-'}
                     </td>
-                    {canEdit && <td className="py-3 px-3.5"><button type="button" onClick={() => { setSubmissionToEdit(sub); setIsFormOpen(true); }} className="text-sky-700 font-semibold">แก้ไข</button></td>}
+                    <td className="py-3 px-3.5">{actions(sub)}</td>
                   </tr>
                 );
               })
@@ -281,7 +293,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
                   </div>
                 </div>
 
-                {canEdit && <button type="button" onClick={() => { setSubmissionToEdit(sub); setIsFormOpen(true); }} className="text-sm font-semibold text-sky-700">แก้ไข</button>}
+                {actions(sub)}
                 {/* Teacher contact */}
                 <div className="p-2.5 bg-slate-50 rounded-xl text-xs space-y-1">
                   <div className="flex justify-between">
@@ -342,6 +354,27 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
         </div>
       )}
 
+      {detail && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"><div role="dialog" aria-modal="true" aria-label="รายละเอียดการยื่นหนังสือ" className="bg-white rounded-2xl p-5 max-w-xl w-full max-h-[90vh] overflow-y-auto space-y-4">
+        <div className="flex justify-between items-center"><h2 className="font-bold">รายละเอียดการยื่นหนังสือ</h2><button aria-label="ปิดรายละเอียด" onClick={() => setDetail(null)}><X size={20}/></button></div>
+        <h3 className="font-semibold text-sky-800">{detail.schoolName}</h3>
+        <dl className="space-y-2 text-sm">
+          <div><dt className="text-slate-500">เลขที่หนังสือ</dt><dd>{detail.documentNumber || '-'}</dd></div>
+          <div><dt className="text-slate-500">วันที่และเวลายื่น</dt><dd>{formatThaiShortDate(detail.submissionDate)} {detail.submissionTime}</dd></div>
+          <div><dt className="text-slate-500">สาย</dt><dd>{detail.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'}</dd></div>
+          <div><dt className="text-slate-500">ผู้ยื่น</dt><dd>{detail.submittedByNames?.join(', ') || detail.submittedByName}</dd></div>
+          <div><dt className="text-slate-500">ครูแนะแนว / เบอร์โทร</dt><dd>{detail.teacherName || '-'} {detail.teacherPhone}</dd></div>
+          <div><dt className="text-slate-500">สถานะ</dt><dd>{getStatusBadge(detail.status)}</dd></div>
+          {detail.appointmentDate && <div><dt className="text-slate-500">นัดแนะแนว</dt><dd>{formatThaiShortDate(detail.appointmentDate)} {detail.appointmentStartTime}–{detail.appointmentEndTime}<p>{detail.appointmentNote}</p></dd></div>}
+          <div><dt className="text-slate-500">หมายเหตุ</dt><dd className="whitespace-pre-wrap">{detail.note || '-'}</dd></div>
+        </dl>
+        <div className="grid grid-cols-2 gap-2">{detail.photos?.map((photo, i) => <a key={photo.id || i} href={photo.url} target="_blank" rel="noreferrer"><img src={photo.url} alt={`หลักฐาน ${i + 1}`} className="rounded-lg w-full"/></a>)}</div>
+      </div></div>}
+      {deleting && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"><div role="alertdialog" aria-modal="true" aria-label="ยืนยันลบการยื่นหนังสือ" className="bg-white rounded-2xl p-5 max-w-md w-full space-y-4">
+        <h2 className="font-bold">ลบรายการยื่นหนังสือ?</h2><p className="text-sm">{deleting.schoolName} — {deleting.documentNumber}</p>
+        {deleting.appointmentId || deleting.fieldTripId ? <p className="text-sm text-amber-700">รายการนี้เชื่อมกับนัดหมายหรือผลแนะแนว กรุณาจัดการรายการที่เชื่อมก่อน จึงจะลบได้</p> : <p className="text-sm text-slate-600">จะลบเฉพาะประวัติการยื่นหนังสือนี้ ข้อมูลโรงเรียนและนัดหมายอื่นจะยังอยู่</p>}
+        {deleteError && <p role="alert" className="text-sm text-red-600">{deleteError}</p>}
+        <div className="flex justify-end gap-3"><button disabled={busy} onClick={() => setDeleting(null)}>ยกเลิก</button><button disabled={busy || !!deleting.appointmentId || !!deleting.fieldTripId} className="px-4 py-2 rounded-lg bg-red-600 text-white disabled:opacity-40" onClick={async () => { if (!isAdmin) return; setBusy(true); try { await deleteDoc(doc(db, 'documentSubmissions', deleting.id)); setDeleting(null); } catch { setDeleteError('ลบไม่สำเร็จ กรุณาลองอีกครั้ง'); } finally { setBusy(false); } }}>{busy ? 'กำลังลบ...' : 'ยืนยันลบ'}</button></div>
+      </div></div>}
       {/* Form Modal */}
       <SubmissionFormModal
         key={isFormOpen ? submissionToEdit?.id || "new" : "closed"}
