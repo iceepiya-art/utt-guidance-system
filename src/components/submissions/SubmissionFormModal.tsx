@@ -1,3 +1,4 @@
+import { TripVehiclePicker } from '../common/TripVehiclePicker';
 import { saveSubmissionAppointment } from '../../firebase/submissionAppointmentService';
 import { SchoolPicker } from '../common/SchoolPicker';
 import React, { useState, useEffect } from 'react';
@@ -60,12 +61,15 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [appointmentDate, setAppointmentDate] = useState('');
   const [appointmentStart, setAppointmentStart] = useState('');
   const [appointmentEnd, setAppointmentEnd] = useState('');
+  const [vehicleId, setVehicleId] = useState('');
+  const [vehicleName, setVehicleName] = useState('');
   const [appointmentNote, setAppointmentNote] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!submissionToEdit) return;
     const data = submissionToEdit;
+    setVehicleId(data.vehicleId || ''); setVehicleName(data.vehicleName || '');
     setSelectedSchoolId(data.schoolId); setDocumentNumber(data.documentNumber);
     setSubmissionDate(data.submissionDate); setSubmissionTime(data.submissionTime || '');
     setTeamId(data.teamId); setSubmitterNames(data.submittedByNames?.length ? data.submittedByNames : [data.submittedByName]);
@@ -123,6 +127,8 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         schoolId: targetSchool.id,
         schoolName: targetSchool.schoolName,
         documentNumber,
+        vehicleId,
+        vehicleName,
         submissionDate,
         submissionTime,
         teamId,
@@ -168,6 +174,8 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         schoolId: targetSchool.id,
         schoolName: targetSchool.schoolName,
         documentNumber,
+        vehicleId,
+        vehicleName,
         submissionDate,
         submissionTime,
         teamId,
@@ -305,6 +313,11 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               <button type="button" disabled={isSubmitting} onClick={() => setSubmitterNames(names => [...names, ''])} className="text-sm font-semibold text-sky-700">+ เพิ่มอาจารย์ผู้ยื่น</button>
               <p className="text-xs text-slate-500">เลือกชื่อจากระบบ หรือพิมพ์ชื่อเพิ่มเติมในช่องชื่อ รายชื่อทุกคนจะแสดงในรายงานสรุป</p>
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-xs font-semibold text-slate-700">ยานพาหนะที่ใช้ยื่นหนังสือ</label>
+            <TripVehiclePicker value={vehicleId} name={vehicleName} onChange={(id, name) => { setVehicleId(id); setVehicleName(name); }} disabled={isSubmitting} />
           </div>
 
           {/* Guidance Teacher Information (Auto-updates School!) */}

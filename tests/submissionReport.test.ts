@@ -6,12 +6,14 @@ vi.mock('xlsx', async importOriginal => ({ ...await importOriginal<typeof import
 it('exports every submitter and retains names on legacy submissions', () => {
   const base = { submissionDate: '2026-09-14', submissionTime: '10:00', schoolName: 'โรงเรียนทดสอบ', teamId: 'team1', documentNumber: '123', status: 'DOCUMENT_SUBMITTED' };
   exportMonthlyReportToExcel([], [], [
-    { ...base, submittedByName: 'old display', submittedByNames: ['อาจารย์ ก', 'อาจารย์ ข'] },
+    { ...base, vehicleId: 'mitsu-6738', vehicleName: 'MITSU บน 6738', submittedByName: 'old display', submittedByNames: ['อาจารย์ ก', 'อาจารย์ ข'] },
     { ...base, submittedByName: 'อาจารย์ ค' },
   ] as DocumentSubmission[], 'กันยายน 2569');
   const workbook = vi.mocked(XLSX.writeFile).mock.calls[0][0];
   const rows = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets['สรุปการยื่นหนังสือ'], { header: 1 });
   expect(rows[1][5]).toBe('อาจารย์ ก, อาจารย์ ข');
   expect(rows[2][5]).toBe('อาจารย์ ค');
+  expect(rows[1][9]).toBe('MITSU บน 6738');
+  expect(rows[2][9]).toBe('ไม่ระบุ');
   expect(rows).toHaveLength(3);
 });

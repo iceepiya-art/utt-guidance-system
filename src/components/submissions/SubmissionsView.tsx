@@ -361,6 +361,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
           <div><dt className="text-slate-500">เลขที่หนังสือ</dt><dd>{detail.documentNumber || '-'}</dd></div>
           <div><dt className="text-slate-500">วันที่และเวลายื่น</dt><dd>{formatThaiShortDate(detail.submissionDate)} {detail.submissionTime}</dd></div>
           <div><dt className="text-slate-500">สาย</dt><dd>{detail.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'}</dd></div>
+          <div><dt className="text-slate-500">ยานพาหนะ</dt><dd>{detail.vehicleName || 'ไม่ระบุ'}</dd></div>
           <div><dt className="text-slate-500">ผู้ยื่น</dt><dd>{detail.submittedByNames?.join(', ') || detail.submittedByName}</dd></div>
           <div><dt className="text-slate-500">ครูแนะแนว / เบอร์โทร</dt><dd>{detail.teacherName || '-'} {detail.teacherPhone}</dd></div>
           <div><dt className="text-slate-500">สถานะ</dt><dd>{getStatusBadge(detail.status)}</dd></div>

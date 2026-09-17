@@ -29,6 +29,7 @@ export function TripVehiclePicker({ value, name, onChange, disabled = false }: {
   };
   return <div className="space-y-2">
     <select aria-label="ยานพาหนะ" value={value} disabled={disabled || saving} onChange={e => { const vehicle = vehicles.find(v => v.id === e.target.value); if(vehicle) onChange(vehicle.id, vehicle.vehicleName); }} className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs">
+      {!value && <option value="">— เลือกยานพาหนะ —</option>}
       {value && !vehicles.some(v => v.id === value) && <option value={value}>{name}</option>}
       {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicleName}</option>)}
     </select>

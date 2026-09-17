@@ -76,6 +76,8 @@ export type PostSubmissionStatus =
   | 'NOT_READY';           // โรงเรียนยังไม่พร้อม
 
 export interface DocumentSubmission {
+  vehicleId?: string;
+  vehicleName?: string;
   appointmentId?: string;
   appointmentDate?: string;
   appointmentNote?: string;

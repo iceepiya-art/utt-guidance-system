@@ -131,14 +131,14 @@ export function exportMonthlyReportToExcel(
   XLSX.utils.book_append_sheet(workbook, worksheet, safeSheetName);
   if (submissionsParam) {
     const submissionRows = [
-      ['วันที่ยื่น', 'เวลา', 'โรงเรียน', 'สายงาน', 'เลขที่หนังสือ', 'อาจารย์ผู้ยื่น', 'สถานะ', 'หมายเหตุ', 'ลักษณะการไปโรงเรียน'],
+      ['วันที่ยื่น', 'เวลา', 'โรงเรียน', 'สายงาน', 'เลขที่หนังสือ', 'อาจารย์ผู้ยื่น', 'สถานะ', 'หมายเหตุ', 'ลักษณะการไปโรงเรียน', 'ยานพาหนะ'],
       ...submissionsParam.map(s => [s.submissionDate, s.submissionTime, s.schoolName,
         s.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย', s.documentNumber,
         s.submittedByNames?.length ? s.submittedByNames.join(', ') : s.submittedByName,
-        s.status, s.note || '', s.sameDayGuidance ? 'ยื่นหนังสือ + แนะแนว' : 'ยื่นหนังสือ'])
+        s.status, s.note || '', s.sameDayGuidance ? 'ยื่นหนังสือ + แนะแนว' : 'ยื่นหนังสือ', s.vehicleName || 'ไม่ระบุ'])
     ];
     const submissionSheet = XLSX.utils.aoa_to_sheet(submissionRows);
-    submissionSheet['!cols'] = [14, 10, 35, 18, 24, 60, 24, 40, 30].map(wch => ({ wch }));
+    submissionSheet['!cols'] = [14, 10, 35, 18, 24, 60, 24, 40, 30, 30].map(wch => ({ wch }));
     XLSX.utils.book_append_sheet(workbook, submissionSheet, 'สรุปการยื่นหนังสือ');
   }
 
