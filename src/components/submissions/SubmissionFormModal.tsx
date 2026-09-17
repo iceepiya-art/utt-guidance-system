@@ -299,8 +299,8 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                 onChange={(e) => selectTeam(e.target.value as TeamId)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
               >
-                <option value="team1">อุตรดิตถ์</option>
-                <option value="team2">สุโขทัย</option>
+                <option value="team1">อุตรดิตถ์ (สาย 1)</option>
+                <option value="team2">สุโขทัย (สาย 2)</option>
               </select>
             </div>
             <div className="sm:col-span-3 space-y-2">
