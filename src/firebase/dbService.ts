@@ -282,8 +282,11 @@ export async function createDocumentSubmission(
 ): Promise<string> {
   const colRef = collection(db, 'documentSubmissions');
   const now = new Date().toISOString();
+  const cleanSubmission = Object.fromEntries(
+    Object.entries(submission).filter(([, value]) => value !== undefined)
+  );
   const docRef = await addDoc(colRef, {
-    ...submission,
+    ...cleanSubmission,
     createdAt: now,
     updatedAt: now,
     createdBy: user?.displayName || submission.submittedByName,

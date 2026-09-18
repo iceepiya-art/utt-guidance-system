@@ -154,17 +154,19 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         submittedByName,
         submittedByNames,
         teacherName,
-        teacherPosition,
-        teacherPhone,
-        teacherLine,
-        preferredContactTime,
+        teacherPosition: teacherPosition || '',
+        teacherPhone: teacherPhone || '',
+        teacherLine: teacherLine || '',
+        preferredContactTime: preferredContactTime || '',
         status,
-        otherActivityDetails: status === 'OTHER_ACTIVITY' ? otherActivityDetails.trim() : undefined,
-        note,
-        photos,
+        note: note || '',
+        photos: photos || [],
         createdAt: submissionToEdit?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+      if (status === 'OTHER_ACTIVITY' && otherActivityDetails.trim()) {
+        data.otherActivityDetails = otherActivityDetails.trim();
+      }
       if (status === 'APPOINTED') {
         if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
         await saveSubmissionAppointment(data, { date: appointmentDate, startTime: appointmentStart, endTime: appointmentEnd, note: appointmentNote }, currentUser, submissionToEdit || undefined);
