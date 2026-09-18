@@ -36,6 +36,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   onSave,
   onOpenInstantAppointment,
 }) => {
+  const { currentUser, users = [] } = useAuth();
   const defaultTeacherChoices = [
     'อ.ประชา กัลปนารถ (หัวหน้างานแนะแนว)',
     'อ.ณิชชัยกุญช์ โลราช (แนะแนวสาย 1)',
@@ -44,7 +45,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
 
   const teacherChoices = [...new Set([
     ...defaultTeacherChoices,
-    ...users.filter(user => user.active).map(user => user.displayName.trim()),
+    ...(users || []).filter(user => user.active).map(user => user.displayName.trim()),
     currentUser?.displayName?.trim() || ''
   ].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
 
