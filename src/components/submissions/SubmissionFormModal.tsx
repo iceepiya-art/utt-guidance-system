@@ -56,7 +56,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
       ];
     }
     return [
-      currentUser?.displayName || 'อ.ปิยะ สีดาชัย (แนะแนวสาย 2)',
+      'อ.ปิยะ สีดาชัย (แนะแนวสาย 2)',
     ];
   };
 
