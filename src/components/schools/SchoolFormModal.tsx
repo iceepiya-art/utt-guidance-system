@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
 import { School, SchoolStatus, TeamId } from '../../types';
+import {
+  ALL_THAI_PROVINCES,
+  getDistrictsByProvince,
+} from '../../constants/thaiProvinces';
 
 interface SchoolFormModalProps {
   schoolToEdit: School | null;
@@ -8,18 +12,6 @@ interface SchoolFormModalProps {
   onClose: () => void;
   onSave: (schoolData: Omit<School, 'id'>) => Promise<void>;
 }
-
-const DISTRICTS_UTTARADIT = [
-  'เมืองอุตรดิตถ์',
-  'ลับแล',
-  'พิชัย',
-  'ตรอน',
-  'ท่าปลา',
-  'น้ำปาด',
-  'ฟากท่า',
-  'บ้านโคก',
-  'ทองแสนขัน',
-];
 
 export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
   schoolToEdit,
@@ -97,13 +89,41 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
     }
   }, [schoolToEdit, isOpen]);
 
-  // Auto set team based on district recommendation
-  const handleDistrictChange = (district: string) => {
-    const isOuterZone = ['ท่าปลา', 'น้ำปาด', 'ฟากท่า', 'บ้านโคก', 'ทองแสนขัน'].includes(district);
+  const [isCustomProvince, setIsCustomProvince] = useState(false);
+  const [isCustomDistrict, setIsCustomDistrict] = useState(false);
+
+  // Available districts dynamically filtered by selected province
+  const currentDistricts = useMemo(() => {
+    return getDistrictsByProvince(formData.province);
+  }, [formData.province]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsCustomProvince(!ALL_THAI_PROVINCES.includes(formData.province) && formData.province !== '');
+      const districts = getDistrictsByProvince(formData.province);
+      setIsCustomDistrict(!districts.includes(formData.district) && formData.district !== '');
+    }
+  }, [isOpen, formData.province]);
+
+  const handleProvinceChange = (newProvince: string) => {
+    const districts = getDistrictsByProvince(newProvince);
+    const defaultDistrict = districts[0] || '';
+    // Auto-select team: Sukhothai is team2, Uttaradit is team1
+    const autoTeam: TeamId = newProvince === 'สุโขทัย' ? 'team2' : 'team1';
+
+    setIsCustomDistrict(false);
     setFormData((prev) => ({
       ...prev,
-      district,
-      teamId: isOuterZone ? 'team2' : 'team1',
+      province: newProvince,
+      district: districts.includes(prev.district) ? prev.district : defaultDistrict,
+      teamId: autoTeam,
+    }));
+  };
+
+  const handleDistrictChange = (newDistrict: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      district: newDistrict,
     }));
   };
 
@@ -182,35 +202,100 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
             </div>
           </div>
 
-          {/* Row 2: Location & Team */}
+          {/* Row 2: Location & Team (Order: จังหวัด -> อำเภอ -> สายการปฏิบัติงาน) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* 1. จังหวัด (Province) */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                อำเภอ
+                จังหวัด <span className="text-red-500">*</span>
               </label>
               <select
-                value={formData.district}
-                onChange={(e) => handleDistrictChange(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1]"
+                value={isCustomProvince ? 'custom' : formData.province}
+                onChange={(e) => {
+                  if (e.target.value === 'custom') {
+                    setIsCustomProvince(true);
+                  } else {
+                    setIsCustomProvince(false);
+                    handleProvinceChange(e.target.value);
+                  }
+                }}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
+                required
               >
-                {DISTRICTS_UTTARADIT.map((dist) => (
+                <optgroup label="จังหวัดเป้าหมายหลัก">
+                  <option value="อุตรดิตถ์">อุตรดิตถ์</option>
+                  <option value="สุโขทัย">สุโขทัย</option>
+                </optgroup>
+                <optgroup label="จังหวัดทั้งหมดในไทย">
+                  {ALL_THAI_PROVINCES.filter((p) => p !== 'อุตรดิตถ์' && p !== 'สุโขทัย').map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </optgroup>
+                <option value="custom">-- ระบุจังหวัดอื่น --</option>
+              </select>
+              {isCustomProvince && (
+                <input
+                  type="text"
+                  placeholder="ระบุชื่อจังหวัด"
+                  value={formData.province}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      province: val,
+                      district: getDistrictsByProvince(val)[0] || '',
+                    }));
+                  }}
+                  className="mt-1.5 w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#087CC1]"
+                  autoFocus
+                />
+              )}
+            </div>
+
+            {/* 2. อำเภอ (District - Changes dynamically based on Province!) */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                อำเภอ <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={isCustomDistrict ? 'custom' : formData.district}
+                onChange={(e) => {
+                  if (e.target.value === 'custom') {
+                    setIsCustomDistrict(true);
+                  } else {
+                    setIsCustomDistrict(false);
+                    handleDistrictChange(e.target.value);
+                  }
+                }}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
+                required
+              >
+                {currentDistricts.map((dist) => (
                   <option key={dist} value={dist}>
                     {dist}
                   </option>
                 ))}
+                {/* If the current district isn't in currentDistricts, still show it */}
+                {!currentDistricts.includes(formData.district) && formData.district && !isCustomDistrict && (
+                  <option value={formData.district}>{formData.district}</option>
+                )}
+                <option value="custom">-- ระบุอำเภออื่น --</option>
               </select>
+              {isCustomDistrict && (
+                <input
+                  type="text"
+                  placeholder="ระบุชื่ออำเภอ"
+                  value={formData.district}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, district: e.target.value }))}
+                  className="mt-1.5 w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#087CC1]"
+                  autoFocus
+                />
+              )}
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                จังหวัด
-              </label>
-              <input
-                type="text"
-                value={formData.province}
-                onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1]"
-              />
-            </div>
+
+            {/* 3. สายการปฏิบัติงาน (Team) */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 สายการปฏิบัติงาน
@@ -218,10 +303,10 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
               <select
                 value={formData.teamId}
                 onChange={(e) => setFormData({ ...formData, teamId: e.target.value as TeamId })}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
               >
-                <option value="team1">อุตรดิตถ์</option>
-                <option value="team2">สุโขทัย</option>
+                <option value="team1">สาย 1: อุตรดิตถ์</option>
+                <option value="team2">สาย 2: สุโขทัย</option>
               </select>
             </div>
           </div>

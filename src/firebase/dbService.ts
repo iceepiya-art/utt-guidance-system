@@ -26,6 +26,7 @@ import {
   ActivityLog,
   NotificationLog,
   UserProfile,
+  ApprovalStatus,
 } from '../types';
 import {
   INITIAL_SCHOOLS,
@@ -38,7 +39,7 @@ import {
   INITIAL_USERS,
 } from './seedData';
 import { isTimeOverlapping } from '../utils/dateUtils';
-import { compressImageFile } from '../utils/imageCompressor';
+import { compressImageFile, fileToDataUrl } from '../utils/imageCompressor';
 
 // Helper to log activities
 export async function logActivity(
@@ -211,6 +212,49 @@ export async function deleteSchool(id: string, schoolName: string, user?: UserPr
   );
 }
 
+export async function batchImportSchools(
+  schools: Omit<School, 'id'>[],
+  user?: UserProfile | null
+): Promise<{ count: number }> {
+  if (!schools.length) return { count: 0 };
+  const now = new Date().toISOString();
+  const userName = user?.displayName || 'เจ้าหน้าที่';
+  
+  // Firestore writeBatch max is 500 ops per batch
+  const batchSize = 400;
+  let totalImported = 0;
+  
+  for (let i = 0; i < schools.length; i += batchSize) {
+    const chunk = schools.slice(i, i + batchSize);
+    const batch = writeBatch(db);
+    
+    for (const sch of chunk) {
+      const schRef = doc(collection(db, 'schools'));
+      batch.set(schRef, {
+        ...sch,
+        createdAt: now,
+        updatedAt: now,
+        createdBy: userName,
+        currentStatus: sch.currentStatus || 'NOT_STARTED',
+      });
+    }
+    
+    await batch.commit();
+    totalImported += chunk.length;
+  }
+
+  await logActivity(
+    user?.id || 'sys',
+    userName,
+    'นำเข้าข้อมูลโรงเรียนจาก Excel',
+    'school',
+    'batch-import',
+    `นำเข้าข้อมูลโรงเรียนสำเร็จ ${totalImported} รายการ`
+  );
+
+  return { count: totalImported };
+}
+
 // -------------------------------------------------------------
 // Document Submissions CRUD
 // -------------------------------------------------------------
@@ -332,6 +376,7 @@ export async function checkAppointmentConflict(
   endTime: string,
   teamId: string,
   counselorId: string,
+  vehicleId?: string,
   excludeAppointmentId?: string
 ): Promise<{ hasConflict: boolean; conflictingAppointment?: Appointment; reason?: string }> {
   const colRef = collection(db, 'appointments');
@@ -361,6 +406,13 @@ export async function checkAppointmentConflict(
           reason: `${appt.counselorName} ติดนัดหมายที่ "${appt.schoolName}" เวลา ${appt.startTime} - ${appt.endTime} น.`,
         };
       }
+      if (vehicleId && vehicleId !== 'veh_personal' && appt.vehicleId === vehicleId) {
+        return {
+          hasConflict: true,
+          conflictingAppointment: appt,
+          reason: `ยานพาหนะ "${appt.vehicleName || vehicleId}" มีกำหนดใช้งานแล้วที่ "${appt.schoolName}" เวลา ${appt.startTime} - ${appt.endTime} น.`,
+        };
+      }
     }
   }
 
@@ -377,7 +429,8 @@ export async function createAppointment(
     appointment.startTime,
     appointment.endTime,
     appointment.teamId,
-    appointment.counselorId
+    appointment.counselorId,
+    appointment.vehicleId
   );
 
   if (conflict.hasConflict) {
@@ -389,6 +442,7 @@ export async function createAppointment(
   const now = new Date().toISOString();
   const docRef = await addDoc(colRef, {
     ...appointment,
+    approvalStatus: appointment.approvalStatus || (user?.role === 'ADMIN' || user?.role === 'MANAGER' ? 'APPROVED' : 'PENDING_APPROVAL'),
     createdAt: now,
     updatedAt: now,
     createdBy: user?.displayName || 'เจ้าหน้าที่',
@@ -429,6 +483,7 @@ export async function updateAppointment(
       data.endTime,
       data.teamId,
       data.counselorId || '',
+      data.vehicleId,
       id
     );
     if (conflict.hasConflict) {
@@ -451,6 +506,64 @@ export async function updateAppointment(
     'appointment',
     id,
     `อัปเดตนัดหมายสถานะ: ${data.status || 'ปกติ'}`
+  );
+}
+
+export async function updateAppointmentApproval(
+  appointmentId: string,
+  approvalStatus: ApprovalStatus,
+  user: UserProfile | null,
+  approvalNote?: string
+): Promise<void> {
+  const docRef = doc(db, 'appointments', appointmentId);
+  const now = new Date().toISOString();
+  await updateDoc(docRef, {
+    approvalStatus,
+    approvedBy: user?.id || 'sys',
+    approvedByName: user?.displayName || 'ผู้บริหาร',
+    approvedAt: now,
+    approvalNote: approvalNote || '',
+    updatedAt: now,
+    updatedBy: user?.displayName || 'ผู้บริหาร',
+  });
+
+  const label = approvalStatus === 'APPROVED' ? 'อนุมัตินัดหมาย' : approvalStatus === 'REVISION_REQUESTED' ? 'ส่งกลับแก้ไขนัดหมาย' : 'ปรับสถานะการอนุมัติ';
+  await logActivity(
+    user?.id || 'sys',
+    user?.displayName || 'ผู้บริหาร',
+    label,
+    'appointment',
+    appointmentId,
+    `ผลการพิจารณา: ${approvalStatus} ${approvalNote ? `(${approvalNote})` : ''}`
+  );
+}
+
+export async function updateFieldTripApproval(
+  tripId: string,
+  approvalStatus: ApprovalStatus,
+  user: UserProfile | null,
+  approvalNote?: string
+): Promise<void> {
+  const docRef = doc(db, 'fieldTrips', tripId);
+  const now = new Date().toISOString();
+  await updateDoc(docRef, {
+    approvalStatus,
+    approvedBy: user?.id || 'sys',
+    approvedByName: user?.displayName || 'ผู้บริหาร',
+    approvedAt: now,
+    approvalNote: approvalNote || '',
+    updatedAt: now,
+    updatedBy: user?.displayName || 'ผู้บริหาร',
+  });
+
+  const label = approvalStatus === 'APPROVED' ? 'อนุมัติการออกปฏิบัติงาน' : approvalStatus === 'REVISION_REQUESTED' ? 'ส่งกลับแก้ไขการออกปฏิบัติงาน' : 'ปรับสถานะการอนุมัติ';
+  await logActivity(
+    user?.id || 'sys',
+    user?.displayName || 'ผู้บริหาร',
+    label,
+    'fieldTrip',
+    tripId,
+    `ผลการพิจารณา: ${approvalStatus} ${approvalNote ? `(${approvalNote})` : ''}`
   );
 }
 
@@ -580,6 +693,64 @@ export async function saveVehicle(vehicle: Vehicle): Promise<void> {
   await setDoc(docRef, vehicle, { merge: true });
 }
 
+export async function addVehicle(
+  vehicle: Omit<Vehicle, 'id'>,
+  user?: UserProfile | null
+): Promise<string> {
+  const colRef = collection(db, 'vehicles');
+  const docRef = await addDoc(colRef, {
+    ...vehicle,
+    active: vehicle.active ?? true,
+    status: vehicle.status || 'AVAILABLE',
+  });
+
+  await logActivity(
+    user?.id || 'sys',
+    user?.displayName || 'ผู้ดูแลระบบ',
+    'เพิ่มยานพาหนะใหม่',
+    'vehicle',
+    docRef.id,
+    `เพิ่มยานพาหนะ ${vehicle.vehicleName} (${vehicle.registrationNumber})`
+  );
+  return docRef.id;
+}
+
+export async function updateVehicle(
+  id: string,
+  data: Partial<Vehicle>,
+  user?: UserProfile | null
+): Promise<void> {
+  const docRef = doc(db, 'vehicles', id);
+  await updateDoc(docRef, data);
+
+  await logActivity(
+    user?.id || 'sys',
+    user?.displayName || 'ผู้ดูแลระบบ',
+    'แก้ไขข้อมูลยานพาหนะ',
+    'vehicle',
+    id,
+    `อัปเดตข้อมูลยานพาหนะ ${data.vehicleName || id}`
+  );
+}
+
+export async function deleteVehicle(
+  id: string,
+  vehicleName: string,
+  user?: UserProfile | null
+): Promise<void> {
+  const docRef = doc(db, 'vehicles', id);
+  await deleteDoc(docRef);
+
+  await logActivity(
+    user?.id || 'sys',
+    user?.displayName || 'ผู้ดูแลระบบ',
+    'ลบข้อมูลยานพาหนะ',
+    'vehicle',
+    id,
+    `ลบยานพาหนะ ${vehicleName}`
+  );
+}
+
 export function subscribeTeams(callback: (teams: Team[]) => void) {
   const colRef = collection(db, 'teams');
   return onSnapshot(
@@ -633,8 +804,8 @@ export async function uploadImageFile(
   schoolId: string = 'general',
   onProgress?: (progress: number) => void
 ): Promise<{ url: string; fileName: string; storagePath: string }> {
-  // Compress image to save 80-90% Firebase Storage space and stay 100% within free quota
-  const file = await compressImageFile(rawFile, 1600, 1600, 0.82);
+  // Compress image to optimize responsiveness, save quota, and fit storage budgets
+  const file = await compressImageFile(rawFile, 1280, 1280, 0.75);
 
   const timestamp = Date.now();
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -657,8 +828,25 @@ export async function uploadImageFile(
       storagePath: path,
     };
   } catch (storageErr) {
-    console.error('Image upload failed:', storageErr);
-    throw new Error('อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่ ข้อมูลรูปยังไม่ได้ถูกบันทึก');
+    console.warn(
+      '[Storage Fallback] Firebase Storage is not available or not yet enabled in Firebase Console. Activating resilient inline fallback:',
+      storageErr
+    );
+
+    try {
+      if (onProgress) onProgress(70);
+      const dataUrl = await fileToDataUrl(file);
+      if (onProgress) onProgress(100);
+
+      return {
+        url: dataUrl,
+        fileName: file.name,
+        storagePath: `inline-fallback/${timestamp}_${safeName}`,
+      };
+    } catch (fallbackErr) {
+      console.error('Image fallback conversion failed:', fallbackErr);
+      throw new Error('ไม่สามารถประมวลผลรูปภาพได้ กรุณาตรวจสอบไฟล์รูปภาพแล้วลองใหม่อีกครั้ง');
+    }
   }
 }
 

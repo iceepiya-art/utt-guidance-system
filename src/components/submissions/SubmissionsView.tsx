@@ -368,7 +368,18 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
           {detail.appointmentDate && <div><dt className="text-slate-500">นัดแนะแนว</dt><dd>{formatThaiShortDate(detail.appointmentDate)} {detail.appointmentStartTime}–{detail.appointmentEndTime}<p>{detail.appointmentNote}</p></dd></div>}
           <div><dt className="text-slate-500">หมายเหตุ</dt><dd className="whitespace-pre-wrap">{detail.note || '-'}</dd></div>
         </dl>
-        <div className="grid grid-cols-2 gap-2">{detail.photos?.map((photo, i) => <a key={photo.id || i} href={photo.url} target="_blank" rel="noreferrer"><img src={photo.url} alt={`หลักฐาน ${i + 1}`} className="rounded-lg w-full"/></a>)}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {detail.photos?.map((photo, i) => (
+            <button
+              key={photo.id || i}
+              type="button"
+              onClick={() => setSelectedPhotoModal(photo.url)}
+              className="cursor-pointer overflow-hidden rounded-lg border border-slate-200 hover:opacity-90 text-left"
+            >
+              <img src={photo.url} alt={`หลักฐาน ${i + 1}`} className="w-full aspect-square object-cover" />
+            </button>
+          ))}
+        </div>
       </div></div>}
       {deleting && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"><div role="alertdialog" aria-modal="true" aria-label="ยืนยันลบการยื่นหนังสือ" className="bg-white rounded-2xl p-5 max-w-md w-full space-y-4">
         <h2 className="font-bold">ลบรายการยื่นหนังสือ?</h2><p className="text-sm">{deleting.schoolName} — {deleting.documentNumber}</p>

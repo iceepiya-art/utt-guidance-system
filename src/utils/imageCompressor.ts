@@ -1,18 +1,27 @@
 /**
  * Client-side Image Compression Utility
  * Optimizes photos before uploading to keep Firebase Storage 100% within the Free Tier (5 GB).
- * Downscales high-resolution smartphone camera photos (5-12 MB) to ~150-300 KB
+ * Downscales high-resolution smartphone camera photos (5-12 MB) to ~60-150 KB
  * while preserving high legibility for official school letters and event pictures.
  */
 
+export function fileToDataUrl(file: Blob | File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
 export async function compressImageFile(
   file: File,
-  maxWidth: number = 1600,
-  maxHeight: number = 1600,
-  quality: number = 0.8
+  maxWidth: number = 1280,
+  maxHeight: number = 1280,
+  quality: number = 0.75
 ): Promise<File> {
-  // If file is not an image or is already very small (< 250 KB), return original
-  if (!file.type.startsWith('image/') || file.size < 250 * 1024) {
+  // If file is not an image, return original
+  if (!file.type.startsWith('image/')) {
     return file;
   }
 
@@ -51,6 +60,10 @@ export async function compressImageFile(
           return;
         }
 
+        // Fill white background for transparent PNGs before converting to JPEG
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+
         // Draw and apply smooth bicubic downsampling
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
@@ -72,7 +85,7 @@ export async function compressImageFile(
             });
 
             console.log(
-              `[Free-Tier Optimizer] Compressed ${file.name} from ${(file.size / 1024).toFixed(1)} KB to ${(compressedFile.size / 1024).toFixed(1)} KB (-${Math.round((1 - compressedFile.size / file.size) * 100)}%)`
+              `[Image Optimizer] Processed ${file.name} (${(file.size / 1024).toFixed(1)} KB -> ${(compressedFile.size / 1024).toFixed(1)} KB)`
             );
 
             resolve(compressedFile);
@@ -92,3 +105,4 @@ export async function compressImageFile(
     };
   });
 }
+

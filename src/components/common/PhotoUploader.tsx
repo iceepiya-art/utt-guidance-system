@@ -60,7 +60,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
       onChange(newPhotos);
     } catch (err: any) {
       console.error('Upload failed:', err);
-      setError('อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      setError(err?.message || 'อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setUploading(false);
       setProgress(0);
