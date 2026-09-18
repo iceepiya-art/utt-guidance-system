@@ -2,11 +2,12 @@ import type { DocumentSubmission } from '../../types';
 import { TripVehiclePicker } from '../common/TripVehiclePicker';
 import { SchoolPicker } from '../common/SchoolPicker';
 import React, { useState, useEffect } from 'react';
-import { X, Save, Compass, Plus, Trash2, Calendar, Clock, Car, Users, AlertCircle } from 'lucide-react';
-import { School, FieldTrip, TeamId, PhotoItem, Appointment } from '../../types';
+import { X, Save, Compass, Plus, Trash2, Calendar, Clock, Car, Users, AlertCircle, Coins, Fuel } from 'lucide-react';
+import { School, FieldTrip, TeamId, PhotoItem, Appointment, Vehicle, ApprovalStatus } from '../../types';
 import { PhotoUploader } from '../common/PhotoUploader';
 import { getTodayISO } from '../../utils/dateUtils';
 import { useAuth } from '../../context/AuthContext';
+import { subscribeVehicles } from '../../firebase/dbService';
 
 interface FieldTripFormModalProps {
   isOpen: boolean;
@@ -18,11 +19,11 @@ interface FieldTripFormModalProps {
   onSave: (tripData: Omit<FieldTrip, 'id'>) => Promise<string | void>;
 }
 
-const VEHICLES = [
-  { id: 'veh_01', name: 'รถตู้โตโยต้า คอมมิวเตอร์ (นข-4521 อต)' },
-  { id: 'veh_02', name: 'รถตู้โตโยต้า คอมมิวเตอร์ (นข-8842 อต)' },
-  { id: 'veh_03', name: 'รถกระบะสี่ประตู อีซูซุ (กข-1234 อต)' },
-  { id: 'veh_personal', name: 'รถยนต์ส่วนบุคคลของอาจารย์' },
+const DEFAULT_VEHICLES: Vehicle[] = [
+  { id: 'veh_01', vehicleName: 'รถตู้โตโยต้า คอมมิวเตอร์ (นข-4521 อต)', registrationNumber: 'นข-4521 อต', active: true },
+  { id: 'veh_02', vehicleName: 'รถตู้โตโยต้า คอมมิวเตอร์ (นข-8842 อต)', registrationNumber: 'นข-8842 อต', active: true },
+  { id: 'veh_03', vehicleName: 'รถกระบะสี่ประตู อีซูซุ (กข-1234 อต)', registrationNumber: 'กข-1234 อต', active: true },
+  { id: 'veh_personal', vehicleName: 'รถยนต์ส่วนบุคคลของอาจารย์', registrationNumber: 'ส่วนบุคคล', active: true },
 ];
 
 const WORK_TYPES = [
@@ -43,7 +44,28 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
   tripToEdit,
   onSave,
 }) => {
-  const { currentUser, users } = useAuth();
+  const { currentUser, users, isAdmin, isManager } = useAuth();
+  const [vehicles, setVehicles] = useState<Vehicle[]>(DEFAULT_VEHICLES);
+
+  useEffect(() => {
+    return subscribeVehicles((list) => {
+      if (list && list.length > 0) setVehicles(list);
+    });
+  }, []);
+
+  const counselors = React.useMemo(() => {
+    const activeStaff = users.filter((u) => u.active && u.role !== 'VIEWER');
+    if (activeStaff.length > 0) {
+      return activeStaff.map((u) => ({ id: u.id, name: u.displayName, teamId: u.teamId || 'team1' }));
+    }
+    return [
+      { id: 'usr_counselor_1', name: 'อ.ปิยะ สุขสมบูรณ์', teamId: 'team1' as TeamId },
+      { id: 'usr_staff_1', name: 'อ.สมศักดิ์ วงศ์สว่าง', teamId: 'team1' as TeamId },
+      { id: 'usr_staff_2', name: 'อ.นภาพร ใจดี', teamId: 'team2' as TeamId },
+      { id: 'usr_staff_3', name: 'อ.วรวิทย์ ศิริชัย', teamId: 'team2' as TeamId },
+      { id: 'usr_manager_1', name: 'ดร.สุรชัย มั่นคง', teamId: 'team1' as TeamId },
+    ];
+  }, [users]);
 
   const [date, setDate] = useState<string>(getTodayISO());
   const [departureTime, setDepartureTime] = useState<string>('08:00');
@@ -51,13 +73,17 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
   const [teamId, setTeamId] = useState<TeamId>('team1');
   const [counselorName, setCounselorName] = useState<string>(currentUser?.displayName || 'อ.ปิยะ สุขสมบูรณ์');
   const [counselorId, setCounselorId] = useState<string>(currentUser?.id || 'usr_counselor_1');
-  const [teamMemberNames, setTeamMemberNames] = useState<string>('อ.สมศักดิ์ วงศ์สว่าง, นายกิตติ (ฝ่ายโสต)');
+  const [teamMemberNames, setTeamMemberNames] = useState<string>('');
   const [workType, setWorkType] = useState<string>('แนะแนวการศึกษา ม.3 และ ม.6');
   const [vehicleId, setVehicleId] = useState<string>('mitsu-6738');
   const [vehicleName, setVehicleName] = useState<string>('MITSU บน 6738');
   const [summary, setSummary] = useState<string>('');
   const [issues, setIssues] = useState<string>('');
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>('PENDING_APPROVAL');
+  const [academicYear, setAcademicYear] = useState<string>('2569');
+  const [budgetAllowance, setBudgetAllowance] = useState<number>(0);
+  const [budgetFuel, setBudgetFuel] = useState<number>(0);
 
   // Trip Schools list (support multiple schools in one day trip!)
   const [tripSchools, setTripSchools] = useState<
@@ -83,6 +109,10 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       setIssues(tripToEdit.issues || '');
       setPhotos(tripToEdit.photos || []);
       setTripSchools(tripToEdit.schools || []);
+      setApprovalStatus(tripToEdit.approvalStatus || 'APPROVED');
+      setAcademicYear(tripToEdit.academicYear || '2569');
+      setBudgetAllowance(tripToEdit.budgetAllowance || 0);
+      setBudgetFuel(tripToEdit.budgetFuel || 0);
     } else if (prefilledSubmission) {
       setDate(prefilledSubmission.submissionDate);
       setTeamId(prefilledSubmission.teamId);
@@ -101,32 +131,37 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
         {
           schoolId: prefilledAppointment.schoolId,
           schoolName: prefilledAppointment.schoolName,
-          timeSlot: `${prefilledAppointment.startTime} - ${prefilledAppointment.endTime} น.`,
+          timeSlot: `${prefilledAppointment.startTime} - ${prefilledAppointment.endTime}`,
           studentCount: 50,
           notes: prefilledAppointment.note || '',
         },
       ]);
-    } else if (schools.length > 0 && tripSchools.length === 0) {
-      setTripSchools([
-        {
-          schoolId: schools[0].id,
-          schoolName: schools[0].schoolName,
-          timeSlot: '09:00 - 11:30 น.',
-          studentCount: 40,
-        },
-      ]);
+      setApprovalStatus(isAdmin || isManager ? 'APPROVED' : 'PENDING_APPROVAL');
+    } else {
+      if (schools.length > 0 && tripSchools.length === 0) {
+        setTripSchools([
+          {
+            schoolId: schools[0].id,
+            schoolName: schools[0].schoolName,
+            timeSlot: '09:00 - 11:30',
+            studentCount: (schools[0].studentM3 || 0) + (schools[0].studentM6 || 0) || 50,
+          },
+        ]);
+      }
+      setApprovalStatus(isAdmin || isManager ? 'APPROVED' : 'PENDING_APPROVAL');
     }
-  }, [tripToEdit, prefilledAppointment, prefilledSubmission, schools]);
+  }, [tripToEdit, prefilledAppointment, prefilledSubmission, schools, isAdmin, isManager]);
 
   const handleAddSchoolRow = () => {
-    if (schools.length === 0) return;
+    const defaultSchool = schools[0];
     setTripSchools((prev) => [
       ...prev,
       {
-        schoolId: schools[0].id,
-        schoolName: schools[0].schoolName,
-        timeSlot: '13:00 - 14:30 น.',
+        schoolId: defaultSchool ? defaultSchool.id : '',
+        schoolName: defaultSchool ? defaultSchool.schoolName : '',
+        timeSlot: '13:00 - 14:30',
         studentCount: 30,
+        notes: '',
       },
     ]);
   };
@@ -161,8 +196,8 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
 
   const handleVehicleChange = (vehId: string) => {
     setVehicleId(vehId);
-    const v = VEHICLES.find((item) => item.id === vehId);
-    if (v) setVehicleName(v.name);
+    const v = vehicles.find((item) => item.id === vehId);
+    if (v) setVehicleName(v.vehicleName);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -190,6 +225,10 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
         summary,
         issues,
         photos,
+        approvalStatus,
+        academicYear,
+        budgetAllowance,
+        budgetFuel,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -233,8 +272,8 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
             </div>
           )}
 
-          {/* Date, Times & Team */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Date & Team */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 วันที่ออกแนะแนว
@@ -245,17 +284,6 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
                 onChange={(e) => setDate(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
                 required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                เวลาออกเดินทาง
-              </label>
-              <input
-                type="time"
-                value={departureTime}
-                onChange={(e) => setDepartureTime(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
               />
             </div>
             <div>
@@ -318,8 +346,45 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
                 type="text"
                 value={teamMemberNames}
                 onChange={(e) => setTeamMemberNames(e.target.value)}
+                placeholder="เช่น อ.สมศักดิ์, นายกิตติ (ฝ่ายโสต)"
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
               />
+            </div>
+          </div>
+
+          {/* Organization Budget Reimbursement */}
+          <div className="p-3.5 bg-blue-50/50 rounded-xl border border-blue-200/80 space-y-2.5">
+            <h3 className="text-xs font-bold text-[#075A9C] uppercase tracking-wider flex items-center gap-1.5">
+              <Coins className="w-3.5 h-3.5" />
+              <span>งบประมาณและการเบิกจ่ายขององค์กร</span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  ค่าเบี้ยเลี้ยง / ค่าตอบแทนบุคลากร (บาท)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={budgetAllowance}
+                  onChange={(e) => setBudgetAllowance(parseFloat(e.target.value) || 0)}
+                  placeholder="0"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  ค่าน้ำมันเชื้อเพลิง / ค่าผ่านทาง (บาท)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={budgetFuel}
+                  onChange={(e) => setBudgetFuel(parseFloat(e.target.value) || 0)}
+                  placeholder="0"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono"
+                />
+              </div>
             </div>
           </div>
 
@@ -337,7 +402,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
                 className="inline-flex items-center gap-1 px-3 py-1 bg-white hover:bg-slate-100 text-[#087CC1] border border-[#087CC1]/30 rounded-lg text-xs font-semibold transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>+ เพิ่มโรงเรียน</span>
+                <span>เพิ่มโรงเรียน</span>
               </button>
             </div>
 
@@ -396,34 +461,6 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Summary & Issues */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                สรุปผลการปฏิบัติงาน
-              </label>
-              <textarea
-                rows={3}
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                placeholder="เช่น นักเรียนให้ความสนใจสาขาช่างยนต์และคอมพิวเตอร์เป็นอย่างมาก แจกใบสมัครไป 45 ชุด"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                ปัญหา / อุปสรรค / ข้อเสนอแนะ
-              </label>
-              <textarea
-                rows={3}
-                value={issues}
-                onChange={(e) => setIssues(e.target.value)}
-                placeholder="เช่น ปลั๊กไฟเวทีไม่พอ เครื่องเสียงโรงเรียนมีเสียงฮัม"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-              />
             </div>
           </div>
 

@@ -296,7 +296,7 @@ export const UserManagerSection: React.FC = () => {
             className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
-            <span>+ เพิ่มผู้ใช้งานใหม่</span>
+            <span>เพิ่มผู้ใช้งานใหม่</span>
           </button>
         </div>
 
@@ -361,7 +361,7 @@ export const UserManagerSection: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-
+                        
                         <button
                           onClick={() => handleOpenEdit(u)}
                           title="แก้ไขข้อมูลและสิทธิ์"
