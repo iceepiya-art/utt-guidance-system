@@ -69,6 +69,7 @@ export interface PhotoItem {
 
 export type PostSubmissionStatus = 
   | 'DOCUMENT_SUBMITTED'   // ยื่นหนังสือแล้ว
+  | 'OTHER_ACTIVITY'       // กิจกรรมอื่นๆ
   | 'WAITING_CONTACT'      // รอติดต่อกลับ
   | 'CALL_LATER'           // ขอให้ติดต่อภายหลัง
   | 'WAITING_APPOINTMENT'  // รอนัดหมาย
@@ -85,6 +86,7 @@ export interface DocumentSubmission {
   appointmentEndTime?: string;
   sameDayGuidance?: boolean;
   activities?: string[];
+  otherActivityDetails?: string;
   fieldTripId?: string;
   id: string;
   schoolId: string;

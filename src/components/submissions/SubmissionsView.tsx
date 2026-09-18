@@ -77,6 +77,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
   const getStatusBadge = (status: PostSubmissionStatus) => {
     const config: Record<PostSubmissionStatus, { label: string; bg: string; text: string }> = {
       DOCUMENT_SUBMITTED: { label: 'ยื่นหนังสือแล้ว', bg: 'bg-blue-50', text: 'text-blue-700' },
+      OTHER_ACTIVITY: { label: 'กิจกรรมอื่นๆ', bg: 'bg-emerald-50', text: 'text-emerald-700' },
       WAITING_CONTACT: { label: 'รอติดต่อกลับ', bg: 'bg-amber-50', text: 'text-amber-700' },
       CALL_LATER: { label: 'ขอให้ติดต่อภายหลัง', bg: 'bg-orange-50', text: 'text-orange-700' },
       WAITING_APPOINTMENT: { label: 'รอนัดหมาย', bg: 'bg-indigo-50', text: 'text-indigo-700' },
@@ -193,13 +194,9 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
                     </td>
                     <td className="py-3 px-3.5">
                       <div className="font-bold text-slate-800">{sub.schoolName}</div>
-                      {sub.activities && sub.activities.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {sub.activities.map((act, i) => (
-                            <span key={i} className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
-                              {act}
-                            </span>
-                          ))}
+                      {sub.status === 'OTHER_ACTIVITY' && sub.otherActivityDetails && (
+                        <div className="text-xs text-emerald-700 font-medium mt-0.5">
+                          กิจกรรม: {sub.otherActivityDetails}
                         </div>
                       )}
                     </td>
@@ -374,16 +371,10 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
           <div><dt className="text-slate-500">ผู้ยื่น</dt><dd>{detail.submittedByNames?.join(', ') || detail.submittedByName}</dd></div>
           <div><dt className="text-slate-500">ครูแนะแนว / เบอร์โทร</dt><dd>{detail.teacherName || '-'} {detail.teacherPhone}</dd></div>
           <div><dt className="text-slate-500">สถานะ</dt><dd>{getStatusBadge(detail.status)}</dd></div>
-          {detail.activities && detail.activities.length > 0 && (
+          {detail.status === 'OTHER_ACTIVITY' && detail.otherActivityDetails && (
             <div>
-              <dt className="text-slate-500">กิจกรรมที่ดำเนินการ</dt>
-              <dd className="flex flex-wrap gap-1.5 mt-1">
-                {detail.activities.map((act, i) => (
-                  <span key={i} className="px-2.5 py-0.5 bg-blue-50 text-[#087CC1] border border-blue-200 rounded-md text-xs font-medium">
-                    {act}
-                  </span>
-                ))}
-              </dd>
+              <dt className="text-slate-500">กิจกรรมอื่นๆ</dt>
+              <dd className="font-semibold text-emerald-700">{detail.otherActivityDetails}</dd>
             </div>
           )}
           {detail.appointmentDate && <div><dt className="text-slate-500">นัดแนะแนว</dt><dd>{formatThaiShortDate(detail.appointmentDate)} {detail.appointmentStartTime}–{detail.appointmentEndTime}<p>{detail.appointmentNote}</p></dd></div>}
