@@ -36,15 +36,38 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   onSave,
   onOpenInstantAppointment,
 }) => {
-  const { currentUser, users } = useAuth();
-  const teacherChoices = [...new Set([...users.filter(user => user.active).map(user => user.displayName.trim()), currentUser?.displayName?.trim() || ''].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+  const defaultTeacherChoices = [
+    'อ.ประชา กัลปนารถ (หัวหน้างานแนะแนว)',
+    'อ.ณิชชัยกุญช์ โลราช (แนะแนวสาย 1)',
+    'อ.ปิยะ สีดาชัย (แนะแนวสาย 2)',
+  ];
+
+  const teacherChoices = [...new Set([
+    ...defaultTeacherChoices,
+    ...users.filter(user => user.active).map(user => user.displayName.trim()),
+    currentUser?.displayName?.trim() || ''
+  ].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+
+  const defaultSubmitters = (team: TeamId) => {
+    if (team === 'team1') {
+      return [
+        'อ.ประชา กัลปนารถ (หัวหน้างานแนะแนว)',
+        'อ.ณิชชัยกุญช์ โลราช (แนะแนวสาย 1)',
+      ];
+    }
+    return [
+      currentUser?.displayName || 'อ.ปิยะ สีดาชัย (แนะแนวสาย 2)',
+    ];
+  };
 
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>(preselectedSchool?.id || '');
   const [documentNumber, setDocumentNumber] = useState<string>('วท.อต. /2569');
   const [submissionDate, setSubmissionDate] = useState<string>(getTodayISO());
   const [submissionTime, setSubmissionTime] = useState(() => new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' }));
   const [teamId, setTeamId] = useState<TeamId>(preselectedSchool?.teamId || 'team1');
-  const [submitterNames, setSubmitterNames] = useState<string[]>([currentUser?.displayName || '']);
+  const [submitterNames, setSubmitterNames] = useState<string[]>(() =>
+    defaultSubmitters(preselectedSchool?.teamId || 'team1')
+  );
   const submittedByNames = [...new Set<string>(submitterNames.map(name => name.trim()).filter(Boolean))];
   const submittedByName = submittedByNames.join(', ');
 
@@ -69,7 +92,12 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [vehicleName, setVehicleName] = useState(defaultVehicle(teamId).name);
   const selectTeam = (nextTeam: TeamId) => {
     setTeamId(nextTeam);
-    if (nextTeam !== teamId) { const vehicle = defaultVehicle(nextTeam); setVehicleId(vehicle.id); setVehicleName(vehicle.name); }
+    const vehicle = defaultVehicle(nextTeam);
+    setVehicleId(vehicle.id);
+    setVehicleName(vehicle.name);
+    if (!submissionToEdit) {
+      setSubmitterNames(defaultSubmitters(nextTeam));
+    }
   };
   const [appointmentNote, setAppointmentNote] = useState('');
   const [error, setError] = useState<string | null>(null);
