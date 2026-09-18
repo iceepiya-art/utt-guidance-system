@@ -1,3 +1,5 @@
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getApp } from 'firebase/app';
 import React, { useState } from 'react';
 import {
   Users,
@@ -24,6 +26,8 @@ export const UserManagerSection: React.FC = () => {
   const { currentUser, isAdmin, users, updateCurrentUserProfile } = useAuth();
 
   // State for Add/Edit Modal
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({
@@ -52,7 +56,7 @@ export const UserManagerSection: React.FC = () => {
   };
 
   const handleOpenAdd = () => {
-    setEditingUser(null);
+    setEditingUser(null); setNewPassword(''); setConfirmPassword('');
     setFormData({
       uid: '',
     displayName: '',
@@ -67,7 +71,7 @@ export const UserManagerSection: React.FC = () => {
   };
 
   const handleOpenEdit = (user: UserProfile) => {
-    setEditingUser(user);
+    setEditingUser(user); setNewPassword(''); setConfirmPassword('');
     setFormData({
       uid: user.id,
       displayName: user.displayName,
@@ -115,6 +119,7 @@ export const UserManagerSection: React.FC = () => {
       return;
     }
 
+    if (newPassword && (newPassword.length < 8 || newPassword !== confirmPassword)) { setFormError('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษรและตรงกันทั้งสองช่อง'); return; }
     setFormError(null);
     setIsSubmitting(true);
 
@@ -130,7 +135,8 @@ export const UserManagerSection: React.FC = () => {
 
       if (editingUser) {
         // Update existing user
-        await updateUser(editingUser.id, userPayload, currentUser);
+        await httpsCallable(getFunctions(getApp(), 'asia-southeast1'), 'manageUser')({ ...userPayload, teamId: formData.teamId, uid: editingUser.id, ...(newPassword ? { password: newPassword } : {}) });
+        setNewPassword(''); setConfirmPassword('');
         showToast(`อัปเดตข้อมูล ${userPayload.displayName} เรียบร้อยแล้ว`);
       } else {
         // Create new user
@@ -168,13 +174,13 @@ export const UserManagerSection: React.FC = () => {
       case 'ADMIN':
         return (
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm bg-red-100 text-red-700 border border-red-200">
-            ADMIN (ผู้ดูแลระบบ)
+            ผู้ดูแลระบบ
           </span>
         );
       case 'MANAGER':
         return (
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm bg-purple-100 text-purple-700 border border-purple-200">
-            MANAGER (ผู้บริหาร)
+            หัวหน้างานแนะแนว
           </span>
         );
       case 'STAFF':
@@ -186,7 +192,7 @@ export const UserManagerSection: React.FC = () => {
       case 'VIEWER':
         return (
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm bg-slate-100 text-slate-700 border border-slate-200">
-            VIEWER (ผู้สังเกตการณ์)
+            ผู้ดูข้อมูล (สิทธิ์เดิม)
           </span>
         );
       default:
@@ -455,6 +461,11 @@ export const UserManagerSection: React.FC = () => {
                 <input required value={formData.uid} onChange={(e) => setFormData({ ...formData, uid: e.target.value })} className="w-full border border-slate-300 rounded-xl p-3 mt-2" />
                 <span className="text-xs text-slate-500">สร้างบัญชีใน Firebase Authentication ก่อน แล้วคัดลอก UID เพื่อกำหนดสิทธิ์</span>
               </label>}
+              {editingUser && <div className="space-y-2 rounded-xl border border-slate-200 p-3">
+                <label className="block text-xs font-semibold">รหัสผ่านใหม่<input aria-label="รหัสผ่านใหม่" type="password" autoComplete="new-password" minLength={8} maxLength={128} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1 w-full p-2 border rounded-lg" /></label>
+                <label className="block text-xs font-semibold">ยืนยันรหัสผ่านใหม่<input aria-label="ยืนยันรหัสผ่านใหม่" type="password" autoComplete="new-password" required={!!newPassword} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1 w-full p-2 border rounded-lg" /></label>
+                <p className="text-xs text-slate-500">เว้นว่างเพื่อใช้รหัสผ่านเดิม</p>
+              </div>}
               {/* Role Selection */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -464,27 +475,21 @@ export const UserManagerSection: React.FC = () => {
                   {[
                     {
                       role: 'ADMIN' as UserRole,
-                      title: 'ADMIN (ผู้ดูแลระบบ)',
+                      title: 'ผู้ดูแลระบบ',
                       desc: 'สิทธิ์สูงสุด จัดการโรงเรียน นัดหมาย ลบข้อมูล และเพิ่มผู้ใช้',
                       color: 'border-red-200 text-red-700 bg-red-50/40',
                     },
                     {
                       role: 'MANAGER' as UserRole,
-                      title: 'MANAGER (ผู้บริหาร)',
+                      title: 'หัวหน้างานแนะแนว',
                       desc: 'ดูรายงานภาพรวมทั้งสองสาย ติดตามเป้าหมาย ส่งออก Excel',
                       color: 'border-purple-200 text-purple-700 bg-purple-50/40',
                     },
                     {
                       role: 'STAFF' as UserRole,
-                      title: 'STAFF (เจ้าหน้าที่แนะแนว)',
+                      title: 'เจ้าหน้าที่แนะแนว',
                       desc: 'บันทึกข้อมูลโรงเรียน ยื่นหนังสือ นัดหมาย และลงรูปกิจกรรม',
                       color: 'border-blue-200 text-[#075A9C] bg-blue-50/40',
-                    },
-                    {
-                      role: 'VIEWER' as UserRole,
-                      title: 'VIEWER (ผู้สังเกตการณ์)',
-                      desc: 'อ่านข้อมูลอย่างเดียว ไม่สามารถแก้ไขหรือบันทึกได้',
-                      color: 'border-slate-200 text-slate-700 bg-slate-50',
                     },
                   ].map((r) => (
                     <label

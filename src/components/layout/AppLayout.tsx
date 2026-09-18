@@ -76,7 +76,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           colors[currentUser.role] || colors.STAFF
         }`}
       >
-        {currentUser.role}
+        {{ ADMIN: 'ผู้ดูแลระบบ', MANAGER: 'หัวหน้างานแนะแนว', STAFF: 'เจ้าหน้าที่แนะแนว', VIEWER: 'ผู้ดูข้อมูล (สิทธิ์เดิม)' }[currentUser.role]}
       </span>
     );
   };

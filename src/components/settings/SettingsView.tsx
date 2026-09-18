@@ -122,10 +122,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
           <div className="p-3.5 bg-red-50/50 border border-red-200 rounded-xl space-y-1">
             <div className="font-bold text-red-700 text-xs flex items-center justify-between">
-              <span>ADMIN (ผู้ดูแลระบบ)</span>
+              <span>ผู้ดูแลระบบ</span>
               <span className="text-[10px] bg-red-100 px-1.5 py-0.5 rounded-sm">สูงสุด</span>
             </div>
             <p className="text-[11px] text-slate-600">
@@ -135,7 +135,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
 
           <div className="p-3.5 bg-purple-50/50 border border-purple-200 rounded-xl space-y-1">
             <div className="font-bold text-purple-700 text-xs flex items-center justify-between">
-              <span>MANAGER (ผู้บริหาร)</span>
+              <span>หัวหน้างานแนะแนว</span>
               <span className="text-[10px] bg-purple-100 px-1.5 py-0.5 rounded-sm">อนุมัติ/ติดตาม</span>
             </div>
             <p className="text-[11px] text-slate-600">
@@ -145,7 +145,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
 
           <div className="p-3.5 bg-blue-50/50 border border-blue-200 rounded-xl space-y-1">
             <div className="font-bold text-[#075A9C] text-xs flex items-center justify-between">
-              <span>STAFF (เจ้าหน้าที่แนะแนว)</span>
+              <span>เจ้าหน้าที่แนะแนว</span>
               <span className="text-[10px] bg-blue-100 px-1.5 py-0.5 rounded-sm">ผู้ปฏิบัติงาน</span>
             </div>
             <p className="text-[11px] text-slate-600">
@@ -153,15 +153,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
             </p>
           </div>
 
-          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-            <div className="font-bold text-slate-700 text-xs flex items-center justify-between">
-              <span>VIEWER (ผู้ตรวจการ)</span>
-              <span className="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded-sm">อ่านอย่างเดียว</span>
-            </div>
-            <p className="text-[11px] text-slate-600">
-              ดูข้อมูลโรงเรียน, ดูตารางปฏิทิน และตรวจสอบรูปกิจกรรม ไม่สามารถแก้ไขหรือบันทึกข้อมูลได้
-            </p>
-          </div>
+
         </div>
       </div>
 
@@ -314,7 +306,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ schools, appointment
           ระบบบริหารงานแนะแนวการศึกษานี้ได้รับการออกแบบและปรับแต่งสถาปัตยกรรมมาสำหรับ <strong>ใช้งานฟรี 100% โดยสมบูรณ์</strong> โดยไม่ต้องผูกบัตรเครดิต ไม่มีค่าบริการแอบแฝง และใช้โควต้าฟรีอย่างคุ้มค่าสูงสุด:
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <div className="p-3.5 bg-white border border-emerald-100 rounded-xl shadow-2xs space-y-1">
             <div className="flex items-center justify-between text-xs font-bold text-emerald-800">
               <span className="flex items-center gap-1.5">
