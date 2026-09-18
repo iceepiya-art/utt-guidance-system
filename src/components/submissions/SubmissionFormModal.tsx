@@ -8,6 +8,16 @@ import { PhotoUploader } from '../common/PhotoUploader';
 import { getTodayISO } from '../../utils/dateUtils';
 import { useAuth } from '../../context/AuthContext';
 
+export const COMMON_SUBMISSION_ACTIVITIES = [
+  'ยื่นหนังสือราชการ',
+  'พบปะประสานงานครูแนะแนว',
+  'เข้าพบผู้บริหาร / ผู้อำนวยการ',
+  'มอบสื่อ / โปสเตอร์ประชาสัมพันธ์',
+  'แนะแนวนักเรียนทันที (วันเดียวกัน)',
+  'สำรวจข้อมูลนักเรียนกลุ่มเป้าหมาย',
+  'จัดบูธ / นิทรรศการสัญจร',
+];
+
 interface SubmissionFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -54,8 +64,26 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [preferredContactTime, setPreferredContactTime] = useState<string>('');
 
   const [status, setStatus] = useState<PostSubmissionStatus>('DOCUMENT_SUBMITTED');
+  const [selectedActivities, setSelectedActivities] = useState<string[]>(['ยื่นหนังสือราชการ']);
+  const [customActivityInput, setCustomActivityInput] = useState<string>('');
   const [note, setNote] = useState<string>('รอติดต่อกลับ');
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+
+  const toggleActivity = (act: string) => {
+    setSelectedActivities((prev) => {
+      const next = prev.includes(act) ? prev.filter((a) => a !== act) : [...prev, act];
+      return next.length > 0 ? next : ['ยื่นหนังสือราชการ'];
+    });
+  };
+
+  const handleAddCustomActivity = () => {
+    const trimmed = customActivityInput.trim();
+    if (!trimmed) return;
+    if (!selectedActivities.includes(trimmed)) {
+      setSelectedActivities((prev) => [...prev, trimmed]);
+    }
+    setCustomActivityInput('');
+  };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [appointmentDate, setAppointmentDate] = useState('');
@@ -80,10 +108,15 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     setTeamId(data.teamId); setSubmitterNames(data.submittedByNames?.length ? data.submittedByNames : [data.submittedByName]);
     setTeacherName(data.teacherName || ''); setTeacherPhone(data.teacherPhone || '');
     setTeacherPosition(data.teacherPosition || ''); setTeacherLine(data.teacherLine || '');
-    setPreferredContactTime(data.preferredContactTime || ''); setStatus(data.status === 'APPOINTED' ? 'APPOINTED' : 'DOCUMENT_SUBMITTED');
-    setNote(data.note || (data.status === 'APPOINTED' ? '' : 'รอติดต่อกลับ')); setPhotos(data.photos || []);
-    setAppointmentDate(data.appointmentDate || ''); setAppointmentStart(data.appointmentStartTime || '');
-    setAppointmentEnd(data.appointmentEndTime || ''); setAppointmentNote(data.appointmentNote || '');
+    setPreferredContactTime(data.preferredContactTime || '');
+    setStatus(data.status || 'DOCUMENT_SUBMITTED');
+    setSelectedActivities(data.activities && data.activities.length > 0 ? data.activities : ['ยื่นหนังสือราชการ']);
+    setNote(data.note || (data.status === 'APPOINTED' ? '' : 'รอติดต่อกลับ'));
+    setPhotos(data.photos || []);
+    setAppointmentDate(data.appointmentDate || '');
+    setAppointmentStart(data.appointmentStartTime || '');
+    setAppointmentEnd(data.appointmentEndTime || '');
+    setAppointmentNote(data.appointmentNote || '');
   }, [submissionToEdit]);
 
   // Sync when preselectedSchool changes
@@ -146,6 +179,8 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         teacherLine,
         preferredContactTime,
         status,
+        activities: selectedActivities,
+        sameDayGuidance: selectedActivities.some(a => a.includes('แนะแนวนักเรียนทันที')),
         note,
         photos,
         createdAt: submissionToEdit?.createdAt || new Date().toISOString(),
@@ -193,6 +228,8 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         teacherLine,
         preferredContactTime,
         status: 'APPOINTED',
+        activities: selectedActivities,
+        sameDayGuidance: selectedActivities.some(a => a.includes('แนะแนวนักเรียนทันที')),
         note,
         photos,
         createdAt: submissionToEdit?.createdAt || new Date().toISOString(),
@@ -376,6 +413,89 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
             </div>
           </div>
 
+          {/* กิจกรรมที่ดำเนินการร่วมในการยื่นหนังสือ */}
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-slate-700">
+                กิจกรรมที่ดำเนินการ (เลือกได้หลายข้อ หรือพิมพ์เพิ่มได้)
+              </label>
+              <span className="text-[11px] text-slate-500 font-medium">
+                เลือกแล้ว {selectedActivities.length} กิจกรรม
+              </span>
+            </div>
+
+            {/* Quick Activity Badges */}
+            <div className="flex flex-wrap gap-2">
+              {COMMON_SUBMISSION_ACTIVITIES.map((act) => {
+                const isSelected = selectedActivities.includes(act);
+                return (
+                  <button
+                    key={act}
+                    type="button"
+                    onClick={() => toggleActivity(act)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#087CC1] text-white shadow-xs'
+                        : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>{isSelected ? '✓' : '+'}</span>
+                    <span>{act}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom Activity Input */}
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="text"
+                placeholder="+ พิมพ์ระบุกิจกรรมอื่นเพิ่มเติม เช่น ร่วมกิจกรรมหน้าเสาธง, นิทรรศการสัญจร..."
+                value={customActivityInput}
+                onChange={(e) => setCustomActivityInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddCustomActivity();
+                  }
+                }}
+                className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-[#087CC1]"
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomActivity}
+                disabled={!customActivityInput.trim()}
+                className="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-xl disabled:opacity-50 transition-colors"
+              >
+                เพิ่มกิจกรรม
+              </button>
+            </div>
+
+            {/* Custom Activities Tag List */}
+            {selectedActivities.filter((a) => !COMMON_SUBMISSION_ACTIVITIES.includes(a)).length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {selectedActivities
+                  .filter((a) => !COMMON_SUBMISSION_ACTIVITIES.includes(a))
+                  .map((customAct) => (
+                    <span
+                      key={customAct}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-sky-100 text-sky-800 rounded-lg text-xs font-medium"
+                    >
+                      <span>{customAct}</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleActivity(customAct)}
+                        className="hover:text-red-600 font-bold ml-1 text-sm"
+                        title="ลบกิจกรรมนี้"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+              </div>
+            )}
+          </div>
+
           {/* Post Submission Status & Notes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -385,11 +505,24 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               <select
                 value={status}
                 disabled={!!submissionToEdit?.appointmentId}
-                onChange={(e) => { const next = e.target.value as PostSubmissionStatus; setStatus(next); if (next === 'DOCUMENT_SUBMITTED' && !note.trim()) setNote('รอติดต่อกลับ'); else if (next === 'APPOINTED' && note === 'รอติดต่อกลับ') setNote(''); }}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium"
+                onChange={(e) => {
+                  const next = e.target.value as PostSubmissionStatus;
+                  setStatus(next);
+                  if (next === 'DOCUMENT_SUBMITTED' && !note.trim()) setNote('รอติดต่อกลับ');
+                  else if (next === 'APPOINTED' && note === 'รอติดต่อกลับ') setNote('');
+                  else if (next === 'WAITING_CONTACT' && !note.trim()) setNote('รอติดต่อกลับ');
+                  else if (next === 'CALL_LATER' && !note.trim()) setNote('ขอให้ติดต่อภายหลัง');
+                  else if (next === 'WAITING_APPOINTMENT' && !note.trim()) setNote('รอนัดหมาย');
+                  else if (next === 'NOT_READY' && !note.trim()) setNote('โรงเรียนยังไม่พร้อม');
+                }}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#087CC1]"
               >
                 <option value="DOCUMENT_SUBMITTED">ยื่นหนังสือแล้ว</option>
-                <option value="APPOINTED">นัดหมาย</option>
+                <option value="APPOINTED">นัดหมายแนะแนวแล้ว (ระบุวันเวลานัด)</option>
+                <option value="WAITING_CONTACT">รอติดต่อกลับ</option>
+                <option value="CALL_LATER">ขอให้ติดต่อภายหลัง</option>
+                <option value="WAITING_APPOINTMENT">รอนัดหมาย</option>
+                <option value="NOT_READY">โรงเรียนยังไม่พร้อม</option>
               </select>
             </div>
             <div>

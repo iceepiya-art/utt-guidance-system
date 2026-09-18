@@ -27,7 +27,6 @@ export interface School {
   id: string;
   schoolId: string; // เช่น SCH-001
   schoolName: string;
-  academicYear?: string;
   region?: string;
   subdistrict?: string;
   schoolType?: string;
@@ -50,6 +49,7 @@ export interface School {
   teamId: TeamId;
   currentStatus: SchoolStatus;
   note: string;
+  academicYear?: string; // เช่น 2569
   createdAt: string;
   createdBy?: string;
   updatedAt: string;
@@ -84,6 +84,7 @@ export interface DocumentSubmission {
   appointmentStartTime?: string;
   appointmentEndTime?: string;
   sameDayGuidance?: boolean;
+  activities?: string[];
   fieldTripId?: string;
   id: string;
   schoolId: string;
@@ -103,6 +104,7 @@ export interface DocumentSubmission {
   status: PostSubmissionStatus;
   note: string;
   photos: PhotoItem[];
+  academicYear?: string;
   createdAt: string;
   createdBy?: string;
   updatedAt: string;
@@ -116,6 +118,12 @@ export type AppointmentStatus =
   | 'COMPLETED'     // เสร็จสิ้น / ออกแนะแนวแล้ว
   | 'RESCHEDULED'   // เลื่อนนัด
   | 'CANCELLED';    // ยกเลิก
+
+export type ApprovalStatus =
+  | 'DRAFT'               // ร่าง
+  | 'PENDING_APPROVAL'   // ขออนุมัติ
+  | 'APPROVED'           // อนุมัติแล้ว
+  | 'REVISION_REQUESTED'; // ส่งกลับแก้ไข
 
 export interface ReminderConfig {
   type: 'email' | 'system';
@@ -144,6 +152,12 @@ export interface Appointment {
   vehicleName?: string;
   workType: string; // เช่น 'แนะแนว', 'ยื่นหนังสือ', 'ติดต่อโรงเรียน'
   status: AppointmentStatus;
+  approvalStatus?: ApprovalStatus;
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  approvalNote?: string;
+  academicYear?: string;
   source: 'DOCUMENT_SUBMISSION' | 'MANUAL' | 'FOLLOW_UP';
   note: string;
   reminders: ReminderConfig[];
@@ -180,17 +194,31 @@ export interface FieldTrip {
   summary?: string;
   issues?: string;
   note?: string;
+  approvalStatus?: ApprovalStatus;
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  approvalNote?: string;
+  academicYear?: string;
+  budgetAllowance?: number; // เบี้ยเลี้ยง (บาท)
+  budgetFuel?: number;      // ค่าน้ำมัน/พาหนะ (บาท)
   createdAt: string;
   createdBy?: string;
   updatedAt: string;
   updatedBy?: string;
 }
 
+export type VehicleStatus = 'AVAILABLE' | 'MAINTENANCE' | 'IN_USE';
+
 export interface Vehicle {
   id: string;
   vehicleName: string;
-  registrationNumber: string; // e.g. ขน 6738
+  registrationNumber: string; // e.g. ขน 6738 อต
+  vehicleType?: 'VAN' | 'PICKUP' | 'BUS' | 'SEDAN' | 'PERSONAL';
+  capacity?: number;
+  status?: VehicleStatus;
   active: boolean;
+  notes?: string;
 }
 
 export interface Team {
@@ -233,4 +261,15 @@ export interface SystemSettings {
   defaultReminderMinutes: number; // e.g. 1440 (1 day before)
   guidanceSeasonStart?: string;
   guidanceSeasonEnd?: string;
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'APPOINTMENT_REMINDER' | 'APPROVAL_REQUEST' | 'FOLLOW_UP_DUE' | 'SYSTEM';
+  timestamp: string;
+  read: boolean;
+  targetTab?: 'appointments' | 'calendar' | 'fieldTrips' | 'schools' | 'submissions';
+  priority?: 'high' | 'normal';
 }

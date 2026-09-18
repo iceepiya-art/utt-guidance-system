@@ -193,6 +193,15 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
                     </td>
                     <td className="py-3 px-3.5">
                       <div className="font-bold text-slate-800">{sub.schoolName}</div>
+                      {sub.activities && sub.activities.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {sub.activities.map((act, i) => (
+                            <span key={i} className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
+                              {act}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 px-3.5 font-mono text-slate-600">
                       {sub.documentNumber || '-'}
@@ -365,6 +374,18 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
           <div><dt className="text-slate-500">ผู้ยื่น</dt><dd>{detail.submittedByNames?.join(', ') || detail.submittedByName}</dd></div>
           <div><dt className="text-slate-500">ครูแนะแนว / เบอร์โทร</dt><dd>{detail.teacherName || '-'} {detail.teacherPhone}</dd></div>
           <div><dt className="text-slate-500">สถานะ</dt><dd>{getStatusBadge(detail.status)}</dd></div>
+          {detail.activities && detail.activities.length > 0 && (
+            <div>
+              <dt className="text-slate-500">กิจกรรมที่ดำเนินการ</dt>
+              <dd className="flex flex-wrap gap-1.5 mt-1">
+                {detail.activities.map((act, i) => (
+                  <span key={i} className="px-2.5 py-0.5 bg-blue-50 text-[#087CC1] border border-blue-200 rounded-md text-xs font-medium">
+                    {act}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          )}
           {detail.appointmentDate && <div><dt className="text-slate-500">นัดแนะแนว</dt><dd>{formatThaiShortDate(detail.appointmentDate)} {detail.appointmentStartTime}–{detail.appointmentEndTime}<p>{detail.appointmentNote}</p></dd></div>}
           <div><dt className="text-slate-500">หมายเหตุ</dt><dd className="whitespace-pre-wrap">{detail.note || '-'}</dd></div>
         </dl>
