@@ -390,8 +390,8 @@ export const UserManagerSection: React.FC = () => {
       {/* Add / Edit User Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+          <div className="bg-white w-full max-w-lg max-h-[calc(100dvh-2rem)] flex flex-col rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95">
+            <div className="px-4 sm:px-6 py-4 shrink-0 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-[#087CC1]" />
                 <h3 className="font-bold text-slate-800 text-base">
@@ -406,7 +406,8 @@ export const UserManagerSection: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSaveUser} className="p-6 space-y-4">
+            <form onSubmit={handleSaveUser} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="p-4 sm:p-6 space-y-4 overflow-y-auto min-h-0 flex-1" data-user-form-scroll>
               {formError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
@@ -551,8 +552,9 @@ export const UserManagerSection: React.FC = () => {
                 </label>
               </div>
 
+              </div>
               {/* Modal Footer Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <div className="flex shrink-0 items-center justify-end gap-3 p-4 sm:px-6 border-t border-slate-100 bg-white">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
