@@ -25,12 +25,15 @@ interface SubmissionsViewProps {
   submissions: DocumentSubmission[];
   schools: School[];
   onOpenInstantAppointment: (submissionData: {
+    submissionId?: string;
     schoolId: string;
     schoolName: string;
     teacherName: string;
     teacherPhone: string;
     teacherLine?: string;
     teamId: TeamId;
+    vehicleId?: string;
+    vehicleName?: string;
   }) => void;
 }
 
@@ -46,6 +49,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
   const [deleteError, setDeleteError] = useState('');
   const actions = (sub: DocumentSubmission) => <div className="flex items-center gap-1">
     <button type="button" aria-label={`ดูรายละเอียด ${sub.schoolName}`} title="ดูรายละเอียด" onClick={() => setDetail(sub)} className="p-2 text-slate-500 hover:bg-sky-50 rounded-lg"><Eye size={16}/></button>
+    {canEdit && !sub.appointmentId && sub.status !== 'GUIDANCE_COMPLETED' && <button type="button" aria-label={`นัดหมาย ${sub.schoolName}`} title="นัดหมายแนะแนว" onClick={() => onOpenInstantAppointment({ submissionId: sub.id, schoolId: sub.schoolId, schoolName: sub.schoolName, teacherName: sub.teacherName, teacherPhone: sub.teacherPhone, teacherLine: sub.teacherLine, teamId: sub.teamId, vehicleId: sub.vehicleId, vehicleName: sub.vehicleName })} className="p-2 text-slate-500 hover:text-[#087CC1] hover:bg-sky-50 rounded-lg"><Calendar size={16}/></button>}
     {canEdit && <button type="button" aria-label={`แก้ไข ${sub.schoolName}`} title="แก้ไข" onClick={() => { setSubmissionToEdit(sub); setIsFormOpen(true); }} className="p-2 text-slate-500 hover:bg-sky-50 rounded-lg"><Pencil size={16}/></button>}
     {isAdmin && <button type="button" aria-label={`ลบ ${sub.schoolName}`} title="ลบ" onClick={() => { setDeleteError(''); setDeleting(sub); }} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16}/></button>}
   </div>;
@@ -94,6 +98,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
       CALL_LATER: { label: 'ขอให้ติดต่อภายหลัง', bg: 'bg-orange-50', text: 'text-orange-700' },
       WAITING_APPOINTMENT: { label: 'รอนัดหมาย', bg: 'bg-indigo-50', text: 'text-indigo-700' },
       APPOINTED: { label: 'นัดหมายแล้ว', bg: 'bg-purple-50', text: 'text-purple-700' },
+      GUIDANCE_COMPLETED: { label: 'ออกแนะแนวแล้ว', bg: 'bg-emerald-50', text: 'text-emerald-700' },
       NOT_READY: { label: 'โรงเรียนยังไม่พร้อม', bg: 'bg-slate-100', text: 'text-slate-600' },
     };
     const c = config[status] || config.DOCUMENT_SUBMITTED;
@@ -192,7 +197,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
           <tbody className="divide-y divide-slate-100">
             {filteredSubmissions.length === 0 ? (
               <tr>
-                <td colSpan={11} className="py-8 text-center text-slate-400">
+                <td colSpan={12} className="py-8 text-center text-slate-400">
                   ไม่พบรายการยื่นหนังสือ
                 </td>
               </tr>

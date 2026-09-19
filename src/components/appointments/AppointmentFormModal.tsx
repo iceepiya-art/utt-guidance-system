@@ -1,15 +1,17 @@
 import { SchoolPicker } from '../common/SchoolPicker';
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, AlertTriangle, Bell, Car, Users, Save, Check } from 'lucide-react';
-import { School, Appointment, TeamId, AppointmentStatus } from '../../types';
-import { getTodayISO, checkTimeOverlap } from '../../utils/dateUtils';
+import { School, Appointment, TeamId, AppointmentStatus, DocumentSubmission } from '../../types';
+import { formatThaiShortDate, getTodayISO } from '../../utils/dateUtils';
 import { checkAppointmentConflict } from '../../firebase/dbService';
 
 interface AppointmentFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   schools: School[];
+  submissions?: DocumentSubmission[];
   prefilledData?: {
+    submissionId?: string;
     schoolId?: string;
     schoolName?: string;
     teacherName?: string;
@@ -19,6 +21,8 @@ interface AppointmentFormModalProps {
     date?: string;
     startTime?: string;
     endTime?: string;
+    vehicleId?: string;
+    vehicleName?: string;
   } | null;
   appointmentToEdit?: Appointment | null;
   onSave: (apptData: Omit<Appointment, 'id'>) => Promise<string | void>;
@@ -43,11 +47,22 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
   isOpen,
   onClose,
   schools,
+  submissions = [],
   prefilledData,
   appointmentToEdit,
   onSave,
 }) => {
+  const availableSubmissions = React.useMemo(
+    () => submissions.filter((sub) =>
+      !sub.fieldTripId
+      && (!sub.appointmentId || sub.id === appointmentToEdit?.submissionId || sub.id === prefilledData?.submissionId)
+      && sub.status !== 'GUIDANCE_COMPLETED'
+      && sub.status !== 'OTHER_ACTIVITY'
+    ),
+    [submissions, appointmentToEdit?.submissionId, prefilledData?.submissionId]
+  );
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
+  const [submissionId, setSubmissionId] = useState<string>('');
   const [date, setDate] = useState<string>(getTodayISO());
   const [startTime, setStartTime] = useState<string>('09:00');
   const [endTime, setEndTime] = useState<string>('11:30');
@@ -71,7 +86,10 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     if (appointmentToEdit) {
+      setSubmissionId(appointmentToEdit.submissionId || '');
       setSelectedSchoolId(appointmentToEdit.schoolId);
       setDate(appointmentToEdit.date);
       setStartTime(appointmentToEdit.startTime);
@@ -91,6 +109,11 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
         setReminderMinutes(appointmentToEdit.reminders[0].minutesBefore);
       }
     } else if (prefilledData) {
+      if (prefilledData.submissionId) {
+        const submission = submissions.find((sub) => sub.id === prefilledData.submissionId);
+        if (submission) applySubmission(submission);
+        else setSubmissionId(prefilledData.submissionId);
+      }
       if (prefilledData.schoolId) setSelectedSchoolId(prefilledData.schoolId);
       if (prefilledData.teamId) setTeamId(prefilledData.teamId);
       if (prefilledData.teacherName) setTeacherName(prefilledData.teacherName);
@@ -98,11 +121,40 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
       if (prefilledData.date) setDate(prefilledData.date);
       if (prefilledData.startTime) setStartTime(prefilledData.startTime);
       if (prefilledData.endTime) setEndTime(prefilledData.endTime);
+      if (prefilledData.vehicleId) setVehicleId(prefilledData.vehicleId);
+      if (prefilledData.vehicleName) setVehicleName(prefilledData.vehicleName);
+    } else {
+      setSubmissionId('');
+      setSelectedSchoolId('');
+      setDate(getTodayISO());
+      setStartTime('09:00');
+      setEndTime('11:30');
+      setTeamId('team1');
+      setTeacherName('');
+      setTeacherPhone('');
+      setStatus('CONFIRMED');
+      setNote('');
     }
-  }, [appointmentToEdit, prefilledData, schools]);
+  }, [isOpen, appointmentToEdit?.id, prefilledData, schools, submissions]);
+
+  const applySubmission = (submission: DocumentSubmission) => {
+    setSubmissionId(submission.id);
+    setSelectedSchoolId(submission.schoolId);
+    setTeamId(submission.teamId);
+    setTeacherName(submission.teacherName || '');
+    setTeacherPhone(submission.teacherPhone || '');
+    setTeamMemberNames(submission.submittedByNames?.join(', ') || submission.submittedByName || '');
+    setVehicleId(submission.vehicleId || (submission.teamId === 'team2' ? 'mitsu-6738' : 'vigo-9914'));
+    setVehicleName(submission.vehicleName || (submission.teamId === 'team2' ? 'MITSU บน 6738' : 'VIGO กข 9914'));
+    setNote(submission.appointmentNote || submission.note || '');
+    if (submission.appointmentDate) setDate(submission.appointmentDate);
+    if (submission.appointmentStartTime) setStartTime(submission.appointmentStartTime);
+    if (submission.appointmentEndTime) setEndTime(submission.appointmentEndTime);
+  };
 
   const handleSchoolSelect = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
+    setSubmissionId('');
     if (!schoolId) { setTeacherName(''); setTeacherPhone(''); }
     const target = schools.find((s) => s.id === schoolId);
     if (target) {
@@ -136,6 +188,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
         endTime,
         teamId,
         counselorId,
+        vehicleId,
         appointmentToEdit?.id
       );
 
@@ -162,6 +215,11 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
       return;
     }
 
+    if (!submissionId) {
+      setError('กรุณาเลือกข้อมูลการยื่นหนังสือเดิมก่อนสร้างนัดหมาย');
+      return;
+    }
+
     if (startTime >= endTime) {
       setError('เวลาเริ่มต้องมาก่อนเวลาสิ้นสุด');
       return;
@@ -171,6 +229,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
     setIsSubmitting(true);
     try {
       await onSave({
+        submissionId,
         schoolId: school.id,
         schoolName: school.schoolName,
         date,
@@ -185,6 +244,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
         teacherName,
         teacherPhone,
         status,
+        source: 'DOCUMENT_SUBMISSION',
         note,
         reminders: [
           {
@@ -245,12 +305,63 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
             </div>
           )}
 
+          {/* Submission reference */}
+          <div className="p-4 bg-sky-50/70 rounded-xl border border-sky-200 space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                อ้างอิงรายการยื่นหนังสือ <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={submissionId}
+                disabled={isSubmitting || !!appointmentToEdit?.submissionId}
+                onChange={(e) => {
+                  const submission = submissions.find((sub) => sub.id === e.target.value);
+                  if (submission) applySubmission(submission);
+                  else setSubmissionId('');
+                }}
+                className="w-full px-3 py-2 bg-white border border-sky-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-[#087CC1] disabled:bg-slate-100"
+                required
+              >
+                <option value="">— เลือกรายการยื่นหนังสือเดิม —</option>
+                {availableSubmissions.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {formatThaiShortDate(sub.submissionDate)} · {sub.schoolName} · {sub.documentNumber || 'ไม่มีเลขหนังสือ'}
+                  </option>
+                ))}
+                {submissionId && !availableSubmissions.some((sub) => sub.id === submissionId) && (
+                  <option value={submissionId}>
+                    {appointmentToEdit?.schoolName || prefilledData?.schoolName || 'รายการยื่นหนังสือที่เชื่อมไว้'}
+                  </option>
+                )}
+              </select>
+            </div>
+
+            {submissionId && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                <div className="rounded-lg bg-white border border-sky-100 p-2">
+                  <div className="text-slate-500">โรงเรียน</div>
+                  <div className="font-semibold text-slate-800">{schools.find((s) => s.id === selectedSchoolId)?.schoolName || '-'}</div>
+                </div>
+                <div className="rounded-lg bg-white border border-sky-100 p-2">
+                  <div className="text-slate-500">ครูแนะแนว</div>
+                  <div className="font-semibold text-slate-800">{teacherName || '-'}{teacherPhone ? ` · ${teacherPhone}` : ''}</div>
+                </div>
+                <div className="rounded-lg bg-white border border-sky-100 p-2">
+                  <div className="text-slate-500">สาย / รถ</div>
+                  <div className="font-semibold text-slate-800">
+                    {teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'} · {vehicleName || '-'}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* School selection */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               โรงเรียนเป้าหมาย <span className="text-red-500">*</span>
             </label>
-            <SchoolPicker schools={schools} value={selectedSchoolId} onChange={handleSchoolSelect} disabled={isSubmitting}/>
+            <SchoolPicker schools={schools} value={selectedSchoolId} onChange={handleSchoolSelect} disabled={isSubmitting || !!submissionId}/>
           </div>
 
           {/* Date & Time slots */}
@@ -333,6 +444,9 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
                 onChange={(e) => handleVehicleChange(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
               >
+                {vehicleId && !VEHICLES.some((v) => v.id === vehicleId) && (
+                  <option value={vehicleId}>{vehicleName}</option>
+                )}
                 {VEHICLES.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.name}

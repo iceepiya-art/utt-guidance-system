@@ -151,29 +151,39 @@ function MainApplication() {
   };
 
   const handleOpenAppointmentForSchool = (school: School) => {
+    const latestSubmission = submissions.find((sub) => sub.schoolId === school.id && !sub.appointmentId && !sub.fieldTripId);
     setPrefilledAppointmentData({
+      submissionId: latestSubmission?.id,
       schoolId: school.id,
       schoolName: school.schoolName,
       teacherName: school.teacherName || '',
       teacherPhone: school.teacherPhone || '',
       teamId: school.teamId,
+      vehicleId: latestSubmission?.vehicleId,
+      vehicleName: latestSubmission?.vehicleName,
     });
     setIsAppointmentModalOpen(true);
   };
 
   const handleInstantAppointmentFromSubmission = (submissionData: {
+    submissionId?: string;
     schoolId: string;
     schoolName: string;
     teacherName: string;
     teacherPhone: string;
     teamId: TeamId;
+    vehicleId?: string;
+    vehicleName?: string;
   }) => {
     setPrefilledAppointmentData({
+      submissionId: submissionData.submissionId,
       schoolId: submissionData.schoolId,
       schoolName: submissionData.schoolName,
       teacherName: submissionData.teacherName,
       teacherPhone: submissionData.teacherPhone,
       teamId: submissionData.teamId,
+      vehicleId: submissionData.vehicleId,
+      vehicleName: submissionData.vehicleName,
     });
     setIsAppointmentModalOpen(true);
   };
@@ -229,6 +239,7 @@ function MainApplication() {
         <AppointmentsView
           appointments={appointments}
           schools={schools}
+          submissions={submissions}
           onRecordTrip={handleRecordTripFromAppointment}
         />
       )}
@@ -237,6 +248,7 @@ function MainApplication() {
         <CalendarView
           appointments={appointments}
           schools={schools}
+          submissions={submissions}
           onRecordTrip={handleRecordTripFromAppointment}
         />
       )}
@@ -245,13 +257,14 @@ function MainApplication() {
         <FieldTripsView
           fieldTrips={fieldTrips}
           schools={schools}
+          submissions={submissions}
+          appointments={appointments}
         />
       )}
 
       {activeTab === 'gallery' && (
         <ActivityGalleryView
           fieldTrips={fieldTrips}
-          submissions={submissions}
           schools={schools}
         />
       )}
@@ -294,6 +307,7 @@ function MainApplication() {
           setPrefilledAppointmentData(null);
         }}
         schools={schools}
+        submissions={submissions}
         prefilledData={prefilledAppointmentData}
         onSave={async (data) => {
           await createAppointment(data, currentUser);
@@ -323,6 +337,8 @@ function MainApplication() {
           setPrefilledTripAppointment(null);
         }}
         schools={schools}
+        submissions={submissions}
+        appointments={appointments}
         prefilledAppointment={prefilledTripAppointment}
         onSave={async (data) => {
           await createFieldTrip(data, currentUser);

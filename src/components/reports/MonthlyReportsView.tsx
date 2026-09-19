@@ -348,13 +348,14 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
                 <th className="py-3 px-4">โรงเรียนที่จัดกิจกรรม</th>
                 <th className="py-3 px-4">อาจารย์ผู้รับผิดชอบ</th>
                 <th className="py-3 px-4 text-center">จำนวนนักเรียน</th>
-                <th className="py-3 px-4">ผลการปฏิบัติงาน</th>
+                <th className="py-3 px-4">รายละเอียดกิจกรรม</th>
+                <th className="py-3 px-4 text-center">รูปกิจกรรม</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {monthlyTrips.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">
+                  <td colSpan={7} className="py-8 text-center text-slate-400">
                     ไม่มีรายการออกแนะแนวในเดือนที่เลือก
                   </td>
                 </tr>
@@ -378,8 +379,11 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
                       </td>
                       <td className="py-3 px-4">
                         {trip.schools?.map((s, idx) => (
-                          <div key={idx} className="font-semibold text-slate-800">
-                            {s.schoolName}
+                          <div key={idx} className="font-semibold text-slate-800 mb-1">
+                            <div>{s.schoolName}</div>
+                            <div className="text-[11px] font-normal text-slate-500">
+                              {s.timeSlot || 'ไม่ระบุเวลา'}{s.notes ? ` · ${s.notes}` : ''}
+                            </div>
                           </div>
                         ))}
                       </td>
@@ -389,8 +393,28 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
                       <td className="py-3 px-4 text-center font-bold text-emerald-700">
                         {students} คน
                       </td>
-                      <td className="py-3 px-4 text-slate-600 max-w-xs truncate" title={trip.summary}>
-                        {trip.summary || '-'}
+                      <td className="py-3 px-4 text-slate-600 max-w-xs">
+                        <div className="font-semibold text-slate-700">{trip.workType}</div>
+                        <div className="text-[11px] text-slate-500 line-clamp-2" title={trip.summary || trip.issues || ''}>
+                          {trip.summary || trip.issues || '-'}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {trip.photos?.length ? (
+                          <div className="flex items-center justify-center gap-1">
+                            {trip.photos.slice(0, 3).map((photo, index) => (
+                              <img
+                                key={photo.id || index}
+                                src={photo.url}
+                                alt={photo.fileName || 'รูปกิจกรรม'}
+                                className="w-8 h-8 rounded-md object-cover border border-slate-200"
+                              />
+                            ))}
+                            <span className="text-[11px] font-semibold text-slate-600">{trip.photos.length} รูป</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
                       </td>
                     </tr>
                   );

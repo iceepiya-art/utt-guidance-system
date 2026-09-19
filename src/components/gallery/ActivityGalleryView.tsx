@@ -1,87 +1,62 @@
 import React, { useState, useMemo } from 'react';
 import {
   Image as ImageIcon,
-  Filter,
-  Calendar,
-  GraduationCap,
   Maximize2,
   X,
-  Download,
   ExternalLink,
 } from 'lucide-react';
-import { FieldTrip, DocumentSubmission, School, TeamId, PhotoItem } from '../../types';
+import { FieldTrip, School, TeamId, PhotoItem } from '../../types';
 import { formatThaiShortDate } from '../../utils/dateUtils';
 
 interface ActivityGalleryViewProps {
   fieldTrips: FieldTrip[];
-  submissions: DocumentSubmission[];
   schools: School[];
 }
 
 interface GalleryPhotoWithMeta extends PhotoItem {
-  sourceType: 'fieldTrip' | 'submission';
   sourceTitle: string;
   sourceDate: string;
   teamId: TeamId;
+  activityTitle: string;
 }
 
 export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
   fieldTrips,
-  submissions,
   schools,
 }) => {
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('all');
   const [teamFilter, setTeamFilter] = useState<'all' | TeamId>('all');
-  const [sourceTypeFilter, setSourceTypeFilter] = useState<'all' | 'fieldTrip' | 'submission'>('all');
   const [lightboxPhoto, setLightboxPhoto] = useState<GalleryPhotoWithMeta | null>(null);
 
-  // Aggregate all photos from field trips and submissions
+  // Activity photos are derived from completed field-trip records.
   const allPhotos = useMemo(() => {
     const list: GalleryPhotoWithMeta[] = [];
 
-    // From Field Trips
     fieldTrips.forEach((trip) => {
       if (trip.photos) {
         trip.photos.forEach((photo) => {
           list.push({
             ...photo,
-            sourceType: 'fieldTrip',
             sourceTitle: trip.schools?.map((s) => s.schoolName).join(', ') || 'กิจกรรมแนะแนว',
             sourceDate: trip.date,
             teamId: trip.teamId,
+            activityTitle: trip.workType || 'ออกแนะแนว',
           });
         });
       }
     });
 
-    // From Document Submissions
-    submissions.forEach((sub) => {
-      if (sub.photos) {
-        sub.photos.forEach((photo) => {
-          list.push({
-            ...photo,
-            sourceType: 'submission',
-            sourceTitle: `ยื่นหนังสือ: ${sub.schoolName}`,
-            sourceDate: sub.submissionDate,
-            teamId: sub.teamId,
-          });
-        });
-      }
-    });
-
-    // Sort by uploadedAt or date desc
     return list.sort((a, b) => (b.sourceDate || '').localeCompare(a.sourceDate || ''));
-  }, [fieldTrips, submissions]);
+  }, [fieldTrips]);
 
   // Filter photos
   const filteredPhotos = useMemo(() => {
     return allPhotos.filter((item) => {
       if (teamFilter !== 'all' && item.teamId !== teamFilter) return false;
-      if (sourceTypeFilter !== 'all' && item.sourceType !== sourceTypeFilter) return false;
       if (selectedSchoolId !== 'all' && item.schoolId !== selectedSchoolId) return false;
       return true;
     });
-  }, [allPhotos, teamFilter, sourceTypeFilter, selectedSchoolId]);
+  }, [allPhotos, teamFilter, selectedSchoolId]);
 
   return (
     <div className="space-y-5">
@@ -90,10 +65,10 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
         <div>
           <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
             <ImageIcon className="w-6 h-6 text-[#087CC1]" />
-            <span>คลังรูปกิจกรรมและหลักฐาน ({filteredPhotos.length} รูป)</span>
+            <span>รูปกิจกรรมแนะแนว ({filteredPhotos.length} รูป)</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            รวบรวมภาพถ่ายการยื่นหนังสือและภาพกิจกรรมการออกแนะแนวการศึกษา
+            ดึงจากบันทึกผลการออกแนะแนว พร้อมโรงเรียน วันที่ และกิจกรรม
           </p>
         </div>
       </div>
@@ -128,19 +103,6 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
           </button>
         </div>
 
-        {/* Source Type Filter */}
-        <div>
-          <select
-            value={sourceTypeFilter}
-            onChange={(e) => setSourceTypeFilter(e.target.value as any)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:ring-2 focus:ring-[#087CC1]"
-          >
-            <option value="all">หมวดหมู่: ทั้งหมด</option>
-            <option value="fieldTrip">ภาพออกแนะแนว</option>
-            <option value="submission">ภาพยื่นหนังสือ</option>
-          </select>
-        </div>
-
         {/* School Filter */}
         <div className="flex-1 min-w-[200px]">
           <select
@@ -164,7 +126,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
           <ImageIcon className="w-12 h-12 mx-auto mb-2 text-slate-300" />
           <p className="text-sm">ยังไม่มีรูปภาพในหมวดหมู่นี้</p>
           <p className="text-xs mt-1 text-slate-400">
-            รูปภาพจะปรากฏที่นี่เมื่อมีการบันทึกการยื่นหนังสือ หรือบันทึกการออกแนะแนว
+            รูปภาพจะปรากฏที่นี่เมื่อบันทึกผลการออกแนะแนวและแนบรูปกิจกรรม
           </p>
         </div>
       ) : (
@@ -193,7 +155,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
                       {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                     </span>
                     <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-sm bg-black/60 text-white backdrop-blur-xs">
-                      {item.sourceType === 'fieldTrip' ? 'ออกแนะแนว' : 'ยื่นหนังสือ'}
+                      ออกแนะแนว
                     </span>
                   </div>
                 </div>
@@ -201,6 +163,9 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
                 <div className="p-2.5 flex-1 flex flex-col justify-between text-xs">
                   <div className="font-bold text-slate-800 line-clamp-1">
                     {item.sourceTitle}
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">
+                    {item.activityTitle}
                   </div>
                   <div className="text-[10px] text-slate-400 mt-1 flex items-center justify-between">
                     <span>{formatThaiShortDate(item.sourceDate)}</span>
@@ -227,7 +192,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
               <div>
                 <h3 className="font-bold text-sm sm:text-base">{lightboxPhoto.sourceTitle}</h3>
                 <p className="text-xs text-white/70">
-                  {formatThaiShortDate(lightboxPhoto.sourceDate)} • {lightboxPhoto.fileName}
+                  {formatThaiShortDate(lightboxPhoto.sourceDate)} • {lightboxPhoto.activityTitle} • {lightboxPhoto.fileName}
                 </p>
               </div>
               <div className="flex items-center gap-2">

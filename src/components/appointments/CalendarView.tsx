@@ -10,7 +10,7 @@ import {
   Users,
   Car,
 } from 'lucide-react';
-import { Appointment, School, TeamId } from '../../types';
+import { Appointment, DocumentSubmission, School, TeamId } from '../../types';
 import {
   formatThaiMonthYear,
   formatThaiFullDate,
@@ -27,6 +27,7 @@ import { useAuth } from '../../context/AuthContext';
 interface CalendarViewProps {
   appointments: Appointment[];
   schools: School[];
+  submissions: DocumentSubmission[];
   onRecordTrip: (appointment: Appointment) => void;
 }
 
@@ -35,6 +36,7 @@ type ViewMode = 'month' | 'week' | 'day';
 export const CalendarView: React.FC<CalendarViewProps> = ({
   appointments,
   schools,
+  submissions,
   onRecordTrip,
 }) => {
   const { currentUser, canEdit } = useAuth();
@@ -431,6 +433,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           setAppointmentToEdit(null);
         }}
         schools={schools}
+        submissions={submissions}
         appointmentToEdit={appointmentToEdit}
         prefilledData={prefilledDate ? { date: prefilledDate } : null}
         onSave={handleSaveAppointment}

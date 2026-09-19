@@ -13,7 +13,7 @@ import {
   Eye,
   GraduationCap,
 } from 'lucide-react';
-import { FieldTrip, School, TeamId } from '../../types';
+import { Appointment, DocumentSubmission, FieldTrip, School, TeamId } from '../../types';
 import { formatThaiShortDate } from '../../utils/dateUtils';
 import { FieldTripFormModal } from './FieldTripFormModal';
 import { createFieldTrip, updateFieldTrip, deleteFieldTrip } from '../../firebase/dbService';
@@ -22,11 +22,15 @@ import { useAuth } from '../../context/AuthContext';
 interface FieldTripsViewProps {
   fieldTrips: FieldTrip[];
   schools: School[];
+  submissions: DocumentSubmission[];
+  appointments: Appointment[];
 }
 
 export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
   fieldTrips,
   schools,
+  submissions,
+  appointments,
 }) => {
   const { currentUser, isAdmin, canEdit } = useAuth();
 
@@ -407,6 +411,8 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
           setTripToEdit(null);
         }}
         schools={schools}
+        submissions={submissions}
+        appointments={appointments}
         tripToEdit={tripToEdit}
         onSave={handleSave}
       />

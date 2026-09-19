@@ -461,6 +461,25 @@ export async function createAppointment(
     });
   }
 
+  if (appointment.submissionId) {
+    try {
+      await updateDoc(doc(db, 'documentSubmissions', appointment.submissionId), {
+        status: 'APPOINTED',
+        appointmentId: docRef.id,
+        appointmentDate: appointment.date,
+        appointmentStartTime: appointment.startTime,
+        appointmentEndTime: appointment.endTime,
+        appointmentNote: appointment.note || '',
+        vehicleId: appointment.vehicleId || '',
+        vehicleName: appointment.vehicleName || '',
+        updatedAt: now,
+        updatedBy: user?.displayName || 'เจ้าหน้าที่',
+      });
+    } catch (e) {
+      console.warn('Could not link appointment to document submission for', appointment.submissionId, e);
+    }
+  }
+
   await logActivity(
     user?.id || 'sys',
     user?.displayName || 'เจ้าหน้าที่',
@@ -501,6 +520,25 @@ export async function updateAppointment(
     updatedAt: now,
     updatedBy: user?.displayName || 'เจ้าหน้าที่',
   });
+
+  if (data.submissionId) {
+    try {
+      await updateDoc(doc(db, 'documentSubmissions', data.submissionId), {
+        status: data.status === 'COMPLETED' ? 'GUIDANCE_COMPLETED' : 'APPOINTED',
+        appointmentId: id,
+        appointmentDate: data.date,
+        appointmentStartTime: data.startTime,
+        appointmentEndTime: data.endTime,
+        appointmentNote: data.note || '',
+        vehicleId: data.vehicleId || '',
+        vehicleName: data.vehicleName || '',
+        updatedAt: now,
+        updatedBy: user?.displayName || 'เจ้าหน้าที่',
+      });
+    } catch (e) {
+      console.warn('Could not update linked document submission for appointment', id, e);
+    }
+  }
 
   await logActivity(
     user?.id || 'sys',
@@ -631,6 +669,31 @@ export async function createFieldTrip(
           console.warn('Could not auto-update school status for', sch.schoolId, e);
         }
       }
+    }
+  }
+
+  if (trip.appointmentId) {
+    try {
+      await updateDoc(doc(db, 'appointments', trip.appointmentId), {
+        status: 'COMPLETED',
+        updatedAt: now,
+        updatedBy: user?.displayName || trip.counselorName,
+      });
+    } catch (e) {
+      console.warn('Could not auto-update appointment status for', trip.appointmentId, e);
+    }
+  }
+
+  if (trip.submissionId) {
+    try {
+      await updateDoc(doc(db, 'documentSubmissions', trip.submissionId), {
+        status: 'GUIDANCE_COMPLETED',
+        fieldTripId: docRef.id,
+        updatedAt: now,
+        updatedBy: user?.displayName || trip.counselorName,
+      });
+    } catch (e) {
+      console.warn('Could not link document submission to field trip for', trip.submissionId, e);
     }
   }
 

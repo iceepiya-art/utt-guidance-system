@@ -18,12 +18,15 @@ interface SubmissionFormModalProps {
   submissionToEdit?: DocumentSubmission | null;
   onSave: (data: Omit<DocumentSubmission, 'id'>) => Promise<string>;
   onOpenInstantAppointment: (submissionData: {
+    submissionId?: string;
     schoolId: string;
     schoolName: string;
     teacherName: string;
     teacherPhone: string;
     teacherLine?: string;
     teamId: TeamId;
+    vehicleId?: string;
+    vehicleName?: string;
   }) => void;
 }
 
@@ -219,8 +222,9 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     }
 
     // First, save the document submission so progress is never lost
+    let savedSubmissionId = submissionToEdit?.id;
     try {
-      await onSave({
+      savedSubmissionId = await onSave({
         schoolId: targetSchool.id,
         schoolName: targetSchool.schoolName,
         documentNumber,
@@ -250,12 +254,15 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
 
     // Now open the calendar/appointment modal with carried-over fields
     onOpenInstantAppointment({
+      submissionId: savedSubmissionId,
       schoolId: targetSchool.id,
       schoolName: targetSchool.schoolName,
       teacherName,
       teacherPhone,
       teacherLine,
       teamId,
+      vehicleId,
+      vehicleName,
     });
     onClose();
   };

@@ -74,6 +74,7 @@ export type PostSubmissionStatus =
   | 'CALL_LATER'           // ขอให้ติดต่อภายหลัง
   | 'WAITING_APPOINTMENT'  // รอนัดหมาย
   | 'APPOINTED'            // นัดหมายแล้ว
+  | 'GUIDANCE_COMPLETED'   // ออกแนะแนวแล้ว
   | 'NOT_READY';           // โรงเรียนยังไม่พร้อม
 
 export interface DocumentSubmission {
@@ -180,6 +181,7 @@ export interface FieldTripSchool {
 
 export interface FieldTrip {
   submissionId?: string;
+  appointmentId?: string;
   id: string;
   date: string; // YYYY-MM-DD
   departureTime?: string;

@@ -12,7 +12,7 @@ import {
   Trash2,
   Compass,
 } from 'lucide-react';
-import { Appointment, School, TeamId, AppointmentStatus } from '../../types';
+import { Appointment, DocumentSubmission, School, TeamId, AppointmentStatus } from '../../types';
 import { formatThaiShortDate, getRelativeThaiDayLabel } from '../../utils/dateUtils';
 import { AppointmentDetailModal } from './AppointmentDetailModal';
 import { AppointmentFormModal } from './AppointmentFormModal';
@@ -22,12 +22,14 @@ import { useAuth } from '../../context/AuthContext';
 interface AppointmentsViewProps {
   appointments: Appointment[];
   schools: School[];
+  submissions: DocumentSubmission[];
   onRecordTrip: (appointment: Appointment) => void;
 }
 
 export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
   appointments,
   schools,
+  submissions,
   onRecordTrip,
 }) => {
   const { currentUser, isAdmin, canEdit } = useAuth();
@@ -377,6 +379,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
           setAppointmentToEdit(null);
         }}
         schools={schools}
+        submissions={submissions}
         appointmentToEdit={appointmentToEdit}
         onSave={handleSaveAppointment}
       />

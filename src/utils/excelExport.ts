@@ -47,7 +47,9 @@ export function exportMonthlyReportToExcel(
       'งานที่ปฏิบัติ',
       'อ.แนะแนว',
       'จำนวน นร.',
+      'รูปกิจกรรม',
       'หมายเหตุ/สรุปผล',
+      'รายละเอียดเพิ่มเติม',
       'เบี้ยเลี้ยง (บาท)',
       'ค่าอาหาร (บาท)',
     ],
@@ -56,7 +58,7 @@ export function exportMonthlyReportToExcel(
   let rowIndex = 1;
 
   if (trips.length === 0) {
-    excelData.push(['-', '-', '-', 'ไม่มีรายการปฏิบัติงานในเดือนนี้', '-', '-', '-', '-', 0, '', '', '']);
+    excelData.push(['-', '-', '-', 'ไม่มีรายการปฏิบัติงานในเดือนนี้', '-', '-', '-', '-', 0, '-', '', '', '', '']);
   } else {
     trips.forEach((trip) => {
       const dayName = getThaiDayOfWeek(trip.date);
@@ -66,6 +68,10 @@ export function exportMonthlyReportToExcel(
       const workType = trip.workType || 'ออกแนะแนว';
       const counselor = trip.counselorName || '-';
       const summary = trip.summary || trip.note || '';
+      const details = trip.issues || '';
+      const photoSummary = trip.photos?.length
+        ? `${trip.photos.length} รูป: ${trip.photos.map((photo) => photo.url).join(' | ')}`
+        : '-';
 
       if (!trip.schools || trip.schools.length === 0) {
         excelData.push([
@@ -78,7 +84,9 @@ export function exportMonthlyReportToExcel(
           workType,
           counselor,
           0,
+          photoSummary,
           summary,
+          details,
           '',
           '',
         ]);
@@ -94,7 +102,9 @@ export function exportMonthlyReportToExcel(
             sIdx === 0 ? workType : '',
             sIdx === 0 ? counselor : '',
             sch.studentCount || 0,
+            sIdx === 0 ? photoSummary : '',
             sIdx === 0 ? summary : '',
+            sIdx === 0 ? details : '',
             '',
             '',
           ]);
@@ -121,7 +131,9 @@ export function exportMonthlyReportToExcel(
     { wch: 20 }, // งานที่ปฏิบัติ
     { wch: 22 }, // อ.แนะแนว
     { wch: 12 }, // จำนวน นร.
+    { wch: 42 }, // รูปกิจกรรม
     { wch: 30 }, // หมายเหตุ
+    { wch: 30 }, // รายละเอียดเพิ่มเติม
     { wch: 14 }, // เบี้ยเลี้ยง
     { wch: 14 }, // ค่าอาหาร
   ];
