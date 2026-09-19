@@ -163,6 +163,7 @@ export interface Appointment {
   academicYear?: string;
   source: 'DOCUMENT_SUBMISSION' | 'MANUAL' | 'FOLLOW_UP';
   note: string;
+  photos?: PhotoItem[];
   reminders: ReminderConfig[];
   createdAt: string;
   createdBy?: string;

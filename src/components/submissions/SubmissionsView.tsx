@@ -14,16 +14,19 @@ import {
   ChevronRight,
   Eye,
   Filter,
+  Download,
 } from 'lucide-react';
-import { DocumentSubmission, School, TeamId, PostSubmissionStatus } from '../../types';
-import { formatThaiShortDate } from '../../utils/dateUtils';
+import { DocumentSubmission, School, TeamId, PostSubmissionStatus, Appointment } from '../../types';
+import { formatThaiShortDate, THAI_MONTHS, getBuddhistYear } from '../../utils/dateUtils';
 import { SubmissionFormModal } from './SubmissionFormModal';
+import { SubmissionImportModal } from './SubmissionImportModal';
 import { createDocumentSubmission, updateDocumentSubmission } from '../../firebase/dbService';
 import { useAuth } from '../../context/AuthContext';
 
 interface SubmissionsViewProps {
   submissions: DocumentSubmission[];
   schools: School[];
+  appointments?: Appointment[];
   onOpenInstantAppointment: (submissionData: {
     submissionId?: string;
     schoolId: string;
@@ -40,6 +43,7 @@ interface SubmissionsViewProps {
 export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
   submissions,
   schools,
+  appointments = [],
   onOpenInstantAppointment,
 }) => {
   const { currentUser, canEdit, isAdmin } = useAuth();
@@ -47,16 +51,106 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
   const [deleting, setDeleting] = useState<DocumentSubmission | null>(null);
   const [busy, setBusy] = useState(false);
   const [deleteError, setDeleteError] = useState('');
-  const actions = (sub: DocumentSubmission) => <div className="flex items-center gap-1">
-    <button type="button" aria-label={`ดูรายละเอียด ${sub.schoolName}`} title="ดูรายละเอียด" onClick={() => setDetail(sub)} className="p-2 text-slate-500 hover:bg-sky-50 rounded-lg"><Eye size={16}/></button>
-    {canEdit && !sub.appointmentId && sub.status !== 'GUIDANCE_COMPLETED' && <button type="button" aria-label={`นัดหมาย ${sub.schoolName}`} title="นัดหมายแนะแนว" onClick={() => onOpenInstantAppointment({ submissionId: sub.id, schoolId: sub.schoolId, schoolName: sub.schoolName, teacherName: sub.teacherName, teacherPhone: sub.teacherPhone, teacherLine: sub.teacherLine, teamId: sub.teamId, vehicleId: sub.vehicleId, vehicleName: sub.vehicleName })} className="p-2 text-slate-500 hover:text-[#087CC1] hover:bg-sky-50 rounded-lg"><Calendar size={16}/></button>}
-    {canEdit && <button type="button" aria-label={`แก้ไข ${sub.schoolName}`} title="แก้ไข" onClick={() => { setSubmissionToEdit(sub); setIsFormOpen(true); }} className="p-2 text-slate-500 hover:bg-sky-50 rounded-lg"><Pencil size={16}/></button>}
-    {isAdmin && <button type="button" aria-label={`ลบ ${sub.schoolName}`} title="ลบ" onClick={() => { setDeleteError(''); setDeleting(sub); }} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16}/></button>}
-  </div>;
+
+  const getLinkedAppointment = (sub: DocumentSubmission) => {
+    if (!appointments || appointments.length === 0) return null;
+    const clean = (s: string) => (s || '').replace(/^(โรงเรียน|รร\.)\s*/, '').trim().toLowerCase();
+    const subClean = clean(sub.schoolName);
+    return (
+      appointments.find((a) => a.submissionId === sub.id) ||
+      appointments.find((a) => clean(a.schoolName) === subClean)
+    );
+  };
+
+  const actions = (sub: DocumentSubmission) => (
+    <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
+      <button
+        type="button"
+        aria-label={`ดูรายละเอียด ${sub.schoolName}`}
+        title="ดูรายละเอียด"
+        onClick={() => setDetail(sub)}
+        className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-[#087CC1] hover:bg-sky-50 rounded-xl transition-colors border border-transparent hover:border-sky-200"
+      >
+        <Eye className="w-4 h-4" />
+      </button>
+      {canEdit && !sub.appointmentId && sub.status !== 'GUIDANCE_COMPLETED' && (
+        <button
+          type="button"
+          aria-label={`สร้างนัดหมาย ${sub.schoolName}`}
+          title="สร้างนัดหมาย"
+          onClick={() =>
+            onOpenInstantAppointment({
+              submissionId: sub.id,
+              schoolId: sub.schoolId,
+              schoolName: sub.schoolName,
+              teacherName: sub.teacherName,
+              teacherPhone: sub.teacherPhone,
+              teacherLine: sub.teacherLine,
+              teamId: sub.teamId,
+              vehicleId: sub.vehicleId,
+              vehicleName: sub.vehicleName,
+            })
+          }
+          className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-colors border border-transparent hover:border-emerald-200"
+        >
+          <Calendar className="w-4 h-4" />
+        </button>
+      )}
+      {canEdit && (
+        <button
+          type="button"
+          aria-label={`แก้ไข ${sub.schoolName}`}
+          title="แก้ไข"
+          onClick={() => {
+            setSubmissionToEdit(sub);
+            setIsFormOpen(true);
+          }}
+          className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition-colors border border-transparent hover:border-amber-200"
+        >
+          <Pencil className="w-4 h-4" />
+        </button>
+      )}
+      {isAdmin && (
+        <button
+          type="button"
+          aria-label={`ลบ ${sub.schoolName}`}
+          title="ลบ"
+          onClick={() => {
+            setDeleteError('');
+            setDeleting(sub);
+          }}
+          className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-200"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [teamFilter, setTeamFilter] = useState<'all' | TeamId>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+
+  const availableMonths = useMemo(() => {
+    const monthCounts = new Map<string, number>();
+    submissions.forEach((s) => {
+      if (s.submissionDate && s.submissionDate.length >= 7) {
+        const key = s.submissionDate.substring(0, 7);
+        monthCounts.set(key, (monthCounts.get(key) || 0) + 1);
+      }
+    });
+    return Array.from(monthCounts.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([key, count]) => {
+        const [y, m] = key.split('-');
+        const monthIdx = parseInt(m, 10) - 1;
+        const year = parseInt(y, 10);
+        const label = `${THAI_MONTHS[monthIdx] || m} ${getBuddhistYear(year)}`;
+        return { key, label, count };
+      });
+  }, [submissions]);
   const [submissionToEdit, setSubmissionToEdit] = useState<DocumentSubmission | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedPhotoModal, setSelectedPhotoModal] = useState<string | null>(null);
 
   useEffect(() => {
@@ -81,9 +175,10 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
         sub.submittedByName?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchTeam = teamFilter === 'all' || sub.teamId === teamFilter;
-      return matchSearch && matchTeam;
+      const matchMonth = selectedMonth === 'all' || sub.submissionDate.startsWith(selectedMonth);
+      return matchSearch && matchTeam && matchMonth;
     });
-  }, [submissions, searchTerm, teamFilter]);
+  }, [submissions, searchTerm, teamFilter, selectedMonth]);
 
   const handleSave = async (data: Omit<DocumentSubmission, 'id'>) => {
     if (submissionToEdit) { await updateDocumentSubmission(submissionToEdit.id, data, currentUser); return submissionToEdit.id; }
@@ -92,18 +187,18 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
 
   const getStatusBadge = (status: PostSubmissionStatus) => {
     const config: Record<PostSubmissionStatus, { label: string; bg: string; text: string }> = {
-      DOCUMENT_SUBMITTED: { label: 'ยื่นหนังสือแล้ว', bg: 'bg-blue-50', text: 'text-blue-700' },
+      DOCUMENT_SUBMITTED: { label: 'ยื่นหนังสือแล้ว / รอนัดหมาย', bg: 'bg-blue-50', text: 'text-blue-700' },
       OTHER_ACTIVITY: { label: 'กิจกรรมอื่นๆ', bg: 'bg-emerald-50', text: 'text-emerald-700' },
       WAITING_CONTACT: { label: 'รอติดต่อกลับ', bg: 'bg-amber-50', text: 'text-amber-700' },
       CALL_LATER: { label: 'ขอให้ติดต่อภายหลัง', bg: 'bg-orange-50', text: 'text-orange-700' },
-      WAITING_APPOINTMENT: { label: 'รอนัดหมาย', bg: 'bg-indigo-50', text: 'text-indigo-700' },
+      WAITING_APPOINTMENT: { label: 'ยื่นหนังสือแล้ว / รอนัดหมาย', bg: 'bg-blue-50', text: 'text-blue-700' },
       APPOINTED: { label: 'นัดหมายแล้ว', bg: 'bg-purple-50', text: 'text-purple-700' },
       GUIDANCE_COMPLETED: { label: 'ออกแนะแนวแล้ว', bg: 'bg-emerald-50', text: 'text-emerald-700' },
       NOT_READY: { label: 'โรงเรียนยังไม่พร้อม', bg: 'bg-slate-100', text: 'text-slate-600' },
     };
     const c = config[status] || config.DOCUMENT_SUBMITTED;
     return (
-      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${c.bg} ${c.text}`}>
+      <span className={`inline-block px-3 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap border border-transparent ${c.bg} ${c.text}`}>
         {c.label}
       </span>
     );
@@ -114,171 +209,301 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
             <FileText className="w-6 h-6 text-[#087CC1]" />
-            <span>ข้อมูลการยื่นหนังสือ ({submissions.length} รายการ)</span>
+            <span>ข้อมูลการยื่นหนังสือ ({filteredSubmissions.length}{selectedMonth !== 'all' || teamFilter !== 'all' ? ` จาก ${submissions.length}` : ''} รายการ)</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             บันทึกประวัติการยื่นหนังสือราชการ ข้อมูลครูแนะแนว และรูปถ่ายหลักฐาน
           </p>
         </div>
 
-        {canEdit && (
-          <button
-            onClick={() => { setSubmissionToEdit(null); setIsFormOpen(true); }}
-            id="btn-add-submission"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>บันทึกการยื่นหนังสือ</span>
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setIsImportModalOpen(true)}
+              id="btn-import-utt-submissions"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span>ดึงข้อมูลจาก UTT (126 รายการ)</span>
+            </button>
+          )}
+          {canEdit && (
+            <button
+              onClick={() => { setSubmissionToEdit(null); setIsFormOpen(true); }}
+              id="btn-add-submission"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#087CC1] hover:bg-[#075A9C] text-white text-sm font-semibold rounded-xl shadow-xs transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>บันทึกการยื่นหนังสือ</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="ค้นหาชื่อโรงเรียน, เลขที่หนังสือ, ครูแนะแนว, ผู้ยื่น..."
-            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
-          />
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+        <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="ค้นหาชื่อโรงเรียน, เลขที่หนังสือ, ครูแนะแนว, ผู้ยื่น..."
+              className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            {/* Month Dropdown */}
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 shrink-0">
+              <Calendar className="w-4 h-4 text-[#087CC1] shrink-0" />
+              <label htmlFor="submission-month-select" className="text-xs font-semibold text-slate-500 whitespace-nowrap">เดือน:</label>
+              <select
+                id="submission-month-select"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-transparent text-sm font-semibold text-slate-700 outline-none cursor-pointer"
+              >
+                <option value="all">ทุกเดือน ({submissions.length})</option>
+                {availableMonths.map((m) => (
+                  <option key={m.key} value={m.key}>
+                    {m.label} ({m.count})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Team Toggle */}
+            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 shrink-0">
+              <button
+                onClick={() => setTeamFilter('all')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                  teamFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'
+                }`}
+              >
+                ทั้งหมด
+              </button>
+              <button
+                onClick={() => setTeamFilter('team1')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                  teamFilter === 'team1' ? 'bg-[#1976D2] text-white shadow-2xs' : 'text-[#1976D2]'
+                }`}
+              >
+                อุตรดิตถ์
+              </button>
+              <button
+                onClick={() => setTeamFilter('team2')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                  teamFilter === 'team2' ? 'bg-[#F59E0B] text-white shadow-2xs' : 'text-[#F59E0B]'
+                }`}
+              >
+                สุโขทัย
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 shrink-0 w-full sm:w-auto">
-          <button
-            onClick={() => setTeamFilter('all')}
-            className={`flex-1 sm:flex-initial px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-              teamFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'
-            }`}
-          >
-            ทั้งหมด
-          </button>
-          <button
-            onClick={() => setTeamFilter('team1')}
-            className={`flex-1 sm:flex-initial px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-              teamFilter === 'team1' ? 'bg-[#1976D2] text-white shadow-2xs' : 'text-[#1976D2]'
-            }`}
-          >
-            อุตรดิตถ์
-          </button>
-          <button
-            onClick={() => setTeamFilter('team2')}
-            className={`flex-1 sm:flex-initial px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-              teamFilter === 'team2' ? 'bg-[#F59E0B] text-white shadow-2xs' : 'text-[#F59E0B]'
-            }`}
-          >
-            สุโขทัย
-          </button>
-        </div>
+        {/* Quick Month Filter Pills */}
+        {availableMonths.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap pt-2.5 border-t border-slate-100 text-xs">
+            <span className="font-semibold text-slate-500 mr-1 flex items-center gap-1">
+              <Filter className="w-3.5 h-3.5 text-[#087CC1]" />
+              แยกดูรายเดือน:
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedMonth('all')}
+              className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+                selectedMonth === 'all'
+                  ? 'bg-[#087CC1] text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+              }`}
+            >
+              ทุกเดือน ({submissions.length})
+            </button>
+            {availableMonths.map((m) => (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => setSelectedMonth(m.key)}
+                className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+                  selectedMonth === m.key
+                    ? 'bg-[#087CC1] text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                }`}
+              >
+                {m.label} ({m.count})
+              </button>
+            ))}
+            {(selectedMonth !== 'all' || teamFilter !== 'all' || searchTerm) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMonth('all');
+                  setTeamFilter('all');
+                  setSearchTerm('');
+                }}
+                className="ml-auto text-xs text-[#087CC1] hover:underline font-semibold"
+              >
+                ล้างตัวกรอง
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Desktop Table */}
       <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-bold">
-            <tr>
-              <th className="py-3 px-3.5 w-10 text-center">ลำดับ</th>
-              <th className="py-3 px-3.5">ชื่อโรงเรียน</th>
-              <th className="py-3 px-3.5">เลขที่หนังสือ</th>
-              <th className="py-3 px-3.5">วันที่ยื่น</th>
-              <th className="py-3 px-3.5">สาย</th>
-              <th className="py-3 px-3.5">ผู้ยื่น</th>
-              <th className="py-3 px-3.5">ครูแนะแนว</th>
-              <th className="py-3 px-3.5">เบอร์โทร</th>
-              <th className="py-3 px-3.5 text-center">หลักฐาน</th>
-              <th className="py-3 px-3.5 text-center">สถานะ</th>
-              <th className="py-3 px-3.5">หมายเหตุ</th><th className="py-3 px-3.5">จัดการ</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredSubmissions.length === 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[1150px] border-collapse">
+            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 text-sm font-semibold">
               <tr>
-                <td colSpan={12} className="py-8 text-center text-slate-400">
-                  ไม่พบรายการยื่นหนังสือ
-                </td>
+                <th className="py-3.5 px-3.5 w-14 min-w-[55px] text-center">ลำดับ</th>
+                <th className="py-3.5 px-3.5 min-w-[180px]">ชื่อโรงเรียน</th>
+                <th className="py-3.5 px-3.5 min-w-[110px]">เลขที่หนังสือ</th>
+                <th className="py-3.5 px-3.5 min-w-[110px]">วันที่ยื่น</th>
+                <th className="py-3.5 px-3.5 min-w-[90px] text-center">สาย</th>
+                <th className="py-3.5 px-3.5 min-w-[200px]">ผู้ยื่น</th>
+                <th className="py-3.5 px-3.5 min-w-[130px]">ครูแนะแนว</th>
+                <th className="py-3.5 px-3.5 min-w-[120px]">เบอร์โทร</th>
+                <th className="py-3.5 px-3.5 min-w-[95px] text-center">หลักฐาน</th>
+                <th className="py-3.5 px-3.5 min-w-[140px] text-center">สถานะ</th>
+                <th className="py-3.5 px-3.5 min-w-[120px]">หมายเหตุ</th>
+                <th className="py-3.5 px-3.5 min-w-[150px] text-center">จัดการ</th>
               </tr>
-            ) : (
-              filteredSubmissions.map((sub, idx) => {
-                const isTeam1 = sub.teamId === 'team1';
-                return (
-                  <tr key={sub.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-3 px-3.5 text-center font-semibold text-slate-400">
-                      {idx + 1}
-                    </td>
-                    <td className="py-3 px-3.5">
-                      <div className="font-bold text-slate-800">{sub.schoolName}</div>
-                      {sub.status === 'OTHER_ACTIVITY' && sub.otherActivityDetails && (
-                        <div className="text-xs text-emerald-700 font-medium mt-0.5">
-                          กิจกรรม: {sub.otherActivityDetails}
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredSubmissions.length === 0 ? (
+                <tr>
+                  <td colSpan={12} className="py-10 text-center text-slate-400 text-sm">
+                    ไม่พบรายการยื่นหนังสือ
+                  </td>
+                </tr>
+              ) : (
+                filteredSubmissions.map((sub, idx) => {
+                  const isTeam1 = sub.teamId === 'team1';
+                  const submitters = sub.submittedByNames && sub.submittedByNames.length > 0
+                    ? sub.submittedByNames
+                    : [sub.submittedByName || '-'];
+                  const firstSubmitter = submitters[0];
+                  const extraSubmitters = submitters.length - 1;
+                  const linkedAppt = getLinkedAppointment(sub);
+
+                  return (
+                    <tr key={sub.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3.5 px-3.5 text-center font-medium text-slate-400 text-sm">
+                        {idx + 1}
+                      </td>
+                      <td className="py-3.5 px-3.5">
+                        <div className="font-bold text-slate-900 text-sm leading-snug line-clamp-2">
+                          {sub.schoolName}
                         </div>
-                      )}
-                    </td>
-                    <td className="py-3 px-3.5 font-mono text-slate-600">
-                      {sub.documentNumber || '-'}
-                    </td>
-                    <td className="py-3 px-3.5 text-slate-600">
-                      <div>{formatThaiShortDate(sub.submissionDate)}</div>
-                      <div className="text-[10px] text-slate-400">{sub.submissionTime || ''} น.</div>
-                    </td>
-                    <td className="py-3 px-3.5">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-sm font-bold text-[10px] ${
-                          isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
-                        }`}
-                      >
-                        {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3.5 text-slate-700">
-                      {sub.submittedByName}{sub.appointmentDate && <span className="block text-xs text-sky-700">นัด {sub.appointmentDate} เวลา {sub.appointmentStartTime}–{sub.appointmentEndTime}</span>}{sub.sameDayGuidance && <span className="block text-xs text-sky-700">ยื่นหนังสือ + แนะแนว</span>}
-                    </td>
-                    <td className="py-3 px-3.5 font-medium text-slate-800">
-                      {sub.teacherName || '-'}
-                    </td>
-                    <td className="py-3 px-3.5">
-                      {sub.teacherPhone ? (
-                        <a
-                          href={`tel:${sub.teacherPhone}`}
-                          className="text-[#087CC1] hover:underline font-semibold flex items-center gap-1"
+                        {sub.status === 'OTHER_ACTIVITY' && sub.otherActivityDetails && (
+                          <div className="text-[13px] text-emerald-700 font-medium mt-0.5">
+                            กิจกรรม: {sub.otherActivityDetails}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-3.5 font-mono text-sm text-slate-700 whitespace-nowrap">
+                        {sub.documentNumber || '-'}
+                      </td>
+                      <td className="py-3.5 px-3.5">
+                        <div className="whitespace-nowrap font-medium text-slate-800 text-sm">
+                          {formatThaiShortDate(sub.submissionDate)}
+                        </div>
+                        {sub.submissionTime && (
+                          <div className="whitespace-nowrap text-[13px] text-slate-500 font-normal">
+                            {sub.submissionTime} น.
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-3.5 text-center">
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-md font-bold text-[12px] whitespace-nowrap ${
+                            isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
+                          }`}
                         >
-                          <Phone className="w-3 h-3" />
-                          <span>{sub.teacherPhone}</span>
-                        </a>
-                      ) : (
-                        <span className="text-slate-400">-</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3.5 text-center">
-                      {sub.photos && sub.photos.length > 0 ? (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedPhotoModal(sub.photos[0].url)}
-                          className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-medium"
-                        >
-                          <ImageIcon className="w-3 h-3 text-[#087CC1]" />
-                          <span>{sub.photos.length} รูป</span>
-                        </button>
-                      ) : (
-                        <span className="text-[11px] text-slate-300">-</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3.5 text-center">
-                      {getStatusBadge(sub.status)}
-                    </td>
-                    <td className="py-3 px-3.5 text-slate-500 max-w-[150px] truncate" title={sub.note}>
-                      {sub.note || '-'}
-                    </td>
-                    <td className="py-3 px-3.5">{actions(sub)}</td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                          {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-3.5 text-slate-800 text-sm">
+                        <div className="font-medium text-slate-800">
+                          {firstSubmitter}
+                        </div>
+                        {extraSubmitters > 0 && (
+                          <div
+                            className="text-[13px] text-sky-700 font-medium cursor-help"
+                            title={submitters.join(', ')}
+                          >
+                            +{extraSubmitters} ท่าน
+                          </div>
+                        )}
+                        {sub.appointmentDate ? (
+                          <span className="block text-[13px] text-sky-700 font-medium mt-0.5 whitespace-nowrap">
+                            นัด {formatThaiShortDate(sub.appointmentDate)} {sub.appointmentStartTime ? `(${sub.appointmentStartTime}–${sub.appointmentEndTime})` : ''}
+                          </span>
+                        ) : linkedAppt ? (
+                          <span
+                            className="block text-[13px] text-blue-700 font-semibold mt-0.5 whitespace-nowrap"
+                            title={`นัดหมายแนะแนว: ${formatThaiShortDate(linkedAppt.date)} เวลา ${linkedAppt.startTime} น. โดย ${linkedAppt.counselorName}`}
+                          >
+                            นัด {formatThaiShortDate(linkedAppt.date)} ({linkedAppt.counselorName})
+                          </span>
+                        ) : null}
+                        {sub.sameDayGuidance && (
+                          <span className="block text-[13px] text-emerald-700 font-medium mt-0.5 whitespace-nowrap">
+                            ยื่นหนังสือ + แนะแนว
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-3.5 font-medium text-slate-800 text-sm">
+                        {sub.teacherName || '-'}
+                      </td>
+                      <td className="py-3.5 px-3.5">
+                        {sub.teacherPhone ? (
+                          <a
+                            href={`tel:${sub.teacherPhone}`}
+                            className="text-[#087CC1] hover:underline font-semibold text-sm whitespace-nowrap inline-flex items-center gap-1.5"
+                          >
+                            <Phone className="w-3.5 h-3.5 shrink-0" />
+                            <span>{sub.teacherPhone}</span>
+                          </a>
+                        ) : (
+                          <span className="text-slate-400 text-sm">-</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-3.5 text-center">
+                        {sub.photos && sub.photos.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPhotoModal(sub.photos[0].url)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors"
+                          >
+                            <ImageIcon className="w-3.5 h-3.5 text-[#087CC1]" />
+                            <span>{sub.photos.length} รูป</span>
+                          </button>
+                        ) : (
+                          <span className="text-xs text-slate-300 font-medium">-</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-3.5 text-center">
+                        {getStatusBadge(sub.status)}
+                      </td>
+                      <td className="py-3.5 px-3.5 text-slate-600 text-sm max-w-[160px] truncate" title={sub.note}>
+                        {sub.note || '-'}
+                      </td>
+                      <td className="py-3.5 px-3.5 text-center">{actions(sub)}</td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Mobile Card List */}
@@ -522,6 +747,15 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
         schools={schools}
         onSave={handleSave}
         onOpenInstantAppointment={onOpenInstantAppointment}
+      />
+
+      {/* UTT Import Modal */}
+      <SubmissionImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => setIsImportModalOpen(false)}
+        existingSubmissions={submissions}
+        schools={schools}
       />
     </div>
   );

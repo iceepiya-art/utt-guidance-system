@@ -117,11 +117,11 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
             <FileSpreadsheet className="w-6 h-6 text-[#087CC1]" />
             <span>รายงานสรุปผลการแนะแนวประจำเดือน</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-[13px] sm:text-sm text-slate-500 mt-1">
             วิทยาลัยเทคโนโลยีอุตรดิตถ์ • สรุปยอดการยื่นหนังสือ การลงพื้นที่ และจำนวนนักเรียน
           </p>
         </div>
@@ -131,7 +131,7 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
             type="button"
             onClick={handleExportExcel}
             id="btn-export-monthly-excel"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-colors"
           >
             <Download className="w-4 h-4" />
             <span>ส่งออก Excel (.xlsx)</span>
@@ -139,7 +139,7 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
           <button
             type="button"
             onClick={handleExportAllSchools}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-xl shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-semibold rounded-xl shadow-xs transition-colors"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             <span>ส่งออกรายชื่อโรงเรียน</span>
@@ -147,7 +147,7 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
           <button
             type="button"
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-xl shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-semibold rounded-xl shadow-xs transition-colors"
           >
             <Printer className="w-4 h-4" />
             <span>พิมพ์รายงาน</span>
@@ -158,11 +158,11 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
       {/* Filter Bar: Month, Year, Team */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-slate-600">ประจำเดือน:</label>
+          <label className="text-sm font-semibold text-slate-600">ประจำเดือน:</label>
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#087CC1]"
+            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-[#087CC1]"
           >
             {THAI_MONTHS.map((m, idx) => (
               <option key={m} value={idx}>
@@ -173,11 +173,11 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-slate-600">ปี พ.ศ.:</label>
+          <label className="text-sm font-semibold text-slate-600">ปี พ.ศ.:</label>
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#087CC1]"
+            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-[#087CC1]"
           >
             {[selectedYear - 1, selectedYear, selectedYear + 1].map((y) => (
               <option key={y} value={y}>
@@ -321,17 +321,17 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
       </div>
 
       <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <h3 className="p-4 font-bold text-slate-800">สรุปการยื่นหนังสือ ({monthlySubmissions.length} รายการ)</h3>
+        <h3 className="p-4 font-bold text-slate-800 text-base sm:text-lg">สรุปการยื่นหนังสือ ({monthlySubmissions.length} รายการ)</h3>
         <div className="overflow-x-auto"><table className="w-full text-sm text-left">
-          <thead className="bg-slate-50 text-slate-600"><tr><th className="p-3">วันที่ยื่น</th><th className="p-3">โรงเรียน</th><th className="p-3">อาจารย์ผู้ยื่น</th></tr></thead>
-          <tbody>{monthlySubmissions.map(s => <tr key={s.id} className="border-t border-slate-100"><td className="p-3 whitespace-nowrap">{s.submissionDate}</td><td className="p-3">{s.schoolName}{s.sameDayGuidance && <span className="block text-xs text-sky-700">ยื่นหนังสือ + แนะแนว</span>}</td><td className="p-3">{s.submittedByNames?.length ? s.submittedByNames.join(', ') : s.submittedByName}</td></tr>)}
+          <thead className="bg-slate-50 text-slate-600 font-semibold text-sm"><tr><th className="p-3.5 whitespace-nowrap min-w-[120px]">วันที่ยื่น</th><th className="p-3.5 min-w-[200px]">โรงเรียน</th><th className="p-3.5 min-w-[200px]">อาจารย์ผู้ยื่น</th></tr></thead>
+          <tbody>{monthlySubmissions.map(s => <tr key={s.id} className="border-t border-slate-100"><td className="p-3.5 whitespace-nowrap text-slate-800 font-medium">{s.submissionDate}</td><td className="p-3.5 font-semibold text-slate-800">{s.schoolName}{s.sameDayGuidance && <span className="inline-block mt-0.5 text-xs text-sky-700 bg-sky-50 px-2 py-0.5 rounded-sm">ยื่นหนังสือ + แนะแนว</span>}</td><td className="p-3.5 text-slate-700">{s.submittedByNames?.length ? s.submittedByNames.join(', ') : s.submittedByName}</td></tr>)}
           {!monthlySubmissions.length && <tr><td colSpan={3} className="p-4 text-center text-slate-500">ไม่มีการยื่นหนังสือในเดือนและสายที่เลือก</td></tr>}</tbody>
         </table></div>
       </section>
       {/* Monthly Trips Detail Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-bold text-slate-800 text-sm">
+          <h2 className="font-bold text-slate-800 text-base sm:text-lg">
             รายการออกแนะแนวประจำเดือน {THAI_MONTHS[selectedMonth]} {getBuddhistYear(selectedYear)}
           </h2>
           <span className="text-xs text-slate-400 font-medium">
@@ -340,16 +340,16 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-bold">
+          <table className="w-full text-left text-sm min-w-[1050px]">
+            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold text-sm">
               <tr>
-                <th className="py-3 px-4">วันที่</th>
-                <th className="py-3 px-4">สาย</th>
-                <th className="py-3 px-4">โรงเรียนที่จัดกิจกรรม</th>
-                <th className="py-3 px-4">อาจารย์ผู้รับผิดชอบ</th>
-                <th className="py-3 px-4 text-center">จำนวนนักเรียน</th>
-                <th className="py-3 px-4">รายละเอียดกิจกรรม</th>
-                <th className="py-3 px-4 text-center">รูปกิจกรรม</th>
+                <th className="py-3.5 px-4 whitespace-nowrap min-w-[110px]">วันที่</th>
+                <th className="py-3.5 px-4 whitespace-nowrap min-w-[90px]">สาย</th>
+                <th className="py-3.5 px-4 min-w-[200px]">โรงเรียนที่จัดกิจกรรม</th>
+                <th className="py-3.5 px-4 min-w-[170px]">อาจารย์ผู้รับผิดชอบ</th>
+                <th className="py-3.5 px-4 text-center whitespace-nowrap min-w-[120px]">จำนวนนักเรียน</th>
+                <th className="py-3.5 px-4 min-w-[180px]">รายละเอียดกิจกรรม</th>
+                <th className="py-3.5 px-4 text-center whitespace-nowrap min-w-[110px]">รูปกิจกรรม</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -365,12 +365,12 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
                   const students = trip.schools?.reduce((acc, s) => acc + (s.studentCount || 0), 0) || 0;
                   return (
                     <tr key={trip.id} className="hover:bg-slate-50">
-                      <td className="py-3 px-4 font-semibold text-slate-800">
+                      <td className="py-3.5 px-4 font-semibold text-slate-800 text-sm whitespace-nowrap">
                         {formatThaiShortDate(trip.date)}
                       </td>
                       <td className="py-3 px-4">
                         <span
-                          className={`inline-block px-2 py-0.5 rounded-sm font-bold text-[10px] ${
+                          className={`inline-block px-2.5 py-1 rounded-md font-semibold text-xs whitespace-nowrap ${
                             isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
                           }`}
                         >
@@ -381,25 +381,25 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
                         {trip.schools?.map((s, idx) => (
                           <div key={idx} className="font-semibold text-slate-800 mb-1">
                             <div>{s.schoolName}</div>
-                            <div className="text-[11px] font-normal text-slate-500">
+                            <div className="text-xs font-normal text-slate-500 mt-0.5">
                               {s.timeSlot || 'ไม่ระบุเวลา'}{s.notes ? ` · ${s.notes}` : ''}
                             </div>
                           </div>
                         ))}
                       </td>
-                      <td className="py-3 px-4 text-slate-700">
+                      <td className="py-3.5 px-4 text-slate-700 text-sm font-medium">
                         {trip.counselorName}
                       </td>
-                      <td className="py-3 px-4 text-center font-bold text-emerald-700">
+                      <td className="py-3.5 px-4 text-center font-bold text-emerald-700 text-sm whitespace-nowrap">
                         {students} คน
                       </td>
-                      <td className="py-3 px-4 text-slate-600 max-w-xs">
+                      <td className="py-3.5 px-4 text-slate-600 text-sm">
                         <div className="font-semibold text-slate-700">{trip.workType}</div>
-                        <div className="text-[11px] text-slate-500 line-clamp-2" title={trip.summary || trip.issues || ''}>
+                        <div className="text-xs text-slate-500 line-clamp-2 mt-0.5" title={trip.summary || trip.issues || ''}>
                           {trip.summary || trip.issues || '-'}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         {trip.photos?.length ? (
                           <div className="flex items-center justify-center gap-1">
                             {trip.photos.slice(0, 3).map((photo, index) => (

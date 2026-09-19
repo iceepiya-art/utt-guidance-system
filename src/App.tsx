@@ -203,16 +203,9 @@ function MainApplication() {
           schools={schools}
           appointments={appointments}
           fieldTrips={fieldTrips}
+          submissions={submissions}
           onNavigate={(tab) => setActiveTab(tab)}
           onSelectAppointment={(appt) => setSelectedAppointmentForDetail(appt)}
-          onNewSubmission={() => {
-            setPreselectedSchoolForSubmission(null);
-            setIsSubmissionModalOpen(true);
-          }}
-          onNewAppointment={() => {
-            setPrefilledAppointmentData(null);
-            setIsAppointmentModalOpen(true);
-          }}
         />
       )}
 
@@ -231,6 +224,7 @@ function MainApplication() {
         <SubmissionsView
           submissions={submissions}
           schools={schools}
+          appointments={appointments}
           onOpenInstantAppointment={handleInstantAppointmentFromSubmission}
         />
       )}
@@ -266,6 +260,8 @@ function MainApplication() {
         <ActivityGalleryView
           fieldTrips={fieldTrips}
           schools={schools}
+          appointments={appointments}
+          submissions={submissions}
         />
       )}
 

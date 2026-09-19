@@ -285,6 +285,9 @@ export async function createDocumentSubmission(
   const cleanSubmission = Object.fromEntries(
     Object.entries(submission).filter(([, value]) => value !== undefined)
   );
+  if (!cleanSubmission.status || cleanSubmission.status === 'DOCUMENT_SUBMITTED') {
+    cleanSubmission.status = 'WAITING_APPOINTMENT';
+  }
   const docRef = await addDoc(colRef, {
     ...cleanSubmission,
     createdAt: now,
@@ -307,15 +310,13 @@ export async function createDocumentSubmission(
     if (submission.teacherLine) updatePayload.teacherLine = submission.teacherLine;
     if (submission.preferredContactTime) updatePayload.preferredContactTime = submission.preferredContactTime;
 
-    // Map status
+    // Map status to WAITING_APPOINTMENT as required by Flow
     if (submission.status === 'APPOINTED') {
       updatePayload.currentStatus = 'APPOINTED';
-    } else if (submission.status === 'WAITING_APPOINTMENT') {
-      updatePayload.currentStatus = 'WAITING_APPOINTMENT';
     } else if (submission.status === 'WAITING_CONTACT' || submission.status === 'CALL_LATER') {
       updatePayload.currentStatus = 'WAITING_CONTACT';
     } else {
-      updatePayload.currentStatus = 'DOCUMENT_SUBMITTED';
+      updatePayload.currentStatus = 'WAITING_APPOINTMENT';
     }
 
     await updateDoc(schoolRef, updatePayload);
@@ -515,35 +516,106 @@ export async function updateAppointment(
 
   const docRef = doc(db, 'appointments', id);
   const now = new Date().toISOString();
+
+  // Retrieve existing appointment to preserve and correctly propagate IDs (schoolId, submissionId)
+  const apptSnap = await getDoc(docRef);
+  const existingAppt = apptSnap.exists() ? (apptSnap.data() as Appointment) : null;
+  const targetSubmissionId = data.submissionId || existingAppt?.submissionId;
+  const targetSchoolId = data.schoolId || existingAppt?.schoolId;
+
   await updateDoc(docRef, {
     ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)),
     updatedAt: now,
     updatedBy: user?.displayName || 'เจ้าหน้าที่',
   });
 
-  if (data.submissionId) {
+  // Handle cancellation: revert submission and school status to WAITING_APPOINTMENT, preserving submission history!
+  if (data.status === 'CANCELLED') {
+    if (targetSubmissionId) {
+      try {
+        await updateDoc(doc(db, 'documentSubmissions', targetSubmissionId), {
+          status: 'WAITING_APPOINTMENT',
+          appointmentDate: '',
+          appointmentStartTime: '',
+          appointmentEndTime: '',
+          updatedAt: now,
+          updatedBy: user?.displayName || 'เจ้าหน้าที่',
+        });
+      } catch (e) {
+        console.warn('Could not reset submission status on appointment cancellation', targetSubmissionId, e);
+      }
+    }
+    if (targetSchoolId) {
+      try {
+        await updateDoc(doc(db, 'schools', targetSchoolId), {
+          currentStatus: 'WAITING_APPOINTMENT',
+          updatedAt: now,
+          updatedBy: user?.displayName || 'เจ้าหน้าที่',
+        });
+      } catch (e) {
+        console.warn('Could not reset school status on appointment cancellation', targetSchoolId, e);
+      }
+    }
+  } else if (data.status === 'COMPLETED') {
+    if (targetSubmissionId) {
+      try {
+        await updateDoc(doc(db, 'documentSubmissions', targetSubmissionId), {
+          status: 'GUIDANCE_COMPLETED',
+          updatedAt: now,
+          updatedBy: user?.displayName || 'เจ้าหน้าที่',
+        });
+      } catch (e) {
+        console.warn('Could not update submission on appointment completed', e);
+      }
+    }
+    if (targetSchoolId) {
+      try {
+        await updateDoc(doc(db, 'schools', targetSchoolId), {
+          currentStatus: 'GUIDANCE_COMPLETED',
+          updatedAt: now,
+          updatedBy: user?.displayName || 'เจ้าหน้าที่',
+        });
+      } catch (e) {
+        console.warn('Could not update school on appointment completed', e);
+      }
+    }
+  } else if (targetSubmissionId) {
+    // Active or rescheduled appointment: keep submission synced with date/time
     try {
-      await updateDoc(doc(db, 'documentSubmissions', data.submissionId), {
-        status: data.status === 'COMPLETED' ? 'GUIDANCE_COMPLETED' : 'APPOINTED',
+      const updateData: Record<string, any> = {
+        status: 'APPOINTED',
         appointmentId: id,
-        appointmentDate: data.date,
-        appointmentStartTime: data.startTime,
-        appointmentEndTime: data.endTime,
-        appointmentNote: data.note || '',
-        vehicleId: data.vehicleId || '',
-        vehicleName: data.vehicleName || '',
         updatedAt: now,
         updatedBy: user?.displayName || 'เจ้าหน้าที่',
-      });
+      };
+      if (data.date) updateData.appointmentDate = data.date;
+      if (data.startTime) updateData.appointmentStartTime = data.startTime;
+      if (data.endTime) updateData.appointmentEndTime = data.endTime;
+      if (data.note !== undefined) updateData.appointmentNote = data.note;
+      if (data.vehicleId) updateData.vehicleId = data.vehicleId;
+      if (data.vehicleName) updateData.vehicleName = data.vehicleName;
+
+      await updateDoc(doc(db, 'documentSubmissions', targetSubmissionId), updateData);
     } catch (e) {
       console.warn('Could not update linked document submission for appointment', id, e);
+    }
+    if (targetSchoolId) {
+      try {
+        await updateDoc(doc(db, 'schools', targetSchoolId), {
+          currentStatus: 'APPOINTED',
+          updatedAt: now,
+          updatedBy: user?.displayName || 'เจ้าหน้าที่',
+        });
+      } catch (e) {
+        console.warn('Could not set school to APPOINTED', e);
+      }
     }
   }
 
   await logActivity(
     user?.id || 'sys',
     user?.displayName || 'เจ้าหน้าที่',
-    'แก้ไขนัดหมาย',
+    data.status === 'CANCELLED' ? 'ยกเลิกนัดหมาย' : 'แก้ไขนัดหมาย',
     'appointment',
     id,
     `อัปเดตนัดหมายสถานะ: ${data.status || 'ปกติ'}`
@@ -609,7 +681,42 @@ export async function updateFieldTripApproval(
 }
 
 export async function deleteAppointment(id: string, schoolName: string, user?: UserProfile | null): Promise<void> {
-  await deleteDoc(doc(db, 'appointments', id));
+  const docRef = doc(db, 'appointments', id);
+  try {
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const appt = snap.data() as Appointment;
+      const now = new Date().toISOString();
+      if (appt.submissionId) {
+        try {
+          await updateDoc(doc(db, 'documentSubmissions', appt.submissionId), {
+            status: 'WAITING_APPOINTMENT',
+            appointmentId: '',
+            appointmentDate: '',
+            appointmentStartTime: '',
+            appointmentEndTime: '',
+            updatedAt: now,
+          });
+        } catch (e) {
+          console.warn('Could not reset submission on appointment deletion', e);
+        }
+      }
+      if (appt.schoolId) {
+        try {
+          await updateDoc(doc(db, 'schools', appt.schoolId), {
+            currentStatus: 'WAITING_APPOINTMENT',
+            updatedAt: now,
+          });
+        } catch (e) {
+          console.warn('Could not reset school status on appointment deletion', e);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Error reading appointment before delete:', err);
+  }
+
+  await deleteDoc(docRef);
   await logActivity(
     user?.id || 'sys',
     user?.displayName || 'เจ้าหน้าที่',
@@ -724,7 +831,53 @@ export async function updateFieldTrip(
 }
 
 export async function deleteFieldTrip(id: string, user?: UserProfile | null): Promise<void> {
-  await deleteDoc(doc(db, 'fieldTrips', id));
+  const docRef = doc(db, 'fieldTrips', id);
+  try {
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const trip = snap.data() as FieldTrip;
+      const now = new Date().toISOString();
+      if (trip.appointmentId) {
+        try {
+          await updateDoc(doc(db, 'appointments', trip.appointmentId), {
+            status: 'CONFIRMED',
+            updatedAt: now,
+          });
+        } catch (e) {
+          console.warn('Could not reset appointment on field trip deletion', e);
+        }
+      }
+      if (trip.submissionId) {
+        try {
+          await updateDoc(doc(db, 'documentSubmissions', trip.submissionId), {
+            status: trip.appointmentId ? 'APPOINTED' : 'WAITING_APPOINTMENT',
+            fieldTripId: '',
+            updatedAt: now,
+          });
+        } catch (e) {
+          console.warn('Could not reset submission on field trip deletion', e);
+        }
+      }
+      if (trip.schools) {
+        for (const s of trip.schools) {
+          if (s.schoolId) {
+            try {
+              await updateDoc(doc(db, 'schools', s.schoolId), {
+                currentStatus: trip.appointmentId ? 'APPOINTED' : 'WAITING_APPOINTMENT',
+                updatedAt: now,
+              });
+            } catch (e) {
+              console.warn('Could not reset school on field trip deletion', e);
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Error reading field trip before delete:', err);
+  }
+
+  await deleteDoc(docRef);
   await logActivity(
     user?.id || 'sys',
     user?.displayName || 'ผู้ดูแลระบบ',

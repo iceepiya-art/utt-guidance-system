@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   CalendarCheck,
+  Calendar,
   Plus,
   Search,
   Clock,
@@ -11,11 +12,15 @@ import {
   Edit2,
   Trash2,
   Compass,
+  Download,
+  Image as ImageIcon,
+  CheckCircle2,
 } from 'lucide-react';
 import { Appointment, DocumentSubmission, School, TeamId, AppointmentStatus } from '../../types';
-import { formatThaiShortDate, getRelativeThaiDayLabel } from '../../utils/dateUtils';
+import { formatThaiShortDate, getRelativeThaiDayLabel, THAI_MONTHS, getBuddhistYear } from '../../utils/dateUtils';
 import { AppointmentDetailModal } from './AppointmentDetailModal';
 import { AppointmentFormModal } from './AppointmentFormModal';
+import { AppointmentImportModal } from './AppointmentImportModal';
 import { createAppointment, updateAppointment, deleteAppointment } from '../../firebase/dbService';
 import { useAuth } from '../../context/AuthContext';
 
@@ -37,10 +42,42 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [teamFilter, setTeamFilter] = useState<'all' | TeamId>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | AppointmentStatus>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+
+  const availableMonths = useMemo(() => {
+    const monthCounts = new Map<string, number>();
+    appointments.forEach((a) => {
+      if (a.date && a.date.length >= 7) {
+        const key = a.date.substring(0, 7);
+        monthCounts.set(key, (monthCounts.get(key) || 0) + 1);
+      }
+    });
+    return Array.from(monthCounts.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([key, count]) => {
+        const [y, m] = key.split('-');
+        const monthIdx = parseInt(m, 10) - 1;
+        const year = parseInt(y, 10);
+        const label = `${THAI_MONTHS[monthIdx] || m} ${getBuddhistYear(year)}`;
+        return { key, label, count };
+      });
+  }, [appointments]);
 
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  const [tabScope, setTabScope] = useState<'all' | 'pending' | 'completed'>('all');
+
+  const upcomingCount = useMemo(
+    () => appointments.filter((a) => a.status !== 'COMPLETED' && a.status !== 'CANCELLED').length,
+    [appointments]
+  );
+  const completedCount = useMemo(
+    () => appointments.filter((a) => a.status === 'COMPLETED').length,
+    [appointments]
+  );
 
   const filteredAppointments = useMemo(() => {
     return appointments.filter((appt) => {
@@ -52,10 +89,18 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
 
       const matchTeam = teamFilter === 'all' || appt.teamId === teamFilter;
       const matchStatus = statusFilter === 'all' || appt.status === statusFilter;
+      const matchMonth = selectedMonth === 'all' || appt.date.startsWith(selectedMonth);
 
-      return matchSearch && matchTeam && matchStatus;
+      const matchScope =
+        tabScope === 'all'
+          ? true
+          : tabScope === 'pending'
+          ? appt.status !== 'COMPLETED' && appt.status !== 'CANCELLED'
+          : appt.status === 'COMPLETED';
+
+      return matchSearch && matchTeam && matchStatus && matchMonth && matchScope;
     });
-  }, [appointments, searchTerm, teamFilter, statusFilter]);
+  }, [appointments, searchTerm, teamFilter, statusFilter, selectedMonth, tabScope]);
 
   const handleSaveAppointment = async (data: Omit<Appointment, 'id'>) => {
     if (appointmentToEdit) {
@@ -84,10 +129,23 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
     };
     const c = config[status] || config.CONFIRMED;
     return (
-      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${c.bg} ${c.text}`}>
+      <span className={`inline-block px-3 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap ${c.bg} ${c.text}`}>
         {c.label}
       </span>
     );
+  };
+
+  const getApptPhotosCount = (appt: Appointment) => {
+    let count = appt.photos?.length || 0;
+    if (count === 0 && submissions) {
+      const match = submissions.find(
+        (s) =>
+          s.id === appt.submissionId ||
+          (s.schoolName === appt.schoolName && s.photos && s.photos.length > 0)
+      );
+      if (match?.photos) count += match.photos.length;
+    }
+    return count;
   };
 
   return (
@@ -95,48 +153,116 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
             <CalendarCheck className="w-6 h-6 text-[#087CC1]" />
-            <span>รายการนัดหมายแนะแนว ({appointments.length} รายการ)</span>
+            <span>รายการนัดหมายแนะแนว ({filteredAppointments.length}{selectedMonth !== 'all' || teamFilter !== 'all' || statusFilter !== 'all' ? ` จาก ${appointments.length}` : ''} รายการ)</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             ตารางกำหนดการนัดหมายลงพื้นที่ วิทยาลัยเทคโนโลยีอุตรดิตถ์
           </p>
         </div>
 
-        {canEdit && (
-          <button
-            onClick={() => {
-              setAppointmentToEdit(null);
-              setIsFormOpen(true);
-            }}
-            id="btn-add-appointment"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>สร้างนัดหมายใหม่</span>
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setIsImportModalOpen(true)}
+              id="btn-import-utt-appointments"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span>ดึงข้อมูลจาก UTT (49 รายการ)</span>
+            </button>
+          )}
+          {canEdit && (
+            <button
+              onClick={() => {
+                setAppointmentToEdit(null);
+                setIsFormOpen(true);
+              }}
+              id="btn-add-appointment"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#087CC1] hover:bg-[#075A9C] text-white text-sm font-semibold rounded-xl shadow-xs transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>สร้างนัดหมายใหม่</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+        {/* Quick Scope Tabs */}
+        <div className="flex items-center gap-2 border-b border-slate-100 pb-3 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setTabScope('all')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              tabScope === 'all'
+                ? 'bg-[#087CC1] text-white shadow-xs'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+            }`}
+          >
+            ทั้งหมด ({appointments.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTabScope('pending')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              tabScope === 'pending'
+                ? 'bg-[#087CC1] text-white shadow-xs'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+            }`}
+          >
+            นัดหมายรอลงพื้นที่ ({upcomingCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTabScope('completed')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              tabScope === 'completed'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+            }`}
+          >
+            ออกแนะแนวแล้ว ({completedCount})
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="ค้นหาชื่อโรงเรียน, อาจารย์, ครูแนะแนว..."
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
+              placeholder="ค้นหาชื่อโรงเรียน, อาจารย์..."
+              className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
             />
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+            <Calendar className="w-4 h-4 text-[#087CC1] shrink-0" />
+            <label htmlFor="appt-month-select" className="text-xs font-semibold text-slate-500 whitespace-nowrap">เดือน:</label>
+            <select
+              id="appt-month-select"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="bg-transparent text-sm font-semibold text-slate-700 outline-none cursor-pointer w-full"
+            >
+              <option value="all">ทุกเดือน ({appointments.length})</option>
+              {availableMonths.map((m) => (
+                <option key={m.key} value={m.key}>
+                  {m.label} ({m.count})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
             <button
               onClick={() => setTeamFilter('all')}
-              className={`flex-1 py-1 text-xs font-semibold rounded-lg transition-colors ${
+              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                 teamFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'
               }`}
             >
@@ -144,7 +270,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
             </button>
             <button
               onClick={() => setTeamFilter('team1')}
-              className={`flex-1 py-1 text-xs font-semibold rounded-lg transition-colors ${
+              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                 teamFilter === 'team1' ? 'bg-[#1976D2] text-white shadow-2xs' : 'text-[#1976D2]'
               }`}
             >
@@ -152,7 +278,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
             </button>
             <button
               onClick={() => setTeamFilter('team2')}
-              className={`flex-1 py-1 text-xs font-semibold rounded-lg transition-colors ${
+              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                 teamFilter === 'team2' ? 'bg-[#F59E0B] text-white shadow-2xs' : 'text-[#F59E0B]'
               }`}
             >
@@ -162,9 +288,10 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
 
           <div>
             <select
+              aria-label="กรองตามสถานะ"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:ring-2 focus:ring-[#087CC1]"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-[#087CC1]"
             >
               <option value="all">สถานะ: ทั้งหมด</option>
               <option value="CONFIRMED">ยืนยันแล้ว (Confirmed)</option>
@@ -174,116 +301,249 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
             </select>
           </div>
         </div>
+
+        {/* Quick Month Filter Pills */}
+        {availableMonths.length > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pt-2 border-t border-slate-100 no-scrollbar">
+            <span className="text-xs font-semibold text-slate-400 whitespace-nowrap mr-1 flex items-center gap-1">
+              <Filter className="w-3 h-3" />
+              <span>เดือน:</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedMonth('all')}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                selectedMonth === 'all'
+                  ? 'bg-[#087CC1] text-white shadow-2xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+              }`}
+            >
+              ทุกเดือน ({appointments.length})
+            </button>
+            {availableMonths.map((m) => (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => setSelectedMonth(m.key)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  selectedMonth === m.key
+                    ? 'bg-[#087CC1] text-white shadow-2xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                }`}
+              >
+                {m.label} ({m.count})
+              </button>
+            ))}
+
+            {(selectedMonth !== 'all' || teamFilter !== 'all' || statusFilter !== 'all' || searchTerm) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMonth('all');
+                  setTeamFilter('all');
+                  setStatusFilter('all');
+                  setSearchTerm('');
+                }}
+                className="ml-auto text-xs text-[#087CC1] hover:underline font-semibold"
+              >
+                ล้างตัวกรอง
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Desktop Table View */}
       <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-bold">
-            <tr>
-              <th className="py-3 px-4">สาย</th>
-              <th className="py-3 px-4">วันที่ / เวลา</th>
-              <th className="py-3 px-4">โรงเรียน</th>
-              <th className="py-3 px-4">อาจารย์ผู้รับผิดชอบ</th>
-              <th className="py-3 px-4">ครูแนะแนว</th>
-              <th className="py-3 px-4">ยานพาหนะ</th>
-              <th className="py-3 px-4 text-center">สถานะ</th>
-              <th className="py-3 px-4 text-right">จัดการ</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredAppointments.length === 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[1050px] border-collapse">
+            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 text-sm font-semibold">
               <tr>
-                <td colSpan={8} className="py-8 text-center text-slate-400">
-                  ไม่พบข้อมูลนัดหมาย
-                </td>
+                <th className="py-3.5 px-3.5 min-w-[90px] text-center">สาย</th>
+                <th className="py-3.5 px-3.5 min-w-[150px]">วันที่ / เวลา</th>
+                <th className="py-3.5 px-3.5 min-w-[200px]">โรงเรียน</th>
+                <th className="py-3.5 px-3.5 min-w-[170px]">อาจารย์ผู้รับผิดชอบ</th>
+                <th className="py-3.5 px-3.5 min-w-[140px]">ครูแนะแนว</th>
+                <th className="py-3.5 px-3.5 min-w-[130px]">ยานพาหนะ</th>
+                <th className="py-3.5 px-3.5 min-w-[95px] text-center">รูปภาพ</th>
+                <th className="py-3.5 px-3.5 min-w-[125px] text-center">สถานะ</th>
+                <th className="py-3.5 px-3.5 min-w-[130px] text-center">จัดการ</th>
               </tr>
-            ) : (
-              filteredAppointments.map((appt) => {
-                const isTeam1 = appt.teamId === 'team1';
-                const relativeDay = getRelativeThaiDayLabel(appt.date);
-                return (
-                  <tr
-                    key={appt.id}
-                    onClick={() => setSelectedAppointment(appt)}
-                    className="hover:bg-slate-50 cursor-pointer transition-colors"
-                  >
-                    <td className="py-3 px-4">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-sm font-bold text-[10px] ${
-                          isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
-                        }`}
-                      >
-                        {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="font-semibold text-slate-800">
-                        {formatThaiShortDate(appt.date)}
-                        <span className="ml-1.5 text-[10px] text-slate-400">({relativeDay})</span>
-                      </div>
-                      <div className="text-[11px] text-slate-500 font-mono">
-                        {appt.startTime} - {appt.endTime} น.
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-slate-800 text-sm">{appt.schoolName}</div>
-                      {appt.note && <div className="text-[10px] text-slate-400 truncate max-w-xs">{appt.note}</div>}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="font-medium text-slate-800">{appt.counselorName}</div>
-                      <div className="text-[10px] text-slate-400 truncate max-w-[140px]">{appt.teamMemberNames}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="text-slate-800">{appt.teacherName || '-'}</div>
-                      {appt.teacherPhone && (
-                        <div className="text-[11px] text-[#087CC1] font-semibold">{appt.teacherPhone}</div>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 truncate max-w-[130px]">
-                      {appt.vehicleName || '-'}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {getStatusBadge(appt.status)}
-                    </td>
-                    <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => setSelectedAppointment(appt)}
-                          title="ดูรายละเอียด"
-                          className="p-1.5 text-slate-500 hover:text-[#087CC1] hover:bg-slate-100 rounded-lg"
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredAppointments.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-10 text-center text-slate-400 text-sm">
+                    ไม่พบข้อมูลนัดหมาย
+                  </td>
+                </tr>
+              ) : (
+                filteredAppointments.map((appt) => {
+                  const isTeam1 = appt.teamId === 'team1';
+                  const relativeDay = getRelativeThaiDayLabel(appt.date);
+                  const photosCount = getApptPhotosCount(appt);
+
+                  const cleanSchool = (s: string) =>
+                    (s || '').replace(/^(โรงเรียน|รร\.)\s*/, '').trim().toLowerCase();
+                  const apptClean = cleanSchool(appt.schoolName);
+                  const matchedSub = submissions.find(
+                    (s) => s.id === appt.submissionId || cleanSchool(s.schoolName) === apptClean
+                  );
+                  const matchedSchool = schools.find(
+                    (s) => s.id === appt.schoolId || cleanSchool(s.schoolName) === apptClean
+                  );
+
+                  const teacherDisplay =
+                    appt.teacherName ||
+                    matchedSub?.teacherName ||
+                    matchedSchool?.teacherName ||
+                    matchedSchool?.contactPerson ||
+                    '-';
+                  const phoneDisplay =
+                    appt.teacherPhone ||
+                    matchedSub?.teacherPhone ||
+                    matchedSchool?.teacherPhone ||
+                    matchedSchool?.contactPhone;
+
+                  const vehicleDisplay =
+                    appt.vehicleName ||
+                    matchedSub?.vehicleName ||
+                    (isTeam1 ? 'VIGO กข 9914 (กระบะ 4 ประตู)' : 'MITSU บน 6738 (กระบะ 4 ประตู)');
+
+                  return (
+                    <tr
+                      key={appt.id}
+                      onClick={() => setSelectedAppointment(appt)}
+                      className="hover:bg-slate-50/80 cursor-pointer transition-colors"
+                    >
+                      <td className="py-3.5 px-3.5 text-center">
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-md font-bold text-[12px] whitespace-nowrap ${
+                            isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
+                          }`}
                         >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        {canEdit && (
-                          <button
-                            onClick={() => {
-                              setAppointmentToEdit(appt);
-                              setIsFormOpen(true);
-                            }}
-                            title="แก้ไข"
-                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded-lg"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
+                          {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-3.5">
+                        <div className="whitespace-nowrap font-medium text-slate-900 text-sm">
+                          {formatThaiShortDate(appt.date)}
+                          <span className="ml-1.5 text-xs text-sky-700 font-normal">({relativeDay})</span>
+                        </div>
+                        <div className="whitespace-nowrap text-[13px] text-slate-500 font-normal mt-0.5">
+                          เวลา {appt.startTime} - {appt.endTime} น.
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-3.5">
+                        <div className="font-bold text-slate-900 text-sm leading-snug line-clamp-2">{appt.schoolName}</div>
+                        {appt.note && <div className="text-[13px] text-slate-500 line-clamp-1 max-w-xs mt-0.5" title={appt.note}>{appt.note}</div>}
+                      </td>
+                      <td className="py-3.5 px-3.5 text-slate-800 text-sm">
+                        <div className="font-medium text-slate-800">{appt.counselorName}</div>
+                        {appt.teamMemberNames && (
+                          <div className="text-[13px] text-slate-500 line-clamp-1 max-w-[160px]" title={appt.teamMemberNames}>
+                            ทีมงาน: {appt.teamMemberNames}
+                          </div>
                         )}
-                        {isAdmin && (
-                          <button
-                            onClick={() => handleDelete(appt)}
-                            title="ลบ"
-                            className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-lg"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                      </td>
+                      <td className="py-3.5 px-3.5 text-slate-800 text-sm">
+                        <div className="font-medium text-slate-800">{teacherDisplay}</div>
+                        {phoneDisplay && (
+                          <div className="text-[13px] text-[#087CC1] font-semibold mt-0.5 whitespace-nowrap">
+                            <a href={`tel:${phoneDisplay}`} onClick={(e) => e.stopPropagation()} className="hover:underline">
+                              {phoneDisplay}
+                            </a>
+                          </div>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                      </td>
+                      <td className="py-3.5 px-3.5 text-slate-700 text-sm">
+                        <div className="truncate max-w-[140px]" title={vehicleDisplay}>
+                          {vehicleDisplay}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-3.5 text-center" onClick={(e) => e.stopPropagation()}>
+                        {photosCount > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedAppointment(appt)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer"
+                            title="คลิกเพื่อดูรูปภาพ"
+                          >
+                            <ImageIcon className="w-3.5 h-3.5 text-[#087CC1]" />
+                            <span>{photosCount} รูป</span>
+                          </button>
+                        ) : (
+                          <span className="text-xs text-slate-300 font-medium">-</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-3.5 text-center">
+                        {getStatusBadge(appt.status)}
+                      </td>
+                      <td className="py-3.5 px-3.5 text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
+                          {canEdit && appt.status !== 'COMPLETED' && appt.status !== 'CANCELLED' && (
+                            <button
+                              type="button"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (
+                                  confirm(
+                                    `ยืนยันการเปลี่ยนสถานะ "${appt.schoolName}" เป็น "ออกแนะแนวแล้ว" หรือไม่?\n(ข้อมูลจะไปแสดงในหน้าประวัติการออกแนะแนวทันที)`
+                                  )
+                                ) {
+                                  await updateAppointment(appt.id, { status: 'COMPLETED' }, currentUser);
+                                }
+                              }}
+                              title="เปลี่ยนสถานะเป็น: ออกแนะแนวแล้ว"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-xl border border-emerald-200 transition-colors"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>ออกแนะแนวแล้ว</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedAppointment(appt)}
+                            aria-label={`ดูรายละเอียด ${appt.schoolName}`}
+                            title="ดูรายละเอียด"
+                            className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-[#087CC1] hover:bg-sky-50 rounded-xl transition-colors border border-transparent hover:border-sky-200"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAppointmentToEdit(appt);
+                                setIsFormOpen(true);
+                              }}
+                              aria-label={`แก้ไขนัดหมาย ${appt.schoolName}`}
+                              title="แก้ไข"
+                              className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition-colors border border-transparent hover:border-amber-200"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                          )}
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(appt)}
+                              aria-label={`ลบนัดหมาย ${appt.schoolName}`}
+                              title="ลบ"
+                              className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-200"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Mobile Cards */}
@@ -296,6 +556,34 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
           filteredAppointments.map((appt) => {
             const isTeam1 = appt.teamId === 'team1';
             const relativeDay = getRelativeThaiDayLabel(appt.date);
+            const photosCount = getApptPhotosCount(appt);
+
+            const cleanSchool = (s: string) =>
+              (s || '').replace(/^(โรงเรียน|รร\.)\s*/, '').trim().toLowerCase();
+            const apptClean = cleanSchool(appt.schoolName);
+            const matchedSub = submissions.find(
+              (s) => s.id === appt.submissionId || cleanSchool(s.schoolName) === apptClean
+            );
+            const matchedSchool = schools.find(
+              (s) => s.id === appt.schoolId || cleanSchool(s.schoolName) === apptClean
+            );
+
+            const teacherDisplay =
+              appt.teacherName ||
+              matchedSub?.teacherName ||
+              matchedSchool?.teacherName ||
+              matchedSchool?.contactPerson ||
+              '-';
+            const phoneDisplay =
+              appt.teacherPhone ||
+              matchedSub?.teacherPhone ||
+              matchedSchool?.teacherPhone ||
+              matchedSchool?.contactPhone;
+
+            const vehicleDisplay =
+              appt.vehicleName ||
+              matchedSub?.vehicleName ||
+              (isTeam1 ? 'VIGO กข 9914 (กระบะ 4 ประตู)' : 'MITSU บน 6738 (กระบะ 4 ประตู)');
             return (
               <div
                 key={appt.id}
@@ -312,42 +600,74 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                       >
                         {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                       </span>
+                      {photosCount > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-sky-50 text-[#087CC1] rounded-md text-[11px] font-semibold border border-sky-100">
+                          <ImageIcon className="w-3 h-3" />
+                          <span>{photosCount} รูป</span>
+                        </span>
+                      )}
                       {getStatusBadge(appt.status)}
                     </div>
                     <h3 className="font-bold text-slate-800 text-base">
                       {appt.schoolName}
                     </h3>
                   </div>
-                  <div className="text-right">
-                    <span className="text-[11px] font-bold text-[#087CC1] bg-[#EAF6FD] px-2 py-0.5 rounded-md">
+                  <div className="text-right shrink-0">
+                    <span className="text-xs font-bold px-2 py-0.5 bg-blue-50 text-[#075A9C] rounded-full">
                       {relativeDay}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-2.5 bg-slate-50 rounded-xl text-xs space-y-1">
-                  <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{formatThaiShortDate(appt.date)} • {appt.startTime} - {appt.endTime} น.</span>
+                <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-[#087CC1]" />
+                    <span>{formatThaiShortDate(appt.date)} {appt.startTime} น.</span>
                   </div>
+                  <div className="flex items-center gap-1.5">
+                    <Car className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="truncate">{vehicleDisplay}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1">
                   <div>
-                    <span className="text-slate-500">อาจารย์: </span>
-                    <span className="font-medium text-slate-800">{appt.counselorName}</span>
+                    <span className="text-slate-400">ผู้รับผิดชอบ: </span>
+                    <span className="font-medium text-slate-700">{appt.counselorName}</span>
                   </div>
-                  {appt.teacherPhone && (
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-slate-500">ครูแนะแนว: {appt.teacherName}</span>
+                  {phoneDisplay && (
+                    <div onClick={(e) => e.stopPropagation()}>
                       <a
-                        href={`tel:${appt.teacherPhone}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-[#087CC1] font-bold flex items-center gap-1"
+                        href={`tel:${phoneDisplay}`}
+                        className="inline-flex items-center gap-1 text-[#087CC1] hover:underline font-semibold"
                       >
                         <Phone className="w-3 h-3" />
-                        <span>{appt.teacherPhone}</span>
+                        <span>{phoneDisplay}</span>
                       </a>
                     </div>
                   )}
                 </div>
+
+                {canEdit && appt.status !== 'COMPLETED' && appt.status !== 'CANCELLED' && (
+                  <div className="pt-2 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (
+                          confirm(
+                            `ยืนยันการเปลี่ยนสถานะ "${appt.schoolName}" เป็น "ออกแนะแนวแล้ว" หรือไม่?\n(ข้อมูลจะไปแสดงในหน้าประวัติการออกแนะแนวทันที)`
+                          )
+                        ) {
+                          await updateAppointment(appt.id, { status: 'COMPLETED' }, currentUser);
+                        }
+                      }}
+                      className="w-full py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg border border-emerald-200 flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>เปลี่ยนสถานะเป็น: ออกแนะแนวแล้ว</span>
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })
@@ -368,6 +688,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
             setSelectedAppointment(null);
             onRecordTrip(appt);
           }}
+          submissions={submissions}
         />
       )}
 
@@ -382,6 +703,15 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
         submissions={submissions}
         appointmentToEdit={appointmentToEdit}
         onSave={handleSaveAppointment}
+      />
+
+      {/* UTT Appointment Import Modal */}
+      <AppointmentImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => setIsImportModalOpen(false)}
+        existingAppointments={appointments}
+        schools={schools}
       />
     </div>
   );

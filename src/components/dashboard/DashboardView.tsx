@@ -1,5 +1,5 @@
 import { useAuth } from '../../context/AuthContext';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   GraduationCap,
   FileCheck2,
@@ -14,86 +14,129 @@ import {
   FileText,
   AlertTriangle,
 } from 'lucide-react';
-import { School, Appointment, FieldTrip } from '../../types';
+import { School, Appointment, FieldTrip, DocumentSubmission, SchoolStatus } from '../../types';
 import {
   formatThaiShortDate,
   formatThaiFullDate,
   getRelativeThaiDayLabel,
   getBuddhistYear,
 } from '../../utils/dateUtils';
+import { getSchoolEffectiveStatus } from '../../utils/schoolStatus';
 import { ActiveTab } from '../layout/AppLayout';
 
 interface DashboardViewProps {
   schools: School[];
   appointments: Appointment[];
   fieldTrips: FieldTrip[];
+  submissions?: DocumentSubmission[];
   onNavigate: (tab: ActiveTab) => void;
   onSelectAppointment: (appointment: Appointment) => void;
-  onNewSubmission: () => void;
-  onNewAppointment: () => void;
+  onNewSubmission?: () => void;
+  onNewAppointment?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   schools,
   appointments,
   fieldTrips,
+  submissions = [],
   onNavigate,
   onSelectAppointment,
   onNewSubmission,
   onNewAppointment,
 }) => {
   const { canEdit } = useAuth();
-  // Statistics calculations from real data
+
+  // Unified dynamic status mapping for every school from interconnected data
+  const schoolStatusMap = useMemo(() => {
+    const map = new Map<string, SchoolStatus>();
+    schools.forEach((s) => {
+      map.set(s.id, getSchoolEffectiveStatus(s, submissions, appointments, fieldTrips));
+    });
+    return map;
+  }, [schools, submissions, appointments, fieldTrips]);
+
+  // Statistics calculations from interconnected data
   const totalSchools = schools.length;
-  const submittedSchools = schools.filter(
-    (s) => s.currentStatus !== 'NOT_STARTED' && s.currentStatus !== 'CANCELLED'
-  ).length;
-  const appointedSchools = schools.filter(
-    (s) => s.currentStatus === 'APPOINTED'
-  ).length;
-  const completedSchools = schools.filter(
-    (s) => s.currentStatus === 'GUIDANCE_COMPLETED'
-  ).length;
-  const pendingSchools = schools.filter(
-    (s) => s.currentStatus === 'NOT_STARTED' || s.currentStatus === 'WAITING_CONTACT' || s.currentStatus === 'WAITING_APPOINTMENT'
-  ).length;
+  const completedSchools = useMemo(
+    () => schools.filter((s) => schoolStatusMap.get(s.id) === 'GUIDANCE_COMPLETED').length,
+    [schools, schoolStatusMap]
+  );
+  const appointedSchools = useMemo(
+    () => schools.filter((s) => schoolStatusMap.get(s.id) === 'APPOINTED').length,
+    [schools, schoolStatusMap]
+  );
+  const submittedSchools = useMemo(
+    () =>
+      schools.filter((s) => {
+        const st = schoolStatusMap.get(s.id);
+        return st !== 'NOT_STARTED' && st !== 'CANCELLED';
+      }).length,
+    [schools, schoolStatusMap]
+  );
+  const pendingSchools = useMemo(
+    () =>
+      schools.filter((s) => {
+        const st = schoolStatusMap.get(s.id);
+        return st === 'NOT_STARTED' || st === 'WAITING_CONTACT' || st === 'WAITING_APPOINTMENT';
+      }).length,
+    [schools, schoolStatusMap]
+  );
 
   // Team 1 Breakdown
-  const team1Schools = schools.filter((s) => s.teamId === 'team1');
-  const team1Submitted = team1Schools.filter(
-    (s) => s.currentStatus !== 'NOT_STARTED' && s.currentStatus !== 'CANCELLED'
-  ).length;
-  const team1Appointed = team1Schools.filter(
-    (s) => s.currentStatus === 'APPOINTED'
-  ).length;
-  const team1Completed = team1Schools.filter(
-    (s) => s.currentStatus === 'GUIDANCE_COMPLETED'
-  ).length;
-  const team1Percent = team1Schools.length > 0 ? Math.round((team1Completed / team1Schools.length) * 100) : 0;
+  const team1Schools = useMemo(() => schools.filter((s) => s.teamId === 'team1'), [schools]);
+  const team1Submitted = useMemo(
+    () =>
+      team1Schools.filter((s) => {
+        const st = schoolStatusMap.get(s.id);
+        return st !== 'NOT_STARTED' && st !== 'CANCELLED';
+      }).length,
+    [team1Schools, schoolStatusMap]
+  );
+  const team1Appointed = useMemo(
+    () => team1Schools.filter((s) => schoolStatusMap.get(s.id) === 'APPOINTED').length,
+    [team1Schools, schoolStatusMap]
+  );
+  const team1Completed = useMemo(
+    () => team1Schools.filter((s) => schoolStatusMap.get(s.id) === 'GUIDANCE_COMPLETED').length,
+    [team1Schools, schoolStatusMap]
+  );
+  const team1Percent =
+    team1Schools.length > 0 ? Math.round((team1Completed / team1Schools.length) * 100) : 0;
 
   // Team 2 Breakdown
-  const team2Schools = schools.filter((s) => s.teamId === 'team2');
-  const team2Submitted = team2Schools.filter(
-    (s) => s.currentStatus !== 'NOT_STARTED' && s.currentStatus !== 'CANCELLED'
-  ).length;
-  const team2Appointed = team2Schools.filter(
-    (s) => s.currentStatus === 'APPOINTED'
-  ).length;
-  const team2Completed = team2Schools.filter(
-    (s) => s.currentStatus === 'GUIDANCE_COMPLETED'
-  ).length;
-  const team2Percent = team2Schools.length > 0 ? Math.round((team2Completed / team2Schools.length) * 100) : 0;
+  const team2Schools = useMemo(() => schools.filter((s) => s.teamId === 'team2'), [schools]);
+  const team2Submitted = useMemo(
+    () =>
+      team2Schools.filter((s) => {
+        const st = schoolStatusMap.get(s.id);
+        return st !== 'NOT_STARTED' && st !== 'CANCELLED';
+      }).length,
+    [team2Schools, schoolStatusMap]
+  );
+  const team2Appointed = useMemo(
+    () => team2Schools.filter((s) => schoolStatusMap.get(s.id) === 'APPOINTED').length,
+    [team2Schools, schoolStatusMap]
+  );
+  const team2Completed = useMemo(
+    () => team2Schools.filter((s) => schoolStatusMap.get(s.id) === 'GUIDANCE_COMPLETED').length,
+    [team2Schools, schoolStatusMap]
+  );
+  const team2Percent =
+    team2Schools.length > 0 ? Math.round((team2Completed / team2Schools.length) * 100) : 0;
 
-  // Upcoming appointments (active, sorted by date ascending)
-  const upcomingAppointments = [...appointments]
-    .filter((a) => a.status !== 'CANCELLED')
-    .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime))
-    .slice(0, 6);
+  // Upcoming appointments (only active upcoming appointments, not past or completed ones)
+  const upcomingAppointments = useMemo(() => {
+    const active = appointments.filter((a) => a.status !== 'CANCELLED' && a.status !== 'COMPLETED');
+    return active
+      .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime))
+      .slice(0, 6);
+  }, [appointments]);
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Fast Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+      {/* Top Header - Action buttons removed per user request */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-800">
             ระบบบริหารงานแนะแนวการศึกษา
@@ -101,25 +144,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
             วิทยาลัยเทคโนโลยีอุตรดิตถ์ • ปีการศึกษา {getBuddhistYear(new Date())}
           </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            disabled={!canEdit} onClick={onNewSubmission}
-            id="btn-quick-submit"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>ยื่นหนังสือใหม่</span>
-          </button>
-          <button
-            disabled={!canEdit} onClick={onNewAppointment}
-            id="btn-quick-appointment"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-xl shadow-xs transition-colors"
-          >
-            <Calendar className="w-4 h-4 text-[#087CC1]" />
-            <span>สร้างนัดหมาย</span>
-          </button>
         </div>
       </div>
 

@@ -82,7 +82,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [teacherLine, setTeacherLine] = useState<string>('');
   const [preferredContactTime, setPreferredContactTime] = useState<string>('');
 
-  const [status, setStatus] = useState<PostSubmissionStatus>('DOCUMENT_SUBMITTED');
+  const [status, setStatus] = useState<PostSubmissionStatus>('WAITING_APPOINTMENT');
   const [otherActivityDetails, setOtherActivityDetails] = useState<string>('');
   const [note, setNote] = useState<string>('รอติดต่อกลับ');
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -116,7 +116,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     setTeacherName(data.teacherName || ''); setTeacherPhone(data.teacherPhone || '');
     setTeacherPosition(data.teacherPosition || ''); setTeacherLine(data.teacherLine || '');
     setPreferredContactTime(data.preferredContactTime || '');
-    setStatus(data.status || 'DOCUMENT_SUBMITTED');
+    setStatus(data.status === 'DOCUMENT_SUBMITTED' ? 'WAITING_APPOINTMENT' : (data.status || 'WAITING_APPOINTMENT'));
     setOtherActivityDetails(data.otherActivityDetails || (data.activities && data.activities.length > 0 ? data.activities.join(', ') : ''));
     setNote(data.note || (data.status === 'APPOINTED' ? '' : 'รอติดต่อกลับ'));
     setPhotos(data.photos || []);
@@ -445,9 +445,9 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                 }}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#087CC1]"
               >
-                <option value="DOCUMENT_SUBMITTED">ยื่นหนังสือแล้ว</option>
+                <option value="WAITING_APPOINTMENT">ยื่นหนังสือแล้ว / รอนัดหมาย</option>
                 <option value="OTHER_ACTIVITY">กิจกรรมอื่นๆ</option>
-                {submissionToEdit?.status && submissionToEdit.status !== 'DOCUMENT_SUBMITTED' && submissionToEdit.status !== 'OTHER_ACTIVITY' && (
+                {submissionToEdit?.status && submissionToEdit.status !== 'WAITING_APPOINTMENT' && submissionToEdit.status !== 'DOCUMENT_SUBMITTED' && submissionToEdit.status !== 'OTHER_ACTIVITY' && (
                   <option value={submissionToEdit.status}>
                     {submissionToEdit.status === 'APPOINTED' ? 'นัดหมายแนะแนวแล้ว (ระบุวันเวลานัด)' : submissionToEdit.status}
                   </option>

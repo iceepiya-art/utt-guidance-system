@@ -28,20 +28,8 @@ interface AppointmentFormModalProps {
   onSave: (apptData: Omit<Appointment, 'id'>) => Promise<string | void>;
 }
 
-const VEHICLES = [
-  { id: 'veh_01', name: 'รถตู้โตโยต้า คอมมิวเตอร์ (นข-4521 อต)' },
-  { id: 'veh_02', name: 'รถตู้โตโยต้า คอมมิวเตอร์ (นข-8842 อต)' },
-  { id: 'veh_03', name: 'รถกระบะสี่ประตู อีซูซุ (กข-1234 อต)' },
-  { id: 'veh_personal', name: 'รถยนต์ส่วนบุคคลของอาจารย์' },
-];
-
-const COUNSELORS = [
-  { id: 'usr_counselor_1', name: 'อ.ปิยะ สุขสมบูรณ์', teamId: 'team1' },
-  { id: 'usr_staff_1', name: 'อ.สมศักดิ์ วงศ์สว่าง', teamId: 'team1' },
-  { id: 'usr_staff_2', name: 'อ.นภาพร ใจดี', teamId: 'team2' },
-  { id: 'usr_staff_3', name: 'อ.วรวิทย์ ศิริชัย', teamId: 'team2' },
-  { id: 'usr_manager_1', name: 'ดร.สุรชัย มั่นคง', teamId: 'team1' },
-];
+import { TripVehiclePicker } from '../common/TripVehiclePicker';
+import { useAuth } from '../../context/AuthContext';
 
 export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
   isOpen,
@@ -52,6 +40,25 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
   appointmentToEdit,
   onSave,
 }) => {
+  const { users = [], currentUser } = useAuth();
+
+  const counselors = React.useMemo(() => {
+    const activeStaff = users.filter((u) => u.active && u.role !== 'VIEWER');
+    if (activeStaff.length > 0) {
+      return activeStaff.map((u) => ({
+        id: u.id,
+        name: u.displayName,
+        teamId: (u.teamId || 'team1') as TeamId,
+        phone: u.phone,
+      }));
+    }
+    return [
+      { id: 'usr_admin', name: 'อ.ประชา กัปปนารก (หัวหน้างานแนะแนว)', teamId: 'team1' as TeamId },
+      { id: 'usr_staff1', name: 'อ.ณิชชับภิญญ์ โคราช (แนะแนวสาย 1)', teamId: 'team1' as TeamId },
+      { id: 'usr_staff2', name: 'อ.ปิยะ สีผาชัย (แนะแนวสาย 2)', teamId: 'team2' as TeamId },
+    ];
+  }, [users]);
+
   const availableSubmissions = React.useMemo(
     () => submissions.filter((sub) =>
       !sub.fieldTripId
@@ -67,9 +74,13 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
   const [startTime, setStartTime] = useState<string>('09:00');
   const [endTime, setEndTime] = useState<string>('11:30');
   const [teamId, setTeamId] = useState<TeamId>('team1');
-  const [counselorName, setCounselorName] = useState<string>('อ.ปิยะ สุขสมบูรณ์');
-  const [counselorId, setCounselorId] = useState<string>('usr_counselor_1');
-  const [teamMemberNames, setTeamMemberNames] = useState<string>('อ.สมศักดิ์ วงศ์สว่าง, นายกิตติ (จนท.โสต)');
+  const [counselorName, setCounselorName] = useState<string>(
+    currentUser?.displayName || 'อ.ประชา กัปปนารก'
+  );
+  const [counselorId, setCounselorId] = useState<string>(
+    currentUser?.id || 'usr_admin'
+  );
+  const [teamMemberNames, setTeamMemberNames] = useState<string>('');
   const [vehicleId, setVehicleId] = useState<string>('veh_01');
   const [vehicleName, setVehicleName] = useState<string>('รถตู้โตโยต้า คอมมิวเตอร์ (นข-4521 อต)');
   const [teacherName, setTeacherName] = useState<string>('');
@@ -137,15 +148,63 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
     }
   }, [isOpen, appointmentToEdit?.id, prefilledData, schools, submissions]);
 
+  const defaultVehicleForTeam = (t: TeamId) => {
+    return t === 'team2'
+      ? { id: 'mitsu-6738', name: 'MITSU บน 6738 (กระบะ 4 ประตู)' }
+      : { id: 'vigo-9914', name: 'VIGO กข 9914 (กระบะ 4 ประตู)' };
+  };
+
+  const defaultCounselorForTeam = (t: TeamId) => {
+    const match = counselors.find((c) => c.teamId === t);
+    return (
+      match ||
+      (t === 'team2'
+        ? { id: 'usr_staff2', name: 'อ.ปิยะ สีผาชัย (แนะแนวสาย 2)', teamId: 'team2' as TeamId }
+        : { id: 'usr_admin', name: 'อ.ประชา กัปปนารก (หัวหน้างานแนะแนว)', teamId: 'team1' as TeamId })
+    );
+  };
+
+  const handleTeamChange = (nextTeam: TeamId) => {
+    setTeamId(nextTeam);
+    const defVeh = defaultVehicleForTeam(nextTeam);
+    setVehicleId(defVeh.id);
+    setVehicleName(defVeh.name);
+
+    // If current counselor doesn't belong to this team, switch to team's default counselor
+    const currCounselor = counselors.find((c) => c.name === counselorName || c.id === counselorId);
+    if (!currCounselor || currCounselor.teamId !== nextTeam) {
+      const defC = defaultCounselorForTeam(nextTeam);
+      setCounselorId(defC.id);
+      setCounselorName(defC.name);
+    }
+  };
+
   const applySubmission = (submission: DocumentSubmission) => {
     setSubmissionId(submission.id);
     setSelectedSchoolId(submission.schoolId);
     setTeamId(submission.teamId);
+
+    // Auto-match counselor from submitter if possible
+    const submitterName =
+      submission.submittedByName ||
+      (submission.submittedByNames && submission.submittedByNames[0]) ||
+      '';
+    const cleanSub = submitterName.replace(/^(อ\.|อาจารย์|นาย|นาง|นางสาว)\s*/, '').trim().toLowerCase();
+    const matchedCounselor =
+      counselors.find((c) => c.id === submission.submittedById) ||
+      counselors.find((c) => cleanSub && c.name.toLowerCase().includes(cleanSub)) ||
+      defaultCounselorForTeam(submission.teamId);
+
+    setCounselorId(matchedCounselor.id);
+    setCounselorName(matchedCounselor.name);
+
+    const defVeh = defaultVehicleForTeam(submission.teamId);
+    setVehicleId(submission.vehicleId || defVeh.id);
+    setVehicleName(submission.vehicleName || defVeh.name);
+
     setTeacherName(submission.teacherName || '');
     setTeacherPhone(submission.teacherPhone || '');
     setTeamMemberNames(submission.submittedByNames?.join(', ') || submission.submittedByName || '');
-    setVehicleId(submission.vehicleId || (submission.teamId === 'team2' ? 'mitsu-6738' : 'vigo-9914'));
-    setVehicleName(submission.vehicleName || (submission.teamId === 'team2' ? 'MITSU บน 6738' : 'VIGO กข 9914'));
     setNote(submission.appointmentNote || submission.note || '');
     if (submission.appointmentDate) setDate(submission.appointmentDate);
     if (submission.appointmentStartTime) setStartTime(submission.appointmentStartTime);
@@ -154,26 +213,48 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
 
   const handleSchoolSelect = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
+    if (!schoolId) {
+      setSubmissionId('');
+      setTeacherName('');
+      setTeacherPhone('');
+      return;
+    }
+
+    // Check if there is an existing submission for this school
+    const matchedSub = submissions.find((s) => s.schoolId === schoolId && !s.fieldTripId);
+    if (matchedSub) {
+      applySubmission(matchedSub);
+      return;
+    }
+
     setSubmissionId('');
-    if (!schoolId) { setTeacherName(''); setTeacherPhone(''); }
     const target = schools.find((s) => s.id === schoolId);
     if (target) {
       setTeamId(target.teamId);
-      setTeacherName(target.teacherName || '');
-      setTeacherPhone(target.teacherPhone || '');
+      const defVeh = defaultVehicleForTeam(target.teamId);
+      setVehicleId(defVeh.id);
+      setVehicleName(defVeh.name);
+      const defC = defaultCounselorForTeam(target.teamId);
+      setCounselorId(defC.id);
+      setCounselorName(defC.name);
+      setTeacherName(target.teacherName || target.contactPerson || '');
+      setTeacherPhone(target.teacherPhone || target.contactPhone || '');
     }
-  };
-
-  const handleVehicleChange = (vehId: string) => {
-    setVehicleId(vehId);
-    const v = VEHICLES.find((item) => item.id === vehId);
-    if (v) setVehicleName(v.name);
   };
 
   const handleCounselorChange = (cName: string) => {
     setCounselorName(cName);
-    const found = COUNSELORS.find((c) => c.name === cName);
-    if (found) setCounselorId(found.id);
+    const found = counselors.find((c) => c.name === cName || c.id === cName);
+    if (found) {
+      setCounselorId(found.id);
+      setCounselorName(found.name);
+      if (found.teamId !== teamId) {
+        setTeamId(found.teamId);
+        const defVeh = defaultVehicleForTeam(found.teamId);
+        setVehicleId(defVeh.id);
+        setVehicleName(defVeh.name);
+      }
+    }
   };
 
   // Live conflict checking
@@ -412,7 +493,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
               </label>
               <select
                 value={teamId}
-                onChange={(e) => setTeamId(e.target.value as TeamId)}
+                onChange={(e) => handleTeamChange(e.target.value as TeamId)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
               >
                 <option value="team1">อุตรดิตถ์</option>
@@ -428,7 +509,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
                 onChange={(e) => handleCounselorChange(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
               >
-                {COUNSELORS.map((c) => (
+                {counselors.map((c) => (
                   <option key={c.id} value={c.name}>
                     {c.name} ({c.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'})
                   </option>
@@ -436,23 +517,15 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                ยานพาหนะ
-              </label>
-              <select
+              <TripVehiclePicker
                 value={vehicleId}
-                onChange={(e) => handleVehicleChange(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-              >
-                {vehicleId && !VEHICLES.some((v) => v.id === vehicleId) && (
-                  <option value={vehicleId}>{vehicleName}</option>
-                )}
-                {VEHICLES.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
+                name={vehicleName}
+                onChange={(id, name) => {
+                  setVehicleId(id);
+                  setVehicleName(name);
+                }}
+                disabled={isSubmitting}
+              />
             </div>
           </div>
 

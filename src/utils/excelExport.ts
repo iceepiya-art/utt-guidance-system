@@ -162,7 +162,7 @@ export function exportMonthlyReportToExcel(
 export function exportSchoolsToExcel(schools: School[]) {
   const statusLabels: Record<string, string> = {
     NOT_STARTED: 'ยังไม่ดำเนินการ',
-    DOCUMENT_SUBMITTED: 'ยื่นหนังสือแล้ว',
+    DOCUMENT_SUBMITTED: 'ยื่นหนังสือแล้ว / รอนัดหมาย',
     WAITING_CONTACT: 'รอติดต่อกลับ',
     WAITING_APPOINTMENT: 'รอนัดหมาย',
     APPOINTED: 'นัดหมายแล้ว',

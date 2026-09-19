@@ -2,7 +2,7 @@ import type { DocumentSubmission } from '../../types';
 import { TripVehiclePicker } from '../common/TripVehiclePicker';
 import { SchoolPicker } from '../common/SchoolPicker';
 import React, { useState, useEffect } from 'react';
-import { X, Save, Compass, Plus, Trash2, Coins, CalendarCheck, FileText } from 'lucide-react';
+import { X, Save, Compass, Plus, Trash2, CalendarCheck, FileText } from 'lucide-react';
 import { School, FieldTrip, TeamId, PhotoItem, Appointment, Vehicle, ApprovalStatus } from '../../types';
 import { PhotoUploader } from '../common/PhotoUploader';
 import { formatThaiShortDate, getTodayISO } from '../../utils/dateUtils';
@@ -625,41 +625,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
             </div>
           </div>
 
-          {/* Organization Budget Reimbursement */}
-          <div className="p-3.5 bg-blue-50/50 rounded-xl border border-blue-200/80 space-y-2.5">
-            <h3 className="text-xs font-bold text-[#075A9C] uppercase tracking-wider flex items-center gap-1.5">
-              <Coins className="w-3.5 h-3.5" />
-              <span>งบประมาณและการเบิกจ่ายขององค์กร</span>
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  ค่าเบี้ยเลี้ยง / ค่าตอบแทนบุคลากร (บาท)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={budgetAllowance}
-                  onChange={(e) => setBudgetAllowance(parseFloat(e.target.value) || 0)}
-                  placeholder="0"
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  ค่าน้ำมันเชื้อเพลิง / ค่าผ่านทาง (บาท)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={budgetFuel}
-                  onChange={(e) => setBudgetFuel(parseFloat(e.target.value) || 0)}
-                  placeholder="0"
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono"
-                />
-              </div>
-            </div>
-          </div>
+
 
           {/* Multiple Schools In Trip */}
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
