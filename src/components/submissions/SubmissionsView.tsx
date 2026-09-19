@@ -130,9 +130,22 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
   const [teamFilter, setTeamFilter] = useState<'all' | TeamId>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
+  const isWaitingAppointment = (sub: DocumentSubmission) => {
+    if (sub.status === 'APPOINTED') return false;
+    if (sub.appointmentDate || sub.appointmentId) return false;
+    if (sub.status === 'GUIDANCE_COMPLETED' || sub.fieldTripId) return false;
+    const linked = getLinkedAppointment(sub);
+    if (linked && linked.status !== 'CANCELLED') return false;
+    return true;
+  };
+
+  const waitingSubmissions = useMemo(() => {
+    return submissions.filter(isWaitingAppointment);
+  }, [submissions, appointments]);
+
   const availableMonths = useMemo(() => {
     const monthCounts = new Map<string, number>();
-    submissions.forEach((s) => {
+    waitingSubmissions.forEach((s) => {
       if (s.submissionDate && s.submissionDate.length >= 7) {
         const key = s.submissionDate.substring(0, 7);
         monthCounts.set(key, (monthCounts.get(key) || 0) + 1);
@@ -147,7 +160,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
         const label = `${THAI_MONTHS[monthIdx] || m} ${getBuddhistYear(year)}`;
         return { key, label, count };
       });
-  }, [submissions]);
+  }, [waitingSubmissions]);
   const [submissionToEdit, setSubmissionToEdit] = useState<DocumentSubmission | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -166,7 +179,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
   }, [detail, deleting, selectedPhotoModal]);
 
   const filteredSubmissions = useMemo(() => {
-    return submissions.filter((sub) => {
+    return waitingSubmissions.filter((sub) => {
       const matchSearch =
         !searchTerm ||
         sub.schoolName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -178,7 +191,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
       const matchMonth = selectedMonth === 'all' || sub.submissionDate.startsWith(selectedMonth);
       return matchSearch && matchTeam && matchMonth;
     });
-  }, [submissions, searchTerm, teamFilter, selectedMonth]);
+  }, [waitingSubmissions, searchTerm, teamFilter, selectedMonth]);
 
   const handleSave = async (data: Omit<DocumentSubmission, 'id'>) => {
     if (submissionToEdit) { await updateDocumentSubmission(submissionToEdit.id, data, currentUser); return submissionToEdit.id; }
@@ -211,10 +224,10 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
             <FileText className="w-6 h-6 text-[#087CC1]" />
-            <span>ข้อมูลการยื่นหนังสือ ({filteredSubmissions.length}{selectedMonth !== 'all' || teamFilter !== 'all' ? ` จาก ${submissions.length}` : ''} รายการ)</span>
+            <span>ข้อมูลการยื่นหนังสือ ({filteredSubmissions.length}{selectedMonth !== 'all' || teamFilter !== 'all' ? ` จาก ${waitingSubmissions.length}` : ''} รายการ)</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            บันทึกประวัติการยื่นหนังสือราชการ ข้อมูลครูแนะแนว และรูปถ่ายหลักฐาน
+            บันทึกประวัติการยื่นหนังสือราชการ ข้อมูลครูแนะแนว และรอนัดหมายลงพื้นที่
           </p>
         </div>
 

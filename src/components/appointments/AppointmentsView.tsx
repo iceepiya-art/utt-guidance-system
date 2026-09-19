@@ -44,9 +44,14 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<'all' | AppointmentStatus>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
+  // Appointments that haven't done guidance yet (นัดหมายและยังไม่ได้แนะแนว)
+  const pendingAppointments = useMemo(() => {
+    return appointments.filter((a) => a.status !== 'COMPLETED');
+  }, [appointments]);
+
   const availableMonths = useMemo(() => {
     const monthCounts = new Map<string, number>();
-    appointments.forEach((a) => {
+    pendingAppointments.forEach((a) => {
       if (a.date && a.date.length >= 7) {
         const key = a.date.substring(0, 7);
         monthCounts.set(key, (monthCounts.get(key) || 0) + 1);
@@ -61,26 +66,15 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
         const label = `${THAI_MONTHS[monthIdx] || m} ${getBuddhistYear(year)}`;
         return { key, label, count };
       });
-  }, [appointments]);
+  }, [pendingAppointments]);
 
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
-  const [tabScope, setTabScope] = useState<'all' | 'pending' | 'completed'>('all');
-
-  const upcomingCount = useMemo(
-    () => appointments.filter((a) => a.status !== 'COMPLETED' && a.status !== 'CANCELLED').length,
-    [appointments]
-  );
-  const completedCount = useMemo(
-    () => appointments.filter((a) => a.status === 'COMPLETED').length,
-    [appointments]
-  );
-
   const filteredAppointments = useMemo(() => {
-    return appointments.filter((appt) => {
+    return pendingAppointments.filter((appt) => {
       const matchSearch =
         !searchTerm ||
         appt.schoolName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -91,16 +85,9 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
       const matchStatus = statusFilter === 'all' || appt.status === statusFilter;
       const matchMonth = selectedMonth === 'all' || appt.date.startsWith(selectedMonth);
 
-      const matchScope =
-        tabScope === 'all'
-          ? true
-          : tabScope === 'pending'
-          ? appt.status !== 'COMPLETED' && appt.status !== 'CANCELLED'
-          : appt.status === 'COMPLETED';
-
-      return matchSearch && matchTeam && matchStatus && matchMonth && matchScope;
+      return matchSearch && matchTeam && matchStatus && matchMonth;
     });
-  }, [appointments, searchTerm, teamFilter, statusFilter, selectedMonth, tabScope]);
+  }, [pendingAppointments, searchTerm, teamFilter, statusFilter, selectedMonth]);
 
   const handleSaveAppointment = async (data: Omit<Appointment, 'id'>) => {
     if (appointmentToEdit) {
@@ -155,10 +142,10 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
             <CalendarCheck className="w-6 h-6 text-[#087CC1]" />
-            <span>รายการนัดหมายแนะแนว ({filteredAppointments.length}{selectedMonth !== 'all' || teamFilter !== 'all' || statusFilter !== 'all' ? ` จาก ${appointments.length}` : ''} รายการ)</span>
+            <span>รายการนัดหมายแนะแนว ({filteredAppointments.length}{selectedMonth !== 'all' || teamFilter !== 'all' || statusFilter !== 'all' ? ` จาก ${pendingAppointments.length}` : ''} รายการ)</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            ตารางกำหนดการนัดหมายลงพื้นที่ วิทยาลัยเทคโนโลยีอุตรดิตถ์
+            ตารางกำหนดการนัดหมายลงพื้นที่ วิทยาลัยเทคโนโลยีอุตรดิตถ์ (รอลงพื้นที่แนะแนว)
           </p>
         </div>
 
@@ -192,42 +179,6 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-        {/* Quick Scope Tabs */}
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3 overflow-x-auto no-scrollbar">
-          <button
-            type="button"
-            onClick={() => setTabScope('all')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-              tabScope === 'all'
-                ? 'bg-[#087CC1] text-white shadow-xs'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-            }`}
-          >
-            ทั้งหมด ({appointments.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setTabScope('pending')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-              tabScope === 'pending'
-                ? 'bg-[#087CC1] text-white shadow-xs'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-            }`}
-          >
-            นัดหมายรอลงพื้นที่ ({upcomingCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setTabScope('completed')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-              tabScope === 'completed'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-            }`}
-          >
-            ออกแนะแนวแล้ว ({completedCount})
-          </button>
-        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="relative">
@@ -296,7 +247,6 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
               <option value="all">สถานะ: ทั้งหมด</option>
               <option value="CONFIRMED">ยืนยันแล้ว (Confirmed)</option>
               <option value="TENTATIVE">รอยืนยัน (Tentative)</option>
-              <option value="COMPLETED">ออกแนะแนวแล้ว (Completed)</option>
               <option value="CANCELLED">ยกเลิก (Cancelled)</option>
             </select>
           </div>

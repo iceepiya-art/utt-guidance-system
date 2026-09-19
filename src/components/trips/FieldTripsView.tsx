@@ -44,19 +44,13 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
 
   // Merge fieldTrips with completed appointments from the appointment system
   const combinedTrips = useMemo(() => {
-    const list: FieldTrip[] = [...fieldTrips];
+    const list: FieldTrip[] = fieldTrips.filter((ft) => !ft.workType || ft.workType.includes('แนะแนว'));
 
     const cleanSchool = (s: string) =>
       (s || '').replace(/^(โรงเรียน|รร\.)\s*/, '').trim().toLowerCase();
 
-    // Identify all completed appointments
-    const completedAppts = appointments.filter((appt) => {
-      return (
-        appt.status === 'COMPLETED' ||
-        (appt.photos && appt.photos.length > 0) ||
-        (appt.note && appt.note.includes('แนะแนวแล้ว'))
-      );
-    });
+    // Identify only completed guidance appointments
+    const completedAppts = appointments.filter((appt) => appt.status === 'COMPLETED');
 
     completedAppts.forEach((appt) => {
       const apptSchoolClean = cleanSchool(appt.schoolName);

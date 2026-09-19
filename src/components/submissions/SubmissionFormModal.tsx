@@ -10,6 +10,35 @@ import { useAuth } from '../../context/AuthContext';
 
 
 
+export const normalizeTeacherName = (name: string, choices: string[]): string => {
+  if (!name || !name.trim()) return '';
+  const trimmed = name.trim();
+  if (choices.includes(trimmed)) return trimmed;
+
+  const clean = (s: string) =>
+    s
+      .replace(/^(อ\.|อาจารย์|นาย|นาง|นางสาว)\s*/, '')
+      .replace(/\s*\(.*?\)/g, '')
+      .trim()
+      .toLowerCase();
+
+  const targetClean = clean(trimmed);
+  if (!targetClean) return trimmed;
+
+  const matched = choices.find(c => {
+    const cClean = clean(c);
+    return (
+      cClean === targetClean ||
+      cClean.startsWith(targetClean) ||
+      targetClean.startsWith(cClean) ||
+      cClean.includes(targetClean) ||
+      targetClean.includes(cClean)
+    );
+  });
+
+  return matched || trimmed;
+};
+
 interface SubmissionFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -46,22 +75,42 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     'อ.ปิยะ สีดาชัย (แนะแนวสาย 2)',
   ];
 
-  const teacherChoices = [...new Set([
-    ...defaultTeacherChoices,
-    ...(users || []).filter(user => user.active).map(user => user.displayName.trim()),
-    currentUser?.displayName?.trim() || ''
-  ].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+  const teacherChoices = React.useMemo(() => {
+    const list: string[] = [];
+    (users || [])
+      .filter(u => u.active)
+      .forEach(u => {
+        const name = u.displayName?.trim();
+        if (name) list.push(name);
+      });
 
-  const defaultSubmitters = (team: TeamId) => {
-    if (team === 'team1') {
-      return [
-        'อ.ประชา กัลปนารถ (หัวหน้างานแนะแนว)',
-        'อ.ณิชชัยกุญช์ โลราช (แนะแนวสาย 1)',
-      ];
+    if (currentUser?.displayName?.trim()) {
+      list.push(currentUser.displayName.trim());
     }
-    return [
-      'อ.ปิยะ สีดาชัย (แนะแนวสาย 2)',
-    ];
+
+    const clean = (s: string) =>
+      s.replace(/^(อ\.|อาจารย์|นาย|นาง|นางสาว)\s*/, '').replace(/\s*\(.*?\)/g, '').trim().toLowerCase();
+
+    defaultTeacherChoices.forEach(def => {
+      const defClean = clean(def);
+      const exists = list.some(existing => {
+        const exClean = clean(existing);
+        return exClean === defClean || exClean.startsWith(defClean) || defClean.startsWith(exClean);
+      });
+      if (!exists) list.push(def);
+    });
+
+    return [...new Set(list)].sort((a, b) => a.localeCompare(b, 'th'));
+  }, [users, currentUser]);
+
+  const defaultSubmitters = (team: TeamId): string[] => {
+    if (team === 'team1') {
+      const p1 = normalizeTeacherName('อ.ประชา', teacherChoices) || 'อ.ประชา กัลปนารถ (หัวหน้างานแนะแนว)';
+      const p2 = normalizeTeacherName('อ.ณิชชัยกุญช์', teacherChoices) || 'อ.ณิชชัยกุญช์ โลราช (แนะแนวสาย 1)';
+      return [p1, p2];
+    }
+    const p3 = normalizeTeacherName('อ.ปิยะ', teacherChoices) || 'อ.ปิยะ สีดาชัย (แนะแนวสาย 2)';
+    return [p3];
   };
 
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>(preselectedSchool?.id || '');
@@ -72,6 +121,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [submitterNames, setSubmitterNames] = useState<string[]>(() =>
     defaultSubmitters(preselectedSchool?.teamId || 'team1')
   );
+  const [customIndices, setCustomIndices] = useState<Record<number, boolean>>({});
   const submittedByNames = [...new Set<string>(submitterNames.map(name => name.trim()).filter(Boolean))];
   const submittedByName = submittedByNames.join(', ');
 
@@ -101,6 +151,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     setVehicleName(vehicle.name);
     if (!submissionToEdit) {
       setSubmitterNames(defaultSubmitters(nextTeam));
+      setCustomIndices({});
     }
   };
   const [appointmentNote, setAppointmentNote] = useState('');
@@ -112,7 +163,14 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     setVehicleId(data.vehicleId || defaultVehicle(data.teamId).id); setVehicleName(data.vehicleName || defaultVehicle(data.teamId).name);
     setSelectedSchoolId(data.schoolId); setDocumentNumber(data.documentNumber);
     setSubmissionDate(data.submissionDate); setSubmissionTime(data.submissionTime || '');
-    setTeamId(data.teamId); setSubmitterNames(data.submittedByNames?.length ? data.submittedByNames : [data.submittedByName]);
+    setTeamId(data.teamId);
+    const rawNames: string[] =
+      data.submittedByNames && data.submittedByNames.length > 0
+        ? data.submittedByNames
+        : (data.submittedByName ? data.submittedByName.split(/[,+]/).map(s => s.trim()).filter(Boolean) : defaultSubmitters(data.teamId));
+    const resolved = rawNames.map(name => normalizeTeacherName(name, teacherChoices));
+    setSubmitterNames(resolved.length > 0 ? resolved : defaultSubmitters(data.teamId));
+    setCustomIndices({});
     setTeacherName(data.teacherName || ''); setTeacherPhone(data.teacherPhone || '');
     setTeacherPosition(data.teacherPosition || ''); setTeacherLine(data.teacherLine || '');
     setPreferredContactTime(data.preferredContactTime || '');
@@ -356,19 +414,129 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               </select>
             </div>
             <div className="sm:col-span-3 space-y-2">
-              <label className="block text-xs font-semibold text-slate-700">อาจารย์ผู้ยื่น (เพิ่มได้หลายคน) *</label>
-              {submitterNames.map((name, index) => <div key={index} className="flex flex-wrap sm:flex-nowrap gap-2">
-                <select aria-label={`เลือกอาจารย์จากระบบคนที่ ${index + 1}`} disabled={isSubmitting} value={teacherChoices.includes(name) ? name : ''} onChange={e => setSubmitterNames(names => names.map((n, i) => i === index ? e.target.value : n))} className="w-full sm:w-1/2 px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm">
-                  <option value="">พิมพ์ชื่อเอง / เลือกจากระบบ</option>
-                  {teacherChoices.map(choice => <option key={choice} value={choice}>{choice}</option>)}
-                </select>
-                <input type="text" required aria-label={`อาจารย์ผู้ยื่นคนที่ ${index + 1}`} value={name} disabled={isSubmitting} placeholder="ชื่อ–นามสกุลอาจารย์"
-                  onChange={e => setSubmitterNames(names => names.map((n, i) => i === index ? e.target.value : n))}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm" />
-                {submitterNames.length > 1 && <button type="button" disabled={isSubmitting} aria-label={`ลบอาจารย์คนที่ ${index + 1}`} onClick={() => setSubmitterNames(names => names.filter((_, i) => i !== index))} className="px-3 text-sm text-red-600">ลบ</button>}
-              </div>)}
-              <button type="button" disabled={isSubmitting} onClick={() => setSubmitterNames(names => [...names, ''])} className="text-sm font-semibold text-sky-700">+ เพิ่มอาจารย์ผู้ยื่น</button>
-              <p className="text-xs text-slate-500">เลือกชื่อจากระบบ หรือพิมพ์ชื่อเพิ่มเติมในช่องชื่อ รายชื่อทุกคนจะแสดงในรายงานสรุป</p>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-semibold text-slate-700">
+                  อาจารย์ผู้ยื่น (เลือกจากระบบ / เพิ่มได้หลายคน) *
+                </label>
+                <span className="text-xs text-slate-500">
+                  บุคลากรในระบบ ({teacherChoices.length} ท่าน)
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {submitterNames.map((name, index) => {
+                  const isCustom = !!customIndices[index];
+                  const showCurrentAsOption = !isCustom && name && !teacherChoices.includes(name);
+
+                  return (
+                    <div key={index} className="flex items-center gap-2">
+                      {isCustom ? (
+                        <div className="flex-1 flex gap-2">
+                          <input
+                            type="text"
+                            required
+                            aria-label={`อาจารย์ผู้ยื่นคนที่ ${index + 1}`}
+                            value={name}
+                            disabled={isSubmitting}
+                            placeholder="พิมพ์ชื่อ–นามสกุลอาจารย์"
+                            onChange={e =>
+                              setSubmitterNames(names =>
+                                names.map((n, i) => (i === index ? e.target.value : n))
+                              )
+                            }
+                            className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#075A9C]"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomIndices(prev => ({ ...prev, [index]: false }));
+                              setSubmitterNames(names =>
+                                names.map((n, i) => (i === index ? (teacherChoices[0] || '') : n))
+                              );
+                            }}
+                            className="px-3 py-1.5 text-xs text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-lg whitespace-nowrap font-medium transition-colors"
+                          >
+                            เลือกจากระบบ
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex-1 relative">
+                          <select
+                            aria-label={`เลือกอาจารย์จากระบบคนที่ ${index + 1}`}
+                            disabled={isSubmitting}
+                            value={name}
+                            onChange={e => {
+                              const val = e.target.value;
+                              if (val === '__CUSTOM__') {
+                                setCustomIndices(prev => ({ ...prev, [index]: true }));
+                                setSubmitterNames(names =>
+                                  names.map((n, i) => (i === index ? '' : n))
+                                );
+                              } else {
+                                setSubmitterNames(names =>
+                                  names.map((n, i) => (i === index ? val : n))
+                                );
+                              }
+                            }}
+                            className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:ring-2 focus:ring-[#075A9C]"
+                          >
+                            <option value="" disabled>-- เลือกอาจารย์จากระบบ --</option>
+                            {showCurrentAsOption && (
+                              <option value={name}>{name}</option>
+                            )}
+                            {teacherChoices.map(choice => (
+                              <option key={choice} value={choice}>
+                                {choice}
+                              </option>
+                            ))}
+                            <option value="__CUSTOM__">+ พิมพ์ชื่ออาจารย์ท่านอื่น (ระบุเอง)...</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {submitterNames.length > 1 && (
+                        <button
+                          type="button"
+                          disabled={isSubmitting}
+                          aria-label={`ลบอาจารย์คนที่ ${index + 1}`}
+                          onClick={() => {
+                            setSubmitterNames(names => names.filter((_, i) => i !== index));
+                            setCustomIndices(prev => {
+                              const next = { ...prev };
+                              delete next[index];
+                              return next;
+                            });
+                          }}
+                          className="px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl font-medium transition-colors shrink-0"
+                        >
+                          ลบ
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    const nextChoice =
+                      teacherChoices.find(c => !submitterNames.includes(c)) ||
+                      teacherChoices[0] ||
+                      '';
+                    setSubmitterNames(names => [...names, nextChoice]);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#075A9C] hover:text-[#06487c] transition-colors"
+                >
+                  <span>+ เพิ่มอาจารย์ผู้ยื่น</span>
+                </button>
+                <p className="text-xs text-slate-500">
+                  รายชื่อทุกคนจะแสดงในรายงานสรุปและหน้าติดตามงาน
+                </p>
+              </div>
             </div>
           </div>
 
@@ -440,18 +608,31 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                 onChange={(e) => {
                   const next = e.target.value as PostSubmissionStatus;
                   setStatus(next);
-                  if (next === 'DOCUMENT_SUBMITTED' && !note.trim()) setNote('รอติดต่อกลับ');
-                  else if (next === 'OTHER_ACTIVITY' && note === 'รอติดต่อกลับ') setNote('');
+                  if (next === 'WAITING_APPOINTMENT' || next === 'DOCUMENT_SUBMITTED') {
+                    if (!note.trim()) setNote('รอติดต่อกลับ');
+                  } else if (next === 'APPOINTED') {
+                    if (note === 'รอติดต่อกลับ') setNote('');
+                    if (!appointmentDate) setAppointmentDate(getTodayISO());
+                    if (!appointmentStart) setAppointmentStart('09:00');
+                    if (!appointmentEnd) setAppointmentEnd('11:30');
+                  } else if (next === 'OTHER_ACTIVITY' && note === 'รอติดต่อกลับ') {
+                    setNote('');
+                  }
                 }}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#087CC1]"
               >
                 <option value="WAITING_APPOINTMENT">ยื่นหนังสือแล้ว / รอนัดหมาย</option>
+                <option value="APPOINTED">นัดหมายแล้ว (ระบุวันเวลานัด)</option>
                 <option value="OTHER_ACTIVITY">กิจกรรมอื่นๆ</option>
-                {submissionToEdit?.status && submissionToEdit.status !== 'WAITING_APPOINTMENT' && submissionToEdit.status !== 'DOCUMENT_SUBMITTED' && submissionToEdit.status !== 'OTHER_ACTIVITY' && (
-                  <option value={submissionToEdit.status}>
-                    {submissionToEdit.status === 'APPOINTED' ? 'นัดหมายแนะแนวแล้ว (ระบุวันเวลานัด)' : submissionToEdit.status}
-                  </option>
-                )}
+                {submissionToEdit?.status &&
+                  submissionToEdit.status !== 'WAITING_APPOINTMENT' &&
+                  submissionToEdit.status !== 'DOCUMENT_SUBMITTED' &&
+                  submissionToEdit.status !== 'APPOINTED' &&
+                  submissionToEdit.status !== 'OTHER_ACTIVITY' && (
+                    <option value={submissionToEdit.status}>
+                      {submissionToEdit.status}
+                    </option>
+                  )}
               </select>
             </div>
             <div>
