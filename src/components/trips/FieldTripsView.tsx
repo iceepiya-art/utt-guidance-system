@@ -306,7 +306,23 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
               filteredTrips.map((trip) => {
                 const isTeam1 = trip.teamId === 'team1';
                 return (
-                  <tr key={trip.id} className="hover:bg-slate-50 transition-colors">
+                  <tr
+                    key={trip.id}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`ดูรายละเอียดการออกแนะแนว ${trip.schools?.map(s => s.schoolName).join(', ')}`}
+                    onClick={() => setSelectedTrip(trip)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        const target = e.target as HTMLElement;
+                        if (target.tagName !== 'BUTTON' && target.tagName !== 'A') {
+                          e.preventDefault();
+                          setSelectedTrip(trip);
+                        }
+                      }
+                    }}
+                    className="hover:bg-slate-50/80 cursor-pointer transition-colors focus:outline-none focus-visible:bg-sky-50/60"
+                  >
                     <td className="py-2.5 px-2">
                       <span
                         className={`inline-block px-2 py-0.5 rounded-md font-semibold text-xs whitespace-nowrap ${
@@ -324,33 +340,24 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
                         เวลา {formatAppointmentTime(trip.departureTime || '08:00', trip.returnTime)}
                       </div>
                     </td>
-                    <td className="p-0 align-middle">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedTrip(trip);
-                        }}
-                        className="w-full h-full min-h-[52px] py-2.5 px-2.5 text-left flex flex-col justify-center hover:bg-sky-50/70 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#087CC1] transition-colors group"
-                      >
-                        <div className="space-y-1.5 w-full">
-                          {trip.schools?.map((s, sIdx) => (
-                            <div key={sIdx} className="font-semibold text-slate-800 flex items-center justify-between gap-1.5">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#087CC1] shrink-0" />
-                                <span className="text-sm text-slate-800 group-hover:text-[#087CC1] transition-colors truncate">
-                                  {formatSchoolDisplayName(s.schoolName)}
-                                </span>
-                              </div>
-                              {s.studentCount ? (
-                                <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
-                                  ({s.studentCount} คน)
-                                </span>
-                              ) : null}
+                    <td className="py-2.5 px-2.5">
+                      <div className="space-y-1.5 w-full">
+                        {trip.schools?.map((s, sIdx) => (
+                          <div key={sIdx} className="font-semibold text-slate-800 flex items-center justify-between gap-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#087CC1] shrink-0" />
+                              <span className="text-sm text-slate-800 truncate">
+                                {formatSchoolDisplayName(s.schoolName)}
+                              </span>
                             </div>
-                          ))}
-                        </div>
-                      </button>
+                            {s.studentCount ? (
+                              <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
+                                ({s.studentCount} คน)
+                              </span>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
                     </td>
                     <td className="py-2.5 px-2 text-slate-700 font-medium">
                       {trip.workType}
@@ -362,12 +369,15 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
                     <td className="py-2.5 px-2 text-slate-600 text-sm">
                       {trip.vehicleName || '-'}
                     </td>
-                    <td className="py-2.5 px-2 text-center">
+                    <td className="py-2.5 px-2 text-center" onClick={(e) => e.stopPropagation()}>
                       {trip.photos && trip.photos.length > 0 ? (
                         <button
                           type="button"
-                          onClick={() => setSelectedPhoto(trip.photos[0].url)}
-                          className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium whitespace-nowrap"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPhoto(trip.photos[0].url);
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium whitespace-nowrap cursor-pointer"
                         >
                           <ImageIcon className="w-3.5 h-3.5 text-[#087CC1]" />
                           <span>{trip.photos.length} รูป</span>
@@ -376,32 +386,39 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
                         <span className="text-[11px] text-slate-300">-</span>
                       )}
                     </td>
-                    <td className="py-2.5 px-2 text-right">
+                    <td className="py-2.5 px-2 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => setSelectedTrip(trip)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTrip(trip);
+                          }}
                           title="ดูรายละเอียด"
-                          className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-[#087CC1] hover:bg-slate-100 rounded-lg transition-colors"
+                          className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-[#087CC1] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         {canEdit && (
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setTripToEdit(trip);
                               setIsFormOpen(true);
                             }}
                             title="แก้ไข"
-                            className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                         )}
                         {isAdmin && (
                           <button
-                            onClick={() => handleDelete(trip)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(trip);
+                            }}
                             title="ลบ"
-                            className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

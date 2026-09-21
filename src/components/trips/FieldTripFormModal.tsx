@@ -12,6 +12,7 @@ import { subscribeVehicles } from '../../firebase/dbService';
 import { getSelectablePersonnel, isEligiblePersonnel, resolveResponsibleCounselor } from '../../utils/personnelSelector';
 import { getDefaultVehicleForPersonnel } from '../../utils/vehicleMapping';
 import { isTimeRangeValid, isValidTimeRange, formatAppointmentTime } from '../../utils/appointmentUtils';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 
 interface FieldTripFormModalProps {
   isOpen: boolean;
@@ -156,7 +157,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       .map((appt) => ({
         key: `appointment:${appt.id}`,
         kind: 'appointment',
-        label: `${formatThaiShortDate(appt.date)} · ${appt.schoolName}`,
+        label: `${formatThaiShortDate(appt.date)} · ${formatSchoolDisplayName(appt.schoolName)}`,
         detail: `${formatAppointmentTime(appt.startTime, appt.endTime)} · ${appt.counselorName || 'ยังไม่ระบุผู้รับผิดชอบ'}`,
         schoolId: appt.schoolId,
         schoolName: appt.schoolName,
@@ -183,7 +184,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
         return {
           key: `submission:${sub.id}`,
           kind: 'submission',
-          label: `${formatThaiShortDate(sub.appointmentDate || sub.submissionDate)} · ${sub.schoolName}`,
+          label: `${formatThaiShortDate(sub.appointmentDate || sub.submissionDate)} · ${formatSchoolDisplayName(sub.schoolName)}`,
           detail: hasAppointmentTime
             ? `${formatAppointmentTime(sub.appointmentStartTime, sub.appointmentEndTime)} · จากหน้ายื่นหนังสือ`
             : `${sub.status === 'APPOINTED' ? 'นัดหมายแล้ว' : 'ยื่นหนังสือแล้ว'} · ${sub.submittedByName}`,
@@ -306,7 +307,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       applyLinkedSource({
         key: prefilledSubmission.id ? `submission:${prefilledSubmission.id}` : 'prefilled-submission',
         kind: 'submission',
-        label: prefilledSubmission.schoolName,
+        label: formatSchoolDisplayName(prefilledSubmission.schoolName),
         detail: prefilledSubmission.submittedByName,
         schoolId: prefilledSubmission.schoolId,
         schoolName: prefilledSubmission.schoolName,
@@ -328,7 +329,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       applyLinkedSource({
         key: `appointment:${prefilledAppointment.id}`,
         kind: 'appointment',
-        label: prefilledAppointment.schoolName,
+        label: formatSchoolDisplayName(prefilledAppointment.schoolName),
         detail: formatAppointmentTime(prefilledAppointment.startTime, prefilledAppointment.endTime),
         schoolId: prefilledAppointment.schoolId,
         schoolName: prefilledAppointment.schoolName,
@@ -576,7 +577,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                   <div className="rounded-lg bg-white border border-sky-100 p-2">
                     <div className="text-slate-500">โรงเรียน</div>
-                    <div className="font-semibold text-slate-800">{selectedLinkedSource.schoolName}</div>
+                    <div className="font-semibold text-slate-800">{formatSchoolDisplayName(selectedLinkedSource.schoolName)}</div>
                   </div>
                   <div className="rounded-lg bg-white border border-sky-100 p-2">
                     <div className="text-slate-500">วันเวลา</div>

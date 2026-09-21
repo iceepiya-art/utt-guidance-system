@@ -192,14 +192,25 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   };
 
   const getTargetSchool = (): School | undefined => {
+    // 1. exact submission.schoolId === school.id
     const fromId = schools.find((s) => s.id === selectedSchoolId);
     if (fromId) return fromId;
+
+    // 2. exact UNIQUE submission.schoolId === school.schoolId
+    if (selectedSchoolId) {
+      const fromSchoolId = schools.filter((s) => s.schoolId === selectedSchoolId);
+      if (fromSchoolId.length === 1) return fromSchoolId[0];
+    }
+
     if (submissionToEdit) {
-      const fromName = schools.find((s) => s.schoolName === submissionToEdit.schoolName);
-      if (fromName) return fromName;
-      // Safe fallback from submissionToEdit: preserves original school identity without guessing
+      // Check if submissionToEdit.schoolId matches unique school.schoolId
+      if (submissionToEdit.schoolId) {
+        const fromSchoolId = schools.filter((s) => s.schoolId === submissionToEdit.schoolId);
+        if (fromSchoolId.length === 1) return fromSchoolId[0];
+      }
+      // 3. Fallback: preserve original record identity without guessing or fuzzy matching
       return {
-        id: submissionToEdit.schoolId,
+        id: submissionToEdit.schoolId || '',
         schoolName: submissionToEdit.schoolName,
         teamId: submissionToEdit.teamId,
       } as School;

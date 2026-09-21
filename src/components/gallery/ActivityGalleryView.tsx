@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { FieldTrip, School, TeamId, PhotoItem, Appointment, DocumentSubmission } from '../../types';
 import { formatThaiShortDate } from '../../utils/dateUtils';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 
 interface ActivityGalleryViewProps {
   fieldTrips?: FieldTrip[];
@@ -88,7 +89,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
             ...photo,
             sourceType: 'SUBMISSION',
             sourceId: sub.id,
-            sourceTitle: sub.schoolName || 'ยื่นหนังสือ',
+            sourceTitle: formatSchoolDisplayName(sub.schoolName) || 'ยื่นหนังสือ',
             sourceDate: sub.submissionDate,
             teamId: sub.teamId,
             activityTitle: `ยื่นหนังสือ (${sub.documentNumber || 'มีหลักฐาน'})`,
@@ -116,7 +117,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
             ...photo,
             sourceType: 'GUIDANCE',
             sourceId: trip.id,
-            sourceTitle: trip.schools?.map((s) => s.schoolName).join(', ') || 'กิจกรรมแนะแนว',
+            sourceTitle: trip.schools?.map((s) => formatSchoolDisplayName(s.schoolName)).join(', ') || 'กิจกรรมแนะแนว',
             sourceDate: trip.date,
             teamId: trip.teamId,
             activityTitle: trip.workType || 'ออกแนะแนว',
@@ -141,7 +142,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
             ...photo,
             sourceType: 'LEGACY_APPOINTMENT',
             sourceId: app.id,
-            sourceTitle: app.schoolName || 'กิจกรรมแนะแนว (ย้อนหลัง)',
+            sourceTitle: formatSchoolDisplayName(app.schoolName) || 'กิจกรรมแนะแนว (ย้อนหลัง)',
             sourceDate: app.date,
             teamId: app.teamId,
             activityTitle: app.workType || 'ออกแนะแนวการศึกษา (ข้อมูลเดิม)',
@@ -360,7 +361,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
             <option value="all">ทุกโรงเรียน</option>
             {schools.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.schoolName}
+                {formatSchoolDisplayName(s.schoolName)}
               </option>
             ))}
           </select>

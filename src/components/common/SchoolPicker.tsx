@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import type { School, TeamId } from '../../types';
 import { filterSchoolChoices } from '../../utils/schoolChoices';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 interface Props { schools:School[];value:string;onChange:(id:string)=>void;required?:boolean;disabled?:boolean; }
 export function SchoolPicker({schools,value,onChange,required=true,disabled=false}:Props) {
   const [team,setTeam]=useState<TeamId|'all'>('all');
@@ -10,7 +11,7 @@ export function SchoolPicker({schools,value,onChange,required=true,disabled=fals
   const results=useMemo(()=>filterSchoolChoices(schools,team,query),[schools,team,query]);
   const selected=schools.find(s=>s.id===value);
   if(selected && !editing) return <div data-school-picker className="flex items-center justify-between gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3">
-    <div className="min-w-0"><div className="font-semibold text-sm text-slate-800">{selected.schoolName}</div><div className="text-xs text-slate-500 mt-1">{selected.teamId === 'team1' ? 'สาย 1: อุตรดิตถ์' : 'สาย 2: สุโขทัย'}{selected.district ? ` · ${selected.district}` : ''}</div></div>
+    <div className="min-w-0"><div className="font-semibold text-sm text-slate-800">{formatSchoolDisplayName(selected.schoolName)}</div><div className="text-xs text-slate-500 mt-1">{selected.teamId === 'team1' ? 'สาย 1: อุตรดิตถ์' : 'สาย 2: สุโขทัย'}{selected.district ? ` · ${selected.district}` : ''}</div></div>
     <button type="button" disabled={disabled} onClick={()=>{setQuery('');setEditing(true);}} className="shrink-0 rounded-lg border border-sky-200 bg-white px-3 py-2 text-xs font-semibold text-sky-700 disabled:opacity-50">เปลี่ยนโรงเรียน</button>
   </div>;
   return <div className="space-y-2" data-school-picker>
@@ -20,8 +21,8 @@ export function SchoolPicker({schools,value,onChange,required=true,disabled=fals
     <div className="relative"><Search size={16} className="absolute left-3 top-3 text-slate-400"/><input type="search" aria-label="ค้นหาชื่อโรงเรียน" value={query} disabled={disabled} onChange={e=>{setQuery(e.target.value);if(value)onChange('');}} placeholder="พิมพ์ชื่อโรงเรียน รหัส หรืออำเภอ…" className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-sky-500 outline-none"/></div>
     <select aria-label="ผลการค้นหาโรงเรียน" value={results.some(s=>s.id===value)?value:''} onChange={e=>{onChange(e.target.value);setEditing(false);}} size={Math.max(2, Math.min(5, results.length + 1))} required={required} disabled={disabled} className="w-full rounded-xl border border-slate-300 bg-white p-1 text-sm focus:ring-2 focus:ring-sky-500 outline-none">
       <option value="" disabled>— เลือกโรงเรียนจากรายการ —</option>
-      {results.map(s=><option key={s.id} value={s.id} className="px-3 py-2 rounded-lg">{s.schoolName} · {s.teamId==='team1'?'อุตรดิตถ์':'สุโขทัย'}{s.district?` · ${s.district}`:''}</option>)}
+      {results.map(s=><option key={s.id} value={s.id} className="px-3 py-2 rounded-lg">{formatSchoolDisplayName(s.schoolName)} · {s.teamId==='team1'?'อุตรดิตถ์':'สุโขทัย'}{s.district?` · ${s.district}`:''}</option>)}
     </select>
-    <div className="flex flex-wrap justify-between gap-1 text-xs text-slate-500"><span role="status">{results.length?`พบ ${results.length.toLocaleString('th-TH')} โรงเรียน`:'ไม่พบโรงเรียน ลองเปลี่ยนคำค้นหรือเลือกทุกสาย'}</span>{selected&&<span className="text-sky-700">เลือก: {selected.schoolName}</span>}</div>
+    <div className="flex flex-wrap justify-between gap-1 text-xs text-slate-500"><span role="status">{results.length?`พบ ${results.length.toLocaleString('th-TH')} โรงเรียน`:'ไม่พบโรงเรียน ลองเปลี่ยนคำค้นหรือเลือกทุกสาย'}</span>{selected&&<span className="text-sky-700">เลือก: {formatSchoolDisplayName(selected.schoolName)}</span>}</div>
   </div>;
 }

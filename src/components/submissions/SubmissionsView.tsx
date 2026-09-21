@@ -72,7 +72,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
       sub.submittedByNames && sub.submittedByNames.length > 0
         ? sub.submittedByNames
         : sub.submittedByName
-        ? [sub.submittedByName]
+        ? sub.submittedByName.split(/[,+]/).map(s => s.trim()).filter(Boolean)
         : [];
     if (rawList.length === 0) return ['-'];
     return rawList.map((name) => {

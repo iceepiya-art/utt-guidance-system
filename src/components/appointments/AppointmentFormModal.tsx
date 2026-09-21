@@ -8,6 +8,7 @@ import { checkAppointmentConflict } from '../../firebase/dbService';
 import { getSelectablePersonnel, isEligiblePersonnel, resolveResponsibleCounselor } from '../../utils/personnelSelector';
 import { getDefaultVehicleForPersonnel } from '../../utils/vehicleMapping';
 import { isValidTimeRange, isTimeRangeValid } from '../../utils/appointmentUtils';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 
 interface AppointmentFormModalProps {
   isOpen: boolean;
@@ -437,7 +438,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
                       <div className="rounded-lg bg-white border border-sky-100 p-2.5 shadow-2xs">
                         <div className="text-slate-400 text-[11px] font-medium">โรงเรียน</div>
                         <div className="font-bold text-slate-800 mt-0.5 truncate" title={linked?.schoolName || appointmentToEdit.schoolName}>
-                          {linked?.schoolName || appointmentToEdit.schoolName}
+                          {formatSchoolDisplayName(linked?.schoolName || appointmentToEdit.schoolName)}
                         </div>
                       </div>
                       <div className="rounded-lg bg-white border border-sky-100 p-2.5 shadow-2xs">
@@ -486,12 +487,12 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
                   <option value="">— เลือกรายการยื่นหนังสือเดิม (ถ้ามี) —</option>
                   {availableSubmissions.map((sub) => (
                     <option key={sub.id} value={sub.id}>
-                      {formatThaiShortDate(sub.submissionDate)} · {sub.schoolName} · {sub.documentNumber || 'ไม่มีเลขหนังสือ'}
+                      {formatThaiShortDate(sub.submissionDate)} · {formatSchoolDisplayName(sub.schoolName)} · {sub.documentNumber || 'ไม่มีเลขหนังสือ'}
                     </option>
                   ))}
                   {submissionId && !availableSubmissions.some((sub) => sub.id === submissionId) && (
                     <option value={submissionId}>
-                      {prefilledData?.schoolName || 'รายการยื่นหนังสือที่เชื่อมไว้'}
+                      {formatSchoolDisplayName(prefilledData?.schoolName) || 'รายการยื่นหนังสือที่เชื่อมไว้'}
                     </option>
                   )}
                 </select>
@@ -501,7 +502,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                   <div className="rounded-lg bg-white border border-sky-100 p-2">
                     <div className="text-slate-500">โรงเรียน</div>
-                    <div className="font-semibold text-slate-800">{schools.find((s) => s.id === selectedSchoolId)?.schoolName || '-'}</div>
+                    <div className="font-semibold text-slate-800">{formatSchoolDisplayName(schools.find((s) => s.id === selectedSchoolId)?.schoolName) || '-'}</div>
                   </div>
                   <div className="rounded-lg bg-white border border-sky-100 p-2">
                     <div className="text-slate-500">ครูแนะแนว</div>

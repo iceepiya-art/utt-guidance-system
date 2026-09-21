@@ -19,6 +19,7 @@ import {
   formatThaiShortDate,
 } from '../../utils/dateUtils';
 import { exportMonthlyReportToExcel, exportSchoolsToExcel } from '../../utils/excelExport';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 
 interface MonthlyReportsViewProps {
   schools: School[];
@@ -380,7 +381,7 @@ export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
                       <td className="py-3 px-4">
                         {trip.schools?.map((s, idx) => (
                           <div key={idx} className="font-semibold text-slate-800 mb-1">
-                            <div>{s.schoolName}</div>
+                            <div>{formatSchoolDisplayName(s.schoolName)}</div>
                             <div className="text-xs font-normal text-slate-500 mt-0.5">
                               {s.timeSlot || 'ไม่ระบุเวลา'}{s.notes ? ` · ${s.notes}` : ''}
                             </div>

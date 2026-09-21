@@ -23,6 +23,7 @@ export const isSystemOnlyAccount = (user: UserProfile): boolean => {
     cleanName === 'ผู้ดูแลระบบ' ||
     cleanName === 'system admin' ||
     cleanName === 'admin' ||
+    cleanName.includes('ธุรการ') ||
     cleanEmail === 'admin@utt.ac.th'
   );
 };
@@ -78,10 +79,21 @@ export const cleanTeacherName = (s: string): string => {
 };
 
 /**
+ * Strips role suffixes from a display name so that roles are not conflated with human identity.
+ * e.g. "อ.ประชา กัลปนารถ (หัวหน้างานแนะแนว)" -> "อ.ประชา กัลปนารถ"
+ */
+export const stripRoleSuffix = (name: string): string => {
+  return (name || '')
+    .replace(/\s*\((หัวหน้างานแนะแนว|แนะแนวสาย\s*[12]|สาย\s*[12]|แนะแนว|เดิม|บันทึกเดิม)\)/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+/**
  * Central function to extract selectable personnel from Firestore users.
  * - Single Source of Truth: uses `users` list from Firestore.
  * - Filters by eligibility (active, non-viewer, non-system-account).
- * - Deduplicates by stable unique `user.id`.
+ * - Deduplicates by stable unique `user.id` and canonical name (ONE PERSON = ONE OPTION).
  * - Formats standard display name (without mutating name with appended roles).
  * - Fallback default list provided ONLY if users collection is empty (e.g. unit test or offline mode).
  */
@@ -91,14 +103,36 @@ export const getSelectablePersonnel = (
 ): SelectablePersonnel[] => {
   const eligible = users.filter(isEligiblePersonnel);
   const seenIds = new Set<string>();
+  const seenCanonicalKeys = new Set<string>();
   const list: SelectablePersonnel[] = [];
 
   for (const u of eligible) {
     if (!u.id || seenIds.has(u.id)) continue;
+
+    // Standardize whitespace and strip any attached role suffixes in display name
+    let cleanName = stripRoleSuffix(u.displayName || '');
+    const norm = cleanTeacherName(cleanName);
+
+    // Canonical identity resolution for primary guidance personnel
+    let canonicalTargetId: string | null = null;
+    if (u.id === 'usr_admin' || norm.includes('ประชา')) {
+      canonicalTargetId = 'usr_admin';
+      cleanName = TARGET_PERSONNEL_CANONICAL_NAMES['usr_admin'];
+    } else if (u.id === 'usr_staff1' || norm.includes('ณิชชัยกุญช์')) {
+      canonicalTargetId = 'usr_staff1';
+      cleanName = TARGET_PERSONNEL_CANONICAL_NAMES['usr_staff1'];
+    } else if (u.id === 'usr_staff2' || norm.includes('ปิยะ')) {
+      canonicalTargetId = 'usr_staff2';
+      cleanName = TARGET_PERSONNEL_CANONICAL_NAMES['usr_staff2'];
+    }
+
+    if (canonicalTargetId) {
+      if (seenCanonicalKeys.has(canonicalTargetId)) continue;
+      seenCanonicalKeys.add(canonicalTargetId);
+    }
+
     seenIds.add(u.id);
 
-    // Standardize whitespace in display name without altering actual letters
-    const cleanName = (u.displayName || '').replace(/\s+/g, ' ').trim();
     const meta = formatPersonnelRoleTeam(u.role, u.teamId);
 
     list.push({
