@@ -1,10 +1,30 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function imageUnderLimit() {
+      return request.resource != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /document-submissions/{allPaths=**} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && imageUnderLimit();
+      allow delete: if signedIn();
+    }
+
+    match /guidance-activities/{allPaths=**} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && imageUnderLimit();
+      allow delete: if signedIn();
+    }
+
     match /{allPaths=**} {
-      // Allow reading images, write requires authentication
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

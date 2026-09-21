@@ -1,0 +1,1692 @@
+[
+  {
+    "idGuide": "118",
+    "schoolName": "โรงเรียนวัดปากน้ำ",
+    "date": "2026-09-17",
+    "time": "10:30",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_118_1",
+        "fileName": "LINE_ALBUM_17969_260917_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_17969_260917_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.538Z"
+      },
+      {
+        "id": "utt_appt_photo_118_2",
+        "fileName": "LINE_ALBUM_17969_260917_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_17969_260917_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.539Z"
+      },
+      {
+        "id": "utt_appt_photo_118_3",
+        "fileName": "LINE_ALBUM_17969_260917_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_17969_260917_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.539Z"
+      },
+      {
+        "id": "utt_appt_photo_118_4",
+        "fileName": "LINE_ALBUM_17969_260917_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_17969_260917_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.539Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=118"
+  },
+  {
+    "idGuide": "90",
+    "schoolName": "โรงเรียนบ้านเหล่า",
+    "date": "2026-09-21",
+    "time": "13:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "CONFIRMED",
+    "rawStatus": "นัดหมาย",
+    "note": "",
+    "photos": [],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=90"
+  },
+  {
+    "idGuide": "115",
+    "schoolName": "โรงเรียนบ้านแก่งวิทยา",
+    "date": "2026-11-12",
+    "time": "00:00",
+    "teamId": "team1",
+    "counselorName": "อ.ปิยะ",
+    "status": "CONFIRMED",
+    "rawStatus": "นัดหมาย",
+    "note": "",
+    "photos": [],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=115"
+  },
+  {
+    "idGuide": "117",
+    "schoolName": "โรงเรียนบ้านเหล่าป่าสา",
+    "date": "2026-09-16",
+    "time": "09:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_117_1",
+        "fileName": "IMG_0437.jpeg",
+        "url": "/photos/guidance/IMG_0437.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.581Z"
+      },
+      {
+        "id": "utt_appt_photo_117_2",
+        "fileName": "IMG_0440.jpeg",
+        "url": "/photos/guidance/IMG_0440.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.581Z"
+      },
+      {
+        "id": "utt_appt_photo_117_3",
+        "fileName": "IMG_0438.jpeg",
+        "url": "/photos/guidance/IMG_0438.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.581Z"
+      },
+      {
+        "id": "utt_appt_photo_117_4",
+        "fileName": "IMG_0439.jpeg",
+        "url": "/photos/guidance/IMG_0439.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.581Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=117"
+  },
+  {
+    "idGuide": "106",
+    "schoolName": "โรงเรียนบ้านหนองบัว",
+    "date": "2026-09-15",
+    "time": "13:00",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "CONFIRMED",
+    "rawStatus": "นัดหมาย",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_106_1",
+        "fileName": "LINE_ALBUM_15969_260915_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_15969_260915_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.589Z"
+      },
+      {
+        "id": "utt_appt_photo_106_2",
+        "fileName": "LINE_ALBUM_15969_260915_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_15969_260915_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.589Z"
+      },
+      {
+        "id": "utt_appt_photo_106_3",
+        "fileName": "LINE_ALBUM_15969_260915_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_15969_260915_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.589Z"
+      },
+      {
+        "id": "utt_appt_photo_106_4",
+        "fileName": "LINE_ALBUM_15969_260915_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_15969_260915_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.589Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=106"
+  },
+  {
+    "idGuide": "91",
+    "schoolName": "โรงเรียนบ้านน้ำอ่าง",
+    "date": "2026-09-15",
+    "time": "09:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_91_1",
+        "fileName": "IMG_0427.jpeg",
+        "url": "/photos/guidance/IMG_0427.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.606Z"
+      },
+      {
+        "id": "utt_appt_photo_91_2",
+        "fileName": "IMG_0429.jpeg",
+        "url": "/photos/guidance/IMG_0429.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.606Z"
+      },
+      {
+        "id": "utt_appt_photo_91_3",
+        "fileName": "IMG_0428.jpeg",
+        "url": "/photos/guidance/IMG_0428.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.606Z"
+      },
+      {
+        "id": "utt_appt_photo_91_4",
+        "fileName": "IMG_0430.jpeg",
+        "url": "/photos/guidance/IMG_0430.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.606Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=91"
+  },
+  {
+    "idGuide": "110",
+    "schoolName": "โรงเรียนบ้านสีเสียดบำรุง",
+    "date": "2026-09-14",
+    "time": "13:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_110_1",
+        "fileName": "IMG_0419.jpeg",
+        "url": "/photos/guidance/IMG_0419.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.609Z"
+      },
+      {
+        "id": "utt_appt_photo_110_2",
+        "fileName": "IMG_0418.jpeg",
+        "url": "/photos/guidance/IMG_0418.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.609Z"
+      },
+      {
+        "id": "utt_appt_photo_110_3",
+        "fileName": "IMG_0417.jpeg",
+        "url": "/photos/guidance/IMG_0417.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.609Z"
+      },
+      {
+        "id": "utt_appt_photo_110_4",
+        "fileName": "IMG_0416.jpeg",
+        "url": "/photos/guidance/IMG_0416.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.609Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=110"
+  },
+  {
+    "idGuide": "107",
+    "schoolName": "โรงเรียนเทวัญอำนวยวิทย์",
+    "date": "2026-09-14",
+    "time": "10:30",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_107_1",
+        "fileName": "LINE_ALBUM_โรงเรียนเทวัลอำนวยวิทย์ วัดปากน้ำ_260914_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_โรงเรียนเทวัลอำนวยวิทย์ วัดปากน้ำ_260914_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.619Z"
+      },
+      {
+        "id": "utt_appt_photo_107_2",
+        "fileName": "LINE_ALBUM_โรงเรียนเทวัลอำนวยวิทย์ วัดปากน้ำ_260914_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_โรงเรียนเทวัลอำนวยวิทย์ วัดปากน้ำ_260914_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.619Z"
+      },
+      {
+        "id": "utt_appt_photo_107_3",
+        "fileName": "LINE_ALBUM_โรงเรียนเทวัลอำนวยวิทย์ วัดปากน้ำ_260914_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_โรงเรียนเทวัลอำนวยวิทย์ วัดปากน้ำ_260914_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.619Z"
+      },
+      {
+        "id": "utt_appt_photo_107_4",
+        "fileName": "LINE_ALBUM_โ���งเรียนเทวัลอำนวยว��ทย์ วัดปากน้ำ_260914_2.jpg",
+        "url": "https://www.utt.ac.th/guide/file_guidance/LINE_ALBUM_โ���งเรียนเทวัลอำนวยว��ทย์ วัดปากน้ำ_260914_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.619Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=107"
+  },
+  {
+    "idGuide": "35",
+    "schoolName": "โรงเรียนตรอนตรีสินธุ์",
+    "date": "2026-09-11",
+    "time": "11:15",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_35_1",
+        "fileName": "IMG_2705.jpeg",
+        "url": "/photos/guidance/IMG_2705.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.639Z"
+      },
+      {
+        "id": "utt_appt_photo_35_2",
+        "fileName": "IMG_2706.jpeg",
+        "url": "/photos/guidance/IMG_2706.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.639Z"
+      },
+      {
+        "id": "utt_appt_photo_35_3",
+        "fileName": "IMG_2707.jpeg",
+        "url": "/photos/guidance/IMG_2707.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.639Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=35"
+  },
+  {
+    "idGuide": "97",
+    "schoolName": "โรงเรียนเทศบาลวัดหนองผา",
+    "date": "2026-09-10",
+    "time": "14:30",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_97_1",
+        "fileName": "IMG_0353.jpeg",
+        "url": "/photos/guidance/IMG_0353.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.642Z"
+      },
+      {
+        "id": "utt_appt_photo_97_2",
+        "fileName": "IMG_0354.jpeg",
+        "url": "/photos/guidance/IMG_0354.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.642Z"
+      },
+      {
+        "id": "utt_appt_photo_97_3",
+        "fileName": "IMG_0355.jpeg",
+        "url": "/photos/guidance/IMG_0355.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.642Z"
+      },
+      {
+        "id": "utt_appt_photo_97_4",
+        "fileName": "IMG_0356.jpeg",
+        "url": "/photos/guidance/IMG_0356.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.642Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=97"
+  },
+  {
+    "idGuide": "99",
+    "schoolName": "โรงเรียนภราดานุสรณ์",
+    "date": "2026-09-09",
+    "time": "13:20",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_99_1",
+        "fileName": "IMG_2698.jpeg",
+        "url": "/photos/guidance/IMG_2698.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.650Z"
+      },
+      {
+        "id": "utt_appt_photo_99_2",
+        "fileName": "IMG_2697.jpeg",
+        "url": "/photos/guidance/IMG_2697.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.650Z"
+      },
+      {
+        "id": "utt_appt_photo_99_3",
+        "fileName": "IMG_2696.jpeg",
+        "url": "/photos/guidance/IMG_2696.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.650Z"
+      },
+      {
+        "id": "utt_appt_photo_99_4",
+        "fileName": "IMG_2695.jpeg",
+        "url": "/photos/guidance/IMG_2695.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.650Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=99"
+  },
+  {
+    "idGuide": "84",
+    "schoolName": "โรงเรียนบ้านวังถ้ำ",
+    "date": "2026-09-07",
+    "time": "13:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_84_1",
+        "fileName": "IMG_2644.jpeg",
+        "url": "/photos/guidance/IMG_2644.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.669Z"
+      },
+      {
+        "id": "utt_appt_photo_84_2",
+        "fileName": "IMG_2643.jpeg",
+        "url": "/photos/guidance/IMG_2643.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.669Z"
+      },
+      {
+        "id": "utt_appt_photo_84_3",
+        "fileName": "IMG_2642.jpeg",
+        "url": "/photos/guidance/IMG_2642.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.669Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=84"
+  },
+  {
+    "idGuide": "86",
+    "schoolName": "โรงเรียนบ้านเตว็ดนอก",
+    "date": "2026-09-09",
+    "time": "10:30",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_86_1",
+        "fileName": "IMG_0344.jpeg",
+        "url": "/photos/guidance/IMG_0344.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.671Z"
+      },
+      {
+        "id": "utt_appt_photo_86_2",
+        "fileName": "IMG_0346.jpeg",
+        "url": "/photos/guidance/IMG_0346.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.671Z"
+      },
+      {
+        "id": "utt_appt_photo_86_3",
+        "fileName": "IMG_0345.jpeg",
+        "url": "/photos/guidance/IMG_0345.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.671Z"
+      },
+      {
+        "id": "utt_appt_photo_86_4",
+        "fileName": "IMG_0347.jpeg",
+        "url": "/photos/guidance/IMG_0347.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.671Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=86"
+  },
+  {
+    "idGuide": "89",
+    "schoolName": "โรงเรียนศรีสำโรงชนูปถัมถ์",
+    "date": "2026-09-04",
+    "time": "14:00",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_89_1",
+        "fileName": "LINE_ALBUM_7969_260907_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_7969_260907_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.680Z"
+      },
+      {
+        "id": "utt_appt_photo_89_2",
+        "fileName": "LINE_ALBUM_7969_260907_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_7969_260907_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.680Z"
+      },
+      {
+        "id": "utt_appt_photo_89_3",
+        "fileName": "LINE_ALBUM_7969_260907_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_7969_260907_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.680Z"
+      },
+      {
+        "id": "utt_appt_photo_89_4",
+        "fileName": "LINE_ALBUM_7969_260907_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_7969_260907_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.680Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=89"
+  },
+  {
+    "idGuide": "24",
+    "schoolName": "โรงเรียนโรงเรียนหวัวเฉียว",
+    "date": "2026-09-04",
+    "time": "08:30",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_24_1",
+        "fileName": "IMG_2622.jpeg",
+        "url": "/photos/guidance/IMG_2622.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.696Z"
+      },
+      {
+        "id": "utt_appt_photo_24_2",
+        "fileName": "IMG_2621.jpeg",
+        "url": "/photos/guidance/IMG_2621.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.696Z"
+      },
+      {
+        "id": "utt_appt_photo_24_3",
+        "fileName": "IMG_2619.jpeg",
+        "url": "/photos/guidance/IMG_2619.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.696Z"
+      },
+      {
+        "id": "utt_appt_photo_24_4",
+        "fileName": "IMG_2620.jpeg",
+        "url": "/photos/guidance/IMG_2620.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.696Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=24"
+  },
+  {
+    "idGuide": "64",
+    "schoolName": "โรงเรียนบ้านเด่นเหล็ก",
+    "date": "2026-09-03",
+    "time": "16:05",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_64_1",
+        "fileName": "LINE_ALBUM_เด่นเหล็ก_260903_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_เด่นเหล็ก_260903_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.699Z"
+      },
+      {
+        "id": "utt_appt_photo_64_2",
+        "fileName": "LINE_ALBUM_เด่นเหล็ก_260903_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_เด่นเหล็ก_260903_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.699Z"
+      },
+      {
+        "id": "utt_appt_photo_64_3",
+        "fileName": "LINE_ALBUM_เด่นเหล็ก_260903_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_เด่นเหล็ก_260903_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.699Z"
+      },
+      {
+        "id": "utt_appt_photo_64_4",
+        "fileName": "LINE_ALBUM_เด่นเหล็ก_260903_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_เด่นเหล็ก_260903_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.699Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=64"
+  },
+  {
+    "idGuide": "33",
+    "schoolName": "โรงเรียนอนุบาลอุตรดิตถ์",
+    "date": "2026-09-03",
+    "time": "13:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_33_1",
+        "fileName": "S__18358280.jpg",
+        "url": "/photos/guidance/S__18358280.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.707Z"
+      },
+      {
+        "id": "utt_appt_photo_33_2",
+        "fileName": "LINE_ALBUM_อนุบาลอุตรดิตถ์_260903_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_อนุบาลอุตรดิตถ์_260903_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.707Z"
+      },
+      {
+        "id": "utt_appt_photo_33_3",
+        "fileName": "LINE_ALBUM_อนุบาลอุตรดิตถ์_260903_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_อนุบาลอุตรดิตถ์_260903_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.707Z"
+      },
+      {
+        "id": "utt_appt_photo_33_4",
+        "fileName": "LINE_ALBUM_อนุบาลอุตรดิตถ์_260903_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_อนุบาลอุตรดิตถ์_260903_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.707Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=33"
+  },
+  {
+    "idGuide": "74",
+    "schoolName": "โรงเรียนบ้านนายาง",
+    "date": "2026-09-02",
+    "time": "12:30",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_74_1",
+        "fileName": "LINE_ALBUM_3969_260907_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_3969_260907_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.721Z"
+      },
+      {
+        "id": "utt_appt_photo_74_2",
+        "fileName": "......jpg",
+        "url": "/photos/guidance/......jpg",
+        "uploadedAt": "2026-09-19T06:11:49.721Z"
+      },
+      {
+        "id": "utt_appt_photo_74_3",
+        "fileName": "..jpg",
+        "url": "/photos/guidance/..jpg",
+        "uploadedAt": "2026-09-19T06:11:49.721Z"
+      },
+      {
+        "id": "utt_appt_photo_74_4",
+        "fileName": ".jpg",
+        "url": "/photos/guidance/.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.721Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=74"
+  },
+  {
+    "idGuide": "85",
+    "schoolName": "โรงเรียนบ้านน้ำพี้มิตรภาพ",
+    "date": "2026-09-02",
+    "time": "09:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_85_1",
+        "fileName": "LINE_ALBUM_น้ำพี้มิตรภาพ_260902_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_น้ำพี้มิตรภาพ_260902_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.726Z"
+      },
+      {
+        "id": "utt_appt_photo_85_2",
+        "fileName": "LINE_ALBUM_น้ำพี้มิตรภาพ_260902_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_น้ำพี้มิตรภาพ_260902_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.726Z"
+      },
+      {
+        "id": "utt_appt_photo_85_3",
+        "fileName": "LINE_ALBUM_น้ำพี้มิตรภาพ_260902_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_น้ำพี้มิตรภาพ_260902_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.726Z"
+      },
+      {
+        "id": "utt_appt_photo_85_4",
+        "fileName": "LINE_ALBUM_น้ำพี้มิตรภาพ_260902_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_น้ำพี้มิตรภาพ_260902_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.726Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=85"
+  },
+  {
+    "idGuide": "104",
+    "schoolName": "โรงเรียนบ้านน้ำพี้มิตรภาพที่214",
+    "date": "2026-09-02",
+    "time": "09:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_104_1",
+        "fileName": "LINE_ALBUM_น้ำพี้มิตรภาพ_260907_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_น้ำพี้มิตรภาพ_260907_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.734Z"
+      },
+      {
+        "id": "utt_appt_photo_104_2",
+        "fileName": "LINE_ALBUM_น้ำพี้มิตรภาพ_260907_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_น้ำพี้มิตรภาพ_260907_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.734Z"
+      },
+      {
+        "id": "utt_appt_photo_104_3",
+        "fileName": "LINE_ALBUM_น้ำพี้มิตรภาพ_260907_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_น้ำพี้มิตรภาพ_260907_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.734Z"
+      },
+      {
+        "id": "utt_appt_photo_104_4",
+        "fileName": "LINE_ALBUM_น้ำพี้มิตรภาพ_260907_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_น้ำพี้มิตรภาพ_260907_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.734Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=104"
+  },
+  {
+    "idGuide": "95",
+    "schoolName": "โรงเรียนบ้านขอนซุง",
+    "date": "2026-09-01",
+    "time": "09:00",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_95_1",
+        "fileName": "LINE_ALBUM_2969_260902_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_2969_260902_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.749Z"
+      },
+      {
+        "id": "utt_appt_photo_95_2",
+        "fileName": "LINE_ALBUM_2969_260902_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_2969_260902_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.749Z"
+      },
+      {
+        "id": "utt_appt_photo_95_3",
+        "fileName": "LINE_ALBUM_2969_260902_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_2969_260902_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.749Z"
+      },
+      {
+        "id": "utt_appt_photo_95_4",
+        "fileName": "LINE_ALBUM_2969_260902_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_2969_260902_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.749Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=95"
+  },
+  {
+    "idGuide": "15",
+    "schoolName": "โรงเรียนน้ำปาดชนูปถัทภ์",
+    "date": "2026-08-31",
+    "time": "14:30",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_15_1",
+        "fileName": "LINE_ALBUM_แนะแนวน้ำปาดชนูปถัมภ์_260901_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวน้ำปาดชนูปถัมภ์_260901_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.754Z"
+      },
+      {
+        "id": "utt_appt_photo_15_2",
+        "fileName": "LINE_ALBUM_แนะแนวน้ำปาดชนูปถัมภ์_260901_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวน้ำปาดชนูปถัมภ์_260901_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.754Z"
+      },
+      {
+        "id": "utt_appt_photo_15_3",
+        "fileName": "LINE_ALBUM_แนะแนวน้ำปาดชนูปถัมภ์_260901_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวน้ำปาดชนูปถัมภ์_260901_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.754Z"
+      },
+      {
+        "id": "utt_appt_photo_15_4",
+        "fileName": "LINE_ALBUM_แนะแนวน้ำปาดชนูปถัมภ์_260901_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวน้ำปาดชนูปถัมภ์_260901_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.754Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=15"
+  },
+  {
+    "idGuide": "103",
+    "schoolName": "บ้านเมืองเก่า ศรีอินทราทิตย์",
+    "date": "2026-08-31",
+    "time": "14:00",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_103_1",
+        "fileName": "LINE_ALBUM_4969_260907_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_4969_260907_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.762Z"
+      },
+      {
+        "id": "utt_appt_photo_103_2",
+        "fileName": "LINE_ALBUM_4969_260907_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_4969_260907_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.762Z"
+      },
+      {
+        "id": "utt_appt_photo_103_3",
+        "fileName": "LINE_ALBUM_4969_260907_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_4969_260907_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.762Z"
+      },
+      {
+        "id": "utt_appt_photo_103_4",
+        "fileName": " ศรีอินทราทิตย์.jpg",
+        "url": "/photos/guidance/ ศรีอินทราทิตย์.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.762Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=103"
+  },
+  {
+    "idGuide": "79",
+    "schoolName": "โรงเรียนอนุบาลสวรรคโลก",
+    "date": "2026-08-31",
+    "time": "10:30",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_79_1",
+        "fileName": "LINE_ALBUM_1969_260901_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_1969_260901_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.775Z"
+      },
+      {
+        "id": "utt_appt_photo_79_2",
+        "fileName": "LINE_ALBUM_1969_260901_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_1969_260901_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.775Z"
+      },
+      {
+        "id": "utt_appt_photo_79_3",
+        "fileName": "LINE_ALBUM_1969_260901_5.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_1969_260901_5.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.775Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=79"
+  },
+  {
+    "idGuide": "50",
+    "schoolName": "โรงเรียนบ้านโคนพิทยาคม",
+    "date": "2026-08-28",
+    "time": "10:00",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_50_1",
+        "fileName": "LINE_ALBUM_แนะแนว รร.บ้านโคน_260828_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.บ้านโคน_260828_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.780Z"
+      },
+      {
+        "id": "utt_appt_photo_50_2",
+        "fileName": "LINE_ALBUM_แนะแนว รร.บ้านโคน_260828_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.บ้านโคน_260828_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.780Z"
+      },
+      {
+        "id": "utt_appt_photo_50_3",
+        "fileName": "LINE_ALBUM_แนะแนว รร.��้านโคน_260828_3.jpg",
+        "url": "https://www.utt.ac.th/guide/file_guidance/LINE_ALBUM_แนะแนว รร.��้านโคน_260828_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.780Z"
+      },
+      {
+        "id": "utt_appt_photo_50_4",
+        "fileName": "LINE_ALBUM_แนะแนว รร.บ้านโคน_260828_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.บ้านโคน_260828_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.780Z"
+      },
+      {
+        "id": "utt_appt_photo_50_5",
+        "fileName": "LINE_ALBUM_แนะแนว รร.บ้านโคน_260828_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.บ้านโคน_260828_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.780Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=50"
+  },
+  {
+    "idGuide": "48",
+    "schoolName": "โรงเรียนพิชัย",
+    "date": "2026-08-27",
+    "time": "14:55",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_48_1",
+        "fileName": "LINE_ALBUM_พิชัย_260831_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_พิชัย_260831_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.789Z"
+      },
+      {
+        "id": "utt_appt_photo_48_2",
+        "fileName": "LINE_ALBUM_พิชัย_260831_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_พิชัย_260831_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.789Z"
+      },
+      {
+        "id": "utt_appt_photo_48_3",
+        "fileName": "LINE_ALBUM_พิชัย_260831_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_พิชัย_260831_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.789Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=48"
+  },
+  {
+    "idGuide": "11",
+    "schoolName": "โรงเรียนอนุบาลท่าปลา",
+    "date": "2026-08-27",
+    "time": "09:00",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_11_1",
+        "fileName": "LINE_ALBUM_แนะแนวอนุบาลท่าปลา_260827_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวอนุบาลท่าปลา_260827_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.800Z"
+      },
+      {
+        "id": "utt_appt_photo_11_2",
+        "fileName": "LINE_ALBUM_แนะแนวอนุบาลท่าปลา_260827_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวอนุบาลท่าปลา_260827_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.800Z"
+      },
+      {
+        "id": "utt_appt_photo_11_3",
+        "fileName": "LINE_ALBUM_แนะแ��วอนุบาลท่าปลา_260827_3.jpg",
+        "url": "https://www.utt.ac.th/guide/file_guidance/LINE_ALBUM_แนะแ��วอนุบาลท่าปลา_260827_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.800Z"
+      },
+      {
+        "id": "utt_appt_photo_11_4",
+        "fileName": "LINE_ALBUM_แนะแนวอนุบาลท่าปลา_260827_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวอนุบาลท่าปลา_260827_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.800Z"
+      },
+      {
+        "id": "utt_appt_photo_11_5",
+        "fileName": "LINE_ALBUM_แนะแนวอนุบาลท่าปลา_260827_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวอนุบาลท่าปลา_260827_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.800Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=11"
+  },
+  {
+    "idGuide": "26",
+    "schoolName": "โรงเรียนไทยรัฐวิทยา",
+    "date": "2026-08-27",
+    "time": "08:30",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_26_1",
+        "fileName": "LINE_ALBUM_พิชัย_260831_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_พิชัย_260831_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.804Z"
+      },
+      {
+        "id": "utt_appt_photo_26_2",
+        "fileName": "LINE_ALBUM_พิชัย_260831_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_พิชัย_260831_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.804Z"
+      },
+      {
+        "id": "utt_appt_photo_26_3",
+        "fileName": "LINE_ALBUM_พิชัย_260831_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_พิชัย_260831_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.804Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=26"
+  },
+  {
+    "idGuide": "78",
+    "schoolName": "โรงเรียนบ้านดงไทยวิทยา",
+    "date": "2026-08-26",
+    "time": "10:30",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_78_1",
+        "fileName": "LINE_ALBUM_รร.บ้านดงไทย_260826_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_รร.บ้านดงไทย_260826_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.817Z"
+      },
+      {
+        "id": "utt_appt_photo_78_2",
+        "fileName": "LINE_ALBUM_รร.บ้านดงไทย_260826_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_รร.บ้านดงไทย_260826_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.817Z"
+      },
+      {
+        "id": "utt_appt_photo_78_3",
+        "fileName": "LINE_ALBUM_รร.บ้านดงไทย_260826_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_รร.บ้านดงไทย_260826_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.817Z"
+      },
+      {
+        "id": "utt_appt_photo_78_4",
+        "fileName": "LINE_ALBUM_รร.บ้านดงไทย_260826_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_รร.บ้านดงไทย_260826_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.817Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=78"
+  },
+  {
+    "idGuide": "73",
+    "schoolName": "โรงเรียนสวรรค์อนันต์วิทยาสอง",
+    "date": "2026-08-24",
+    "time": "14:20",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_73_1",
+        "fileName": "LINE_ALBUM_แนะแนวสวรรค์อนัน2_260824_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวสวรรค์อนัน2_260824_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.827Z"
+      },
+      {
+        "id": "utt_appt_photo_73_2",
+        "fileName": "LINE_ALBUM_แนะแนวสวรรค์อนัน2_260824_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวสวรรค์อนัน2_260824_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.827Z"
+      },
+      {
+        "id": "utt_appt_photo_73_3",
+        "fileName": "LINE_ALBUM_แนะแนวสวรรค์อนัน2_260824_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวสวรรค์อนัน2_260824_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.827Z"
+      },
+      {
+        "id": "utt_appt_photo_73_4",
+        "fileName": "LINE_ALBUM_แนะแนวสวรรค์อนัน2_260824_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนวสวรรค์อนัน2_260824_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.827Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=73"
+  },
+  {
+    "idGuide": "18",
+    "schoolName": "โรงเรียนเทศบาลท่าอิฐ",
+    "date": "2026-08-21",
+    "time": "11:01",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_18_1",
+        "fileName": "IMG_4735.jpeg",
+        "url": "/photos/guidance/IMG_4735.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.831Z"
+      },
+      {
+        "id": "utt_appt_photo_18_2",
+        "fileName": "IMG_4736.jpeg",
+        "url": "/photos/guidance/IMG_4736.jpeg",
+        "uploadedAt": "2026-09-19T06:11:49.831Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=18"
+  },
+  {
+    "idGuide": "45",
+    "schoolName": "โรงเรียนบ้านร้องลึก",
+    "date": "2026-08-19",
+    "time": "13:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_45_1",
+        "fileName": "LINE_ALBUM_แนะแนว รร.วังโป่ง_260819_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.วังโป่ง_260819_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.845Z"
+      },
+      {
+        "id": "utt_appt_photo_45_2",
+        "fileName": "LINE_ALBUM_แนะแนว รร.วังโป่ง_260819_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.วังโป่ง_260819_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.845Z"
+      },
+      {
+        "id": "utt_appt_photo_45_3",
+        "fileName": "LINE_ALBUM_แนะแนว รร.��ังโป่ง_260819_2.jpg",
+        "url": "https://www.utt.ac.th/guide/file_guidance/LINE_ALBUM_แนะแนว รร.��ังโป่ง_260819_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.845Z"
+      },
+      {
+        "id": "utt_appt_photo_45_4",
+        "fileName": "LINE_ALBUM_แนะแนว รร.วังโป่ง_260819_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.วังโป่ง_260819_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.845Z"
+      },
+      {
+        "id": "utt_appt_photo_45_5",
+        "fileName": "LINE_ALBUM_แนะแนว รร.วังโป่ง_260819_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.วังโป่ง_260819_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.845Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=45"
+  },
+  {
+    "idGuide": "59",
+    "schoolName": "โรงเรียนบ้านปากปาด",
+    "date": "2026-08-19",
+    "time": "09:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_59_1",
+        "fileName": "LINE_ALBUM_แนะแนว รร.บ้านปากปาด_260819_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.บ้านปากปาด_260819_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.856Z"
+      },
+      {
+        "id": "utt_appt_photo_59_2",
+        "fileName": "LINE_ALBUM_แนะแนว รร.บ้านปากปาด_260819_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.บ้านปากปาด_260819_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.856Z"
+      },
+      {
+        "id": "utt_appt_photo_59_3",
+        "fileName": "LINE_ALBUM_แนะ���นว รร.บ้านปากปาด_260819_3.jpg",
+        "url": "https://www.utt.ac.th/guide/file_guidance/LINE_ALBUM_แนะ���นว รร.บ้านปากปาด_260819_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.856Z"
+      },
+      {
+        "id": "utt_appt_photo_59_4",
+        "fileName": "LINE_ALBUM_แนะแนว รร.บ้านปากปาด_260819_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.บ้านปากปาด_260819_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.856Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=59"
+  },
+  {
+    "idGuide": "58",
+    "schoolName": "โรงเรียนบ้านป่ากุมเกาะ",
+    "date": "2026-08-18",
+    "time": "10:30",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_58_1",
+        "fileName": "LINE_ALBUM_บ้านป่ากุมเกาะ_260818_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_บ้านป่ากุมเกาะ_260818_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.859Z"
+      },
+      {
+        "id": "utt_appt_photo_58_2",
+        "fileName": "LINE_ALBUM_บ้านป่ากุมเกาะ_260818_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_บ้านป่ากุมเกาะ_260818_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.859Z"
+      },
+      {
+        "id": "utt_appt_photo_58_3",
+        "fileName": "LINE_ALBUM_บ้านป่ากุมเก��ะ_260818_3.jpg",
+        "url": "https://www.utt.ac.th/guide/file_guidance/LINE_ALBUM_บ้านป่ากุมเก��ะ_260818_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.859Z"
+      },
+      {
+        "id": "utt_appt_photo_58_4",
+        "fileName": "LINE_ALBUM_บ้านป่ากุมเกาะ_260818_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_บ้านป่ากุมเกาะ_260818_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.859Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=58"
+  },
+  {
+    "idGuide": "7",
+    "schoolName": "โรงเรียนโรงเรียนวิไลเกียรติอุปถัมภ์",
+    "date": "2026-08-17",
+    "time": "13:00",
+    "teamId": "team1",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_7_1",
+        "fileName": "LINE_ALBUM_แนะแนว รร.วิไลเกียรติอุปถัมภ์_260818_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.วิไลเกียรติอุปถัมภ์_260818_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.873Z"
+      },
+      {
+        "id": "utt_appt_photo_7_2",
+        "fileName": "LINE_ALBUM_แนะแนว รร.วิไลเกียรติอุปถัมภ์_260818_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.วิไลเกียรติอุปถัมภ์_260818_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.873Z"
+      },
+      {
+        "id": "utt_appt_photo_7_3",
+        "fileName": "LINE_ALBUM_แนะแนว รร.วิไลเกียรติอุปถัมภ์_260818_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.วิไลเกียรติอุปถัมภ์_260818_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.873Z"
+      },
+      {
+        "id": "utt_appt_photo_7_4",
+        "fileName": "LINE_ALBUM_แนะแนว รร.วิไลเกียรติอุปถัมภ์_260818_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.วิไลเกียรติอุปถัมภ์_260818_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.873Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=7"
+  },
+  {
+    "idGuide": "61",
+    "schoolName": "โรงเรียนบ้านห้วยผึ้ง",
+    "date": "2026-08-14",
+    "time": "13:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_61_1",
+        "fileName": "LINE_ALBUM_แนะแนว รร.ห้วยผึ้ง_260814_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.ห้วยผึ้ง_260814_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.882Z"
+      },
+      {
+        "id": "utt_appt_photo_61_2",
+        "fileName": "LINE_ALBUM_แนะแนว รร.ห้วยผึ้ง_260814_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.ห้วยผึ้ง_260814_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.882Z"
+      },
+      {
+        "id": "utt_appt_photo_61_3",
+        "fileName": "LINE_ALBUM_แนะแนว รร.ห้วยผึ้ง_260814_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.ห้วยผึ้ง_260814_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.882Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=61"
+  },
+  {
+    "idGuide": "2",
+    "schoolName": "โรงเรียนพนมมาศพิทยากร",
+    "date": "2026-08-13",
+    "time": "15:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_2_1",
+        "fileName": "LINE_ALBUM_แนะแนว รร.พนมมาศ_260814_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.พนมมาศ_260814_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.888Z"
+      },
+      {
+        "id": "utt_appt_photo_2_2",
+        "fileName": "LINE_ALBUM_แนะแนว รร.พนมมาศ_260814_2.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.พนมมาศ_260814_2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.888Z"
+      },
+      {
+        "id": "utt_appt_photo_2_3",
+        "fileName": "LINE_ALBUM_แนะแนว รร.พน��มาศ_260814_4.jpg",
+        "url": "https://www.utt.ac.th/guide/file_guidance/LINE_ALBUM_แนะแนว รร.พน��มาศ_260814_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.888Z"
+      },
+      {
+        "id": "utt_appt_photo_2_4",
+        "fileName": "LINE_ALBUM_แนะแนว รร.พนมมาศ_260814_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_แนะแนว รร.พนมมาศ_260814_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.888Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=2"
+  },
+  {
+    "idGuide": "55",
+    "schoolName": "โรงเรียนบ้านป่ากล้วย",
+    "date": "2026-08-13",
+    "time": "10:30",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_55_1",
+        "fileName": ".บ้านป่ากล้วย (2).jpg",
+        "url": "/photos/guidance/.บ้านป่ากล้วย (2).jpg",
+        "uploadedAt": "2026-09-19T06:11:49.902Z"
+      },
+      {
+        "id": "utt_appt_photo_55_2",
+        "fileName": ".บ้านป่ากล้วย (3).jpg",
+        "url": "/photos/guidance/.บ้านป่ากล้วย (3).jpg",
+        "uploadedAt": "2026-09-19T06:11:49.902Z"
+      },
+      {
+        "id": "utt_appt_photo_55_3",
+        "fileName": ".บ้านป่ากล้วย (4).jpg",
+        "url": "/photos/guidance/.บ้านป่ากล้วย (4).jpg",
+        "uploadedAt": "2026-09-19T06:11:49.902Z"
+      },
+      {
+        "id": "utt_appt_photo_55_4",
+        "fileName": ".บ้านป่ากล้วย.jpg",
+        "url": "/photos/guidance/.บ้านป่ากล้วย.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.902Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=55"
+  },
+  {
+    "idGuide": "54",
+    "schoolName": "โรงเรียนเมืองด้งวิทยา",
+    "date": "2026-08-11",
+    "time": "10:00",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_54_1",
+        "fileName": ".เมืองด้งวิทยา.jpg",
+        "url": "/photos/guidance/.เมืองด้งวิทยา.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.917Z"
+      },
+      {
+        "id": "utt_appt_photo_54_2",
+        "fileName": ".เมืองด้งวิทยา1.jpg",
+        "url": "/photos/guidance/.เมืองด้งวิทยา1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.917Z"
+      },
+      {
+        "id": "utt_appt_photo_54_3",
+        "fileName": ".เมืองด้งวิทยา2.jpg",
+        "url": "/photos/guidance/.เมืองด้งวิทยา2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.917Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=54"
+  },
+  {
+    "idGuide": "57",
+    "schoolName": "โรงเรียนไชยะวิทยา",
+    "date": "2026-08-10",
+    "time": "10:30",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_57_1",
+        "fileName": ".ไชยะวิทยา.jpg",
+        "url": "/photos/guidance/.ไชยะวิทยา.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.918Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=57"
+  },
+  {
+    "idGuide": "37",
+    "schoolName": "โรงเรียนบ้านห้วยสูน",
+    "date": "2026-08-07",
+    "time": "13:47",
+    "teamId": "team1",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_37_1",
+        "fileName": ".บ้านห้วยสูน.jpg",
+        "url": "/photos/guidance/.บ้านห้วยสูน.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.930Z"
+      },
+      {
+        "id": "utt_appt_photo_37_2",
+        "fileName": ".บ้านห้วยสูน1.jpg",
+        "url": "/photos/guidance/.บ้านห้วยสูน1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.930Z"
+      },
+      {
+        "id": "utt_appt_photo_37_3",
+        "fileName": ".บ้านห้วยสูน2.jpg",
+        "url": "/photos/guidance/.บ้านห้วยสูน2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.930Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=37"
+  },
+  {
+    "idGuide": "46",
+    "schoolName": "โรงเรียนชุมชนบ้านนากล่ำ",
+    "date": "2026-08-03",
+    "time": "13:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_46_1",
+        "fileName": ".ชุมชนบ้านนากล่ำ.jpg",
+        "url": "/photos/guidance/.ชุมชนบ้านนากล่ำ.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.945Z"
+      },
+      {
+        "id": "utt_appt_photo_46_2",
+        "fileName": ".ชุมชนบ้านนากล่ำ1.jpg",
+        "url": "/photos/guidance/.ชุมชนบ้านนากล่ำ1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.945Z"
+      },
+      {
+        "id": "utt_appt_photo_46_3",
+        "fileName": ".ชุมชนบ้านนากล่ำ2.jpg",
+        "url": "/photos/guidance/.ชุมชนบ้านนากล่ำ2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.945Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=46"
+  },
+  {
+    "idGuide": "38",
+    "schoolName": "โรงเรียนบ้านนาไพร",
+    "date": "2026-08-07",
+    "time": "09:00",
+    "teamId": "team1",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_38_1",
+        "fileName": ".บ้านนาไพร.jpg",
+        "url": "/photos/guidance/.บ้านนาไพร.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.948Z"
+      },
+      {
+        "id": "utt_appt_photo_38_2",
+        "fileName": ".บ้านนาไพร1.jpg",
+        "url": "/photos/guidance/.บ้านนาไพร1.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.948Z"
+      },
+      {
+        "id": "utt_appt_photo_38_3",
+        "fileName": ".บ้านนาไพร2.jpg",
+        "url": "/photos/guidance/.บ้านนาไพร2.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.948Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=38"
+  },
+  {
+    "idGuide": "3",
+    "schoolName": "โรงเรียนเทศบาลหัวดง",
+    "date": "2026-07-23",
+    "time": "13:00",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_3_1",
+        "fileName": ".ป.ฟักอังกูร.jpg",
+        "url": "/photos/guidance/.ป.ฟักอังกูร.jpg",
+        "uploadedAt": "2026-09-19T06:11:49.961Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=3"
+  },
+  {
+    "idGuide": "109",
+    "schoolName": "บ้านวังดิน",
+    "date": "2026-09-18",
+    "time": "09:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_109_1",
+        "fileName": "IMG_0464.jpeg",
+        "url": "/photos/guidance/IMG_0464.jpeg",
+        "uploadedAt": "2026-09-19T06:11:50.496Z"
+      },
+      {
+        "id": "utt_appt_photo_109_2",
+        "fileName": "IMG_0465.jpeg",
+        "url": "/photos/guidance/IMG_0465.jpeg",
+        "uploadedAt": "2026-09-19T06:11:50.496Z"
+      },
+      {
+        "id": "utt_appt_photo_109_3",
+        "fileName": "IMG_0466.jpeg",
+        "url": "/photos/guidance/IMG_0466.jpeg",
+        "uploadedAt": "2026-09-19T06:11:50.496Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=109"
+  },
+  {
+    "idGuide": "71",
+    "schoolName": "โรงเรียนเตรียมอุดมศึกษาน้อมเกล้า อุตรดิตถ์",
+    "date": "2026-09-21",
+    "time": "09:20",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "CONFIRMED",
+    "rawStatus": "นัดหมาย",
+    "note": "",
+    "photos": [],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=71"
+  },
+  {
+    "idGuide": "108",
+    "schoolName": "โรงเรียนบ้านน้ำหมัน",
+    "date": "2026-11-10",
+    "time": "14:30",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "CONFIRMED",
+    "rawStatus": "นัดหมาย",
+    "note": "",
+    "photos": [],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=108"
+  },
+  {
+    "idGuide": "41",
+    "schoolName": "โรงเรียนบ้านหนองแหน",
+    "date": "2026-09-16",
+    "time": "10:00",
+    "teamId": "team2",
+    "counselorName": "อ.ปิยะ",
+    "status": "COMPLETED",
+    "rawStatus": "แนะแนวปกติ",
+    "note": "แนะแนวแล้ว",
+    "photos": [
+      {
+        "id": "utt_appt_photo_41_1",
+        "fileName": "LINE_ALBUM_16969_260916_5.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_16969_260916_5.jpg",
+        "uploadedAt": "2026-09-19T06:11:50.509Z"
+      },
+      {
+        "id": "utt_appt_photo_41_2",
+        "fileName": "LINE_ALBUM_16969_260916_4.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_16969_260916_4.jpg",
+        "uploadedAt": "2026-09-19T06:11:50.509Z"
+      },
+      {
+        "id": "utt_appt_photo_41_3",
+        "fileName": "LINE_ALBUM_16969_260916_3.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_16969_260916_3.jpg",
+        "uploadedAt": "2026-09-19T06:11:50.509Z"
+      },
+      {
+        "id": "utt_appt_photo_41_4",
+        "fileName": "LINE_ALBUM_16969_260916_1.jpg",
+        "url": "/photos/guidance/LINE_ALBUM_16969_260916_1.jpg",
+        "uploadedAt": "2026-09-19T06:11:50.509Z"
+      }
+    ],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=41"
+  },
+  {
+    "idGuide": "128",
+    "schoolName": "โรงเรียนทองแสนขันวิทยา",
+    "date": "2026-11-13",
+    "time": "09:00",
+    "teamId": "team1",
+    "counselorName": "อ.ประชา",
+    "status": "CONFIRMED",
+    "rawStatus": "นัดหมาย",
+    "note": "",
+    "photos": [],
+    "academicYear": "2569",
+    "rawUrl": "https://www.utt.ac.th/guide/guidance_edit.php?id_guide=128"
+  }
+]

@@ -1,126 +1,348 @@
 import React, { useState, useMemo } from 'react';
 import {
   Image as ImageIcon,
-  Filter,
-  Calendar,
-  GraduationCap,
   Maximize2,
   X,
-  Download,
   ExternalLink,
+  Search,
+  Camera,
+  FileText,
+  History,
+  AlertCircle,
 } from 'lucide-react';
-import { FieldTrip, DocumentSubmission, School, TeamId, PhotoItem } from '../../types';
+import { FieldTrip, School, TeamId, PhotoItem, Appointment, DocumentSubmission } from '../../types';
 import { formatThaiShortDate } from '../../utils/dateUtils';
 
 interface ActivityGalleryViewProps {
-  fieldTrips: FieldTrip[];
-  submissions: DocumentSubmission[];
+  fieldTrips?: FieldTrip[];
   schools: School[];
+  appointments?: Appointment[];
+  submissions?: DocumentSubmission[];
 }
 
+export type GalleryCategory = 'all' | 'guidance' | 'submission' | 'legacy';
+export type GallerySourceType = 'SUBMISSION' | 'GUIDANCE' | 'LEGACY_APPOINTMENT';
+
 interface GalleryPhotoWithMeta extends PhotoItem {
-  sourceType: 'fieldTrip' | 'submission';
+  sourceType: GallerySourceType;
+  sourceId: string;
   sourceTitle: string;
   sourceDate: string;
   teamId: TeamId;
+  activityTitle: string;
+  category: 'guidance' | 'submission' | 'legacy';
 }
 
 export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
-  fieldTrips,
-  submissions,
+  fieldTrips = [],
   schools,
+  appointments = [],
+  submissions = [],
 }) => {
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('all');
   const [teamFilter, setTeamFilter] = useState<'all' | TeamId>('all');
-  const [sourceTypeFilter, setSourceTypeFilter] = useState<'all' | 'fieldTrip' | 'submission'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<GalleryCategory>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [lightboxPhoto, setLightboxPhoto] = useState<GalleryPhotoWithMeta | null>(null);
+  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(new Set());
 
-  // Aggregate all photos from field trips and submissions
+  const handleImageError = (url: string) => {
+    setFailedImageUrls((prev) => {
+      if (prev.has(url)) return prev;
+      const next = new Set(prev);
+      next.add(url);
+      return next;
+    });
+  };
+
+  // Unified photo repository with clear Source of Truth hierarchy
   const allPhotos = useMemo(() => {
     const list: GalleryPhotoWithMeta[] = [];
+    const seenNormalizedUrls = new Set<string>();
+    const seenFileSignature = new Set<string>(); // schoolId + baseFilename to prevent twin duplicates
 
-    // From Field Trips
-    fieldTrips.forEach((trip) => {
-      if (trip.photos) {
-        trip.photos.forEach((photo) => {
+    const normalizeUrl = (url: string) => {
+      if (!url) return '';
+      return url.split('?')[0].replace(/\/+$/, '').trim().toLowerCase();
+    };
+
+    const getBaseFileName = (url: string, name?: string) => {
+      const raw = name || url.split('/').pop() || '';
+      return raw.replace(/^\d+_+/, '').trim().toLowerCase();
+    };
+
+    // 1. PRIMARY SOURCE 1: Document Submissions (Letter submission evidence)
+    submissions.forEach((sub) => {
+      if (sub.photos && sub.photos.length > 0) {
+        sub.photos.forEach((photo) => {
+          if (!photo.url) return;
+          const norm = normalizeUrl(photo.url);
+          if (norm && seenNormalizedUrls.has(norm)) return;
+          if (norm) seenNormalizedUrls.add(norm);
+
+          const schId = photo.schoolId || sub.schoolId || 'sub';
+          const sig = `${schId}_${getBaseFileName(photo.url, photo.fileName)}`;
+          if (sig) seenFileSignature.add(sig);
+
           list.push({
             ...photo,
-            sourceType: 'fieldTrip',
+            sourceType: 'SUBMISSION',
+            sourceId: sub.id,
+            sourceTitle: sub.schoolName || 'ยื่นหนังสือ',
+            sourceDate: sub.submissionDate,
+            teamId: sub.teamId,
+            activityTitle: `ยื่นหนังสือ (${sub.documentNumber || 'มีหลักฐาน'})`,
+            schoolId: schId,
+            category: 'submission',
+          });
+        });
+      }
+    });
+
+    // 2. PRIMARY SOURCE 2: Field Trips (Live guidance activities)
+    fieldTrips.forEach((trip) => {
+      if (trip.photos && trip.photos.length > 0) {
+        trip.photos.forEach((photo) => {
+          if (!photo.url) return;
+          const norm = normalizeUrl(photo.url);
+          if (norm && seenNormalizedUrls.has(norm)) return;
+          if (norm) seenNormalizedUrls.add(norm);
+
+          const schId = photo.schoolId || trip.schools?.[0]?.schoolId || 'trip';
+          const sig = `${schId}_${getBaseFileName(photo.url, photo.fileName)}`;
+          if (sig) seenFileSignature.add(sig);
+
+          list.push({
+            ...photo,
+            sourceType: 'GUIDANCE',
+            sourceId: trip.id,
             sourceTitle: trip.schools?.map((s) => s.schoolName).join(', ') || 'กิจกรรมแนะแนว',
             sourceDate: trip.date,
             teamId: trip.teamId,
+            activityTitle: trip.workType || 'ออกแนะแนว',
+            schoolId: schId,
+            category: 'guidance',
           });
         });
       }
     });
 
-    // From Document Submissions
-    submissions.forEach((sub) => {
-      if (sub.photos) {
-        sub.photos.forEach((photo) => {
+    // 3. SECONDARY ARCHIVE: Legacy Appointments Photos (Preserves 156 historical photos safely)
+    appointments.forEach((app) => {
+      if (app.photos && app.photos.length > 0) {
+        app.photos.forEach((photo) => {
+          if (!photo.url) return;
+          const norm = normalizeUrl(photo.url);
+          if (norm && seenNormalizedUrls.has(norm)) return;
+          if (norm) seenNormalizedUrls.add(norm);
+
+          const schId = photo.schoolId || app.schoolId || 'appt';
           list.push({
             ...photo,
-            sourceType: 'submission',
-            sourceTitle: `ยื่นหนังสือ: ${sub.schoolName}`,
-            sourceDate: sub.submissionDate,
-            teamId: sub.teamId,
+            sourceType: 'LEGACY_APPOINTMENT',
+            sourceId: app.id,
+            sourceTitle: app.schoolName || 'กิจกรรมแนะแนว (ย้อนหลัง)',
+            sourceDate: app.date,
+            teamId: app.teamId,
+            activityTitle: app.workType || 'ออกแนะแนวการศึกษา (ข้อมูลเดิม)',
+            schoolId: schId,
+            category: 'legacy',
           });
         });
       }
     });
 
-    // Sort by uploadedAt or date desc
     return list.sort((a, b) => (b.sourceDate || '').localeCompare(a.sourceDate || ''));
-  }, [fieldTrips, submissions]);
+  }, [appointments, fieldTrips, submissions]);
+
+  // Counts for category badges
+  const categoryCounts = useMemo(() => {
+    let guidanceCount = 0;
+    let submissionCount = 0;
+    let legacyCount = 0;
+    allPhotos.forEach((p) => {
+      if (p.category === 'guidance') guidanceCount++;
+      if (p.category === 'submission') submissionCount++;
+      if (p.category === 'legacy') legacyCount++;
+    });
+    return {
+      all: allPhotos.length,
+      guidance: guidanceCount,
+      submission: submissionCount,
+      legacy: legacyCount,
+    };
+  }, [allPhotos]);
 
   // Filter photos
   const filteredPhotos = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
     return allPhotos.filter((item) => {
+      if (categoryFilter !== 'all' && item.category !== categoryFilter) return false;
       if (teamFilter !== 'all' && item.teamId !== teamFilter) return false;
-      if (sourceTypeFilter !== 'all' && item.sourceType !== sourceTypeFilter) return false;
       if (selectedSchoolId !== 'all' && item.schoolId !== selectedSchoolId) return false;
+      if (q) {
+        const matchTitle = item.sourceTitle.toLowerCase().includes(q);
+        const matchActivity = item.activityTitle.toLowerCase().includes(q);
+        const matchFile = (item.fileName || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchActivity && !matchFile) return false;
+      }
       return true;
     });
-  }, [allPhotos, teamFilter, sourceTypeFilter, selectedSchoolId]);
+  }, [allPhotos, categoryFilter, teamFilter, selectedSchoolId, searchQuery]);
+
+  const getSourceBadge = (sourceType: GallerySourceType) => {
+    switch (sourceType) {
+      case 'SUBMISSION':
+        return {
+          label: 'หลักฐานยื่นหนังสือ',
+          className: 'bg-emerald-700/90 text-white',
+        };
+      case 'GUIDANCE':
+        return {
+          label: 'กิจกรรมแนะแนว',
+          className: 'bg-sky-700/90 text-white',
+        };
+      case 'LEGACY_APPOINTMENT':
+        return {
+          label: 'กิจกรรมย้อนหลัง',
+          className: 'bg-amber-600/90 text-white',
+        };
+      default:
+        return {
+          label: 'รูปภาพ',
+          className: 'bg-slate-700/90 text-white',
+        };
+    }
+  };
 
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
             <ImageIcon className="w-6 h-6 text-[#087CC1]" />
-            <span>คลังรูปกิจกรรมและหลักฐาน ({filteredPhotos.length} รูป)</span>
+            <span>คลังรูปภาพกิจกรรมและหลักฐาน ({filteredPhotos.length} รูป)</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            รวบรวมภาพถ่ายการยื่นหนังสือและภาพกิจกรรมการออกแนะแนวการศึกษา
+          <p className="text-[13px] sm:text-sm text-slate-500 mt-1">
+            รวบรวมรูปภาพจากกิจกรรมออกแนะแนว หลักฐานการยื่นหนังสือ และประวัติย้อนหลังอย่างครบถ้วน
           </p>
+        </div>
+
+        {/* Category Filter Tabs */}
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 self-start lg:self-auto">
+          <button
+            type="button"
+            onClick={() => setCategoryFilter('all')}
+            className={`px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+              categoryFilter === 'all'
+                ? 'bg-white text-slate-800 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            <span>ทั้งหมด</span>
+            <span className="px-1.5 py-0.2 text-[11px] rounded-full bg-slate-200/70 text-slate-700">
+              {categoryCounts.all}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setCategoryFilter('guidance')}
+            className={`px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+              categoryFilter === 'guidance'
+                ? 'bg-[#087CC1] text-white shadow-2xs'
+                : 'text-slate-600 hover:text-[#087CC1]'
+            }`}
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span>กิจกรรมแนะแนว</span>
+            <span
+              className={`px-1.5 py-0.2 text-[11px] rounded-full ${
+                categoryFilter === 'guidance' ? 'bg-white/25 text-white' : 'bg-slate-200/70 text-slate-700'
+              }`}
+            >
+              {categoryCounts.guidance}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setCategoryFilter('submission')}
+            className={`px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+              categoryFilter === 'submission'
+                ? 'bg-[#10B981] text-white shadow-2xs'
+                : 'text-slate-600 hover:text-[#10B981]'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>หลักฐานยื่นหนังสือ</span>
+            <span
+              className={`px-1.5 py-0.2 text-[11px] rounded-full ${
+                categoryFilter === 'submission' ? 'bg-white/25 text-white' : 'bg-slate-200/70 text-slate-700'
+              }`}
+            >
+              {categoryCounts.submission}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setCategoryFilter('legacy')}
+            className={`px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+              categoryFilter === 'legacy'
+                ? 'bg-amber-600 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-amber-600'
+            }`}
+          >
+            <History className="w-3.5 h-3.5" />
+            <span>กิจกรรมย้อนหลัง</span>
+            <span
+              className={`px-1.5 py-0.2 text-[11px] rounded-full ${
+                categoryFilter === 'legacy' ? 'bg-white/25 text-white' : 'bg-slate-200/70 text-slate-700'
+              }`}
+            >
+              {categoryCounts.legacy}
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* Filter Bar */}
+      {/* Filter & Search Bar */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center gap-3">
+        {/* Search School or Activity */}
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="ค้นหาชื่อโรงเรียน หรือกิจกรรม..."
+            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-[#087CC1] focus:border-transparent outline-none transition-all"
+          />
+        </div>
+
         {/* Team Filter */}
         <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
           <button
+            type="button"
             onClick={() => setTeamFilter('all')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-              teamFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'
+            className={`px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-colors ${
+              teamFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             ทุกสาย
           </button>
           <button
+            type="button"
             onClick={() => setTeamFilter('team1')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-colors ${
               teamFilter === 'team1' ? 'bg-[#1976D2] text-white shadow-2xs' : 'text-[#1976D2]'
             }`}
           >
             อุตรดิตถ์
           </button>
           <button
+            type="button"
             onClick={() => setTeamFilter('team2')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-colors ${
               teamFilter === 'team2' ? 'bg-[#F59E0B] text-white shadow-2xs' : 'text-[#F59E0B]'
             }`}
           >
@@ -128,27 +350,14 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
           </button>
         </div>
 
-        {/* Source Type Filter */}
-        <div>
-          <select
-            value={sourceTypeFilter}
-            onChange={(e) => setSourceTypeFilter(e.target.value as any)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:ring-2 focus:ring-[#087CC1]"
-          >
-            <option value="all">หมวดหมู่: ทั้งหมด</option>
-            <option value="fieldTrip">ภาพออกแนะแนว</option>
-            <option value="submission">ภาพยื่นหนังสือ</option>
-          </select>
-        </div>
-
-        {/* School Filter */}
-        <div className="flex-1 min-w-[200px]">
+        {/* School Filter Dropdown */}
+        <div className="w-full sm:w-auto sm:min-w-[200px]">
           <select
             value={selectedSchoolId}
             onChange={(e) => setSelectedSchoolId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:ring-2 focus:ring-[#087CC1]"
+            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:bg-white focus:ring-2 focus:ring-[#087CC1]"
           >
-            <option value="all">โรงเรียน: ทั้งหมด</option>
+            <option value="all">ทุกโรงเรียน</option>
             {schools.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.schoolName}
@@ -162,49 +371,76 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
       {filteredPhotos.length === 0 ? (
         <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-400">
           <ImageIcon className="w-12 h-12 mx-auto mb-2 text-slate-300" />
-          <p className="text-sm">ยังไม่มีรูปภาพในหมวดหมู่นี้</p>
+          <p className="text-sm font-medium text-slate-600">ไม่พบรูปภาพตามเงื่อนไขที่ค้นหา</p>
           <p className="text-xs mt-1 text-slate-400">
-            รูปภาพจะปรากฏที่นี่เมื่อมีการบันทึกการยื่นหนังสือ หรือบันทึกการออกแนะแนว
+            ลองล้างคำค้นหา หรือเปลี่ยนหมวดหมู่ / สายปฏิบัติงาน / โรงเรียน
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
           {filteredPhotos.map((item, idx) => {
             const isTeam1 = item.teamId === 'team1';
+            const badge = getSourceBadge(item.sourceType);
+            const isBroken = failedImageUrls.has(item.url);
+
             return (
               <div
-                key={item.id || idx}
-                onClick={() => setLightboxPhoto(item)}
-                className="group relative bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden cursor-pointer hover:shadow-md transition-all flex flex-col"
+                key={item.id || `${item.url}-${idx}`}
+                onClick={() => !isBroken && setLightboxPhoto(item)}
+                className={`group relative bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden flex flex-col transition-all ${
+                  isBroken ? 'cursor-default opacity-85' : 'cursor-pointer hover:shadow-md'
+                }`}
               >
-                <div className="aspect-4/3 relative overflow-hidden bg-slate-100">
-                  <img
-                    src={item.url}
-                    alt={item.fileName || 'รูปภาพ'}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <div className="absolute top-2 left-2 flex gap-1">
+                <div className="aspect-4/3 relative overflow-hidden bg-slate-100 flex items-center justify-center">
+                  {isBroken ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-400 p-2 text-center select-none">
+                      <AlertCircle className="w-6 h-6 text-amber-500/80 mb-1" />
+                      <span className="text-[11px] font-medium text-slate-600">ไม่สามารถโหลดรูปได้</span>
+                      <span className="text-[10px] text-slate-400 truncate max-w-[90%] mt-0.5">
+                        {item.fileName || 'ไฟล์ภาพไม่พร้อมใช้งาน'}
+                      </span>
+                    </div>
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt={item.fileName || 'รูปภาพ'}
+                      loading="lazy"
+                      onError={() => handleImageError(item.url)}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  )}
+
+                  {/* Top Badges */}
+                  <div className="absolute top-2 left-2 flex flex-wrap gap-1 pointer-events-none">
                     <span
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm shadow-xs ${
+                      className={`text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md shadow-xs ${
                         isTeam1 ? 'bg-[#1976D2] text-white' : 'bg-[#F59E0B] text-white'
                       }`}
                     >
                       {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                     </span>
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-sm bg-black/60 text-white backdrop-blur-xs">
-                      {item.sourceType === 'fieldTrip' ? 'ออกแนะแนว' : 'ยื่นหนังสือ'}
+                    <span
+                      className={`text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-md shadow-xs backdrop-blur-xs ${badge.className}`}
+                    >
+                      {badge.label}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-2.5 flex-1 flex flex-col justify-between text-xs">
-                  <div className="font-bold text-slate-800 line-clamp-1">
-                    {item.sourceTitle}
+                <div className="p-3 flex-1 flex flex-col justify-between text-xs">
+                  <div>
+                    <div className="font-bold text-slate-800 text-sm line-clamp-1 group-hover:text-[#087CC1] transition-colors">
+                      {item.sourceTitle}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                      {item.activityTitle}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-1 flex items-center justify-between">
+                  <div className="text-xs text-slate-400 mt-2 flex items-center justify-between pt-1 border-t border-slate-100">
                     <span>{formatThaiShortDate(item.sourceDate)}</span>
-                    <Maximize2 className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {!isBroken && (
+                      <Maximize2 className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    )}
                   </div>
                 </div>
               </div>
@@ -227,7 +463,8 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
               <div>
                 <h3 className="font-bold text-sm sm:text-base">{lightboxPhoto.sourceTitle}</h3>
                 <p className="text-xs text-white/70">
-                  {formatThaiShortDate(lightboxPhoto.sourceDate)} • {lightboxPhoto.fileName}
+                  {formatThaiShortDate(lightboxPhoto.sourceDate)} • {lightboxPhoto.activityTitle} •{' '}
+                  {lightboxPhoto.fileName}
                 </p>
               </div>
               <div className="flex items-center gap-2">

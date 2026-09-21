@@ -449,7 +449,7 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm"
               >
                 <option value="NOT_STARTED">ยังไม่ดำเนินการ</option>
-                <option value="DOCUMENT_SUBMITTED">ยื่นหนังสือแล้ว</option>
+                <option value="DOCUMENT_SUBMITTED">ยื่นหนังสือแล้ว / รอนัดหมาย</option>
                 <option value="WAITING_CONTACT">รอติดต่อกลับ</option>
                 <option value="WAITING_APPOINTMENT">รอนัดหมาย</option>
                 <option value="APPOINTED">นัดหมายแล้ว</option>

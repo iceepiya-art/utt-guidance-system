@@ -110,6 +110,17 @@ export function getRelativeThaiDayLabel(dateStr: string): string {
 }
 
 /**
+ * Calculates calendar day differences accurately
+ */
+export function getDaysDifference(start: string | Date, end: string | Date): number {
+  const dStart = typeof start === 'string' ? new Date(start) : start;
+  const dEnd = typeof end === 'string' ? new Date(end) : end;
+  const utc1 = Date.UTC(dStart.getFullYear(), dStart.getMonth(), dStart.getDate());
+  const utc2 = Date.UTC(dEnd.getFullYear(), dEnd.getMonth(), dEnd.getDate());
+  return Math.round((utc2 - utc1) / (1000 * 60 * 60 * 24));
+}
+
+/**
  * Standard Guidance Availability Time Slots for Uttaradit Tech College
  */
 export const STANDARD_TIME_SLOTS = [

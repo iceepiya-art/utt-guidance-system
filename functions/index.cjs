@@ -15,16 +15,51 @@ exports.manageUser = onCall({ region: 'asia-southeast1', maxInstances: 3 }, asyn
  if (uid === request.auth.uid && (role !== 'ADMIN' || !active)) throw new HttpsError('failed-precondition', 'ไม่สามารถปิดสิทธิ์ผู้ดูแลระบบของตนเอง');
  const profileRef = db.doc(`users/${uid}`);
  if (!(await profileRef.get()).exists) throw new HttpsError('not-found', 'ไม่พบผู้ใช้ในระบบ');
- try {
-   const authData = { displayName: displayName.trim(), email: email.trim().toLowerCase(), disabled: !active };
-   if (password !== undefined) authData.password = password;
-   await getAuth().updateUser(uid, authData);
-   await profileRef.update({ displayName: authData.displayName, email: authData.email, phone: phone.trim(), role, teamId: teamId === 'none' ? null : teamId, active, updatedAt: new Date().toISOString() });
-   await db.collection('activityLogs').add({ userId: request.auth.uid, userName: actor.displayName, action: 'แก้ไขบัญชีผู้ใช้', entityType: 'user', entityId: uid, details: password !== undefined ? 'อัปเดตข้อมูลและเปลี่ยนรหัสผ่าน' : 'อัปเดตข้อมูลบัญชี', timestamp: new Date().toISOString() });
-   return { success: true };
- } catch (error) {
-   if (error.code === 'auth/email-already-exists') throw new HttpsError('already-exists', 'อีเมลนี้มีผู้ใช้แล้ว');
-   if (error.code === 'auth/user-not-found') throw new HttpsError('not-found', 'ไม่พบบัญชีเข้าสู่ระบบ กรุณาสร้างบัญชี Authentication ก่อน');
-   throw new HttpsError('internal', 'อัปเดตบัญชีไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่');
- }
+  try {
+    const authData = { displayName: displayName.trim(), email: email.trim().toLowerCase(), disabled: !active };
+    if (password !== undefined) authData.password = password;
+    await getAuth().updateUser(uid, authData);
+    await profileRef.update({ displayName: authData.displayName, email: authData.email, phone: phone.trim(), role, teamId: teamId === 'none' ? null : teamId, active, updatedAt: new Date().toISOString() });
+    await db.collection('activityLogs').add({ userId: request.auth.uid, userName: actor.displayName, action: 'แก้ไขบัญชีผู้ใช้', entityType: 'user', entityId: uid, details: password !== undefined ? 'อัปเดตข้อมูลและเปลี่ยนรหัสผ่าน' : 'อัปเดตข้อมูลบัญชี', timestamp: new Date().toISOString() });
+    return { success: true };
+  } catch (error) {
+    if (error.code === 'auth/email-already-exists') throw new HttpsError('already-exists', 'อีเมลนี้มีผู้ใช้แล้ว');
+    if (error.code === 'auth/user-not-found') {
+      if (password === undefined) {
+        await profileRef.update({ displayName: displayName.trim(), email: email.trim().toLowerCase(), phone: phone.trim(), role, teamId: teamId === 'none' ? null : teamId, active, updatedAt: new Date().toISOString() });
+        await db.collection('activityLogs').add({ userId: request.auth.uid, userName: actor.displayName, action: 'แก้ไขข้อมูลบุคลากร', entityType: 'user', entityId: uid, details: 'อัปเดตข้อมูลบุคลากร (ยังไม่มีบัญชี Authentication)', timestamp: new Date().toISOString() });
+        return { success: true, authLinked: false };
+      }
+      throw new HttpsError('not-found', 'ไม่พบบัญชีเข้าสู่ระบบ กรุณาสร้างบัญชี Authentication ก่อน');
+    }
+    throw new HttpsError('internal', 'อัปเดตบัญชีไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่');
+  }
+});
+
+exports.checkUserAuthStatus = onCall({ region: 'asia-southeast1', maxInstances: 3 }, async request => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'กรุณาเข้าสู่ระบบ');
+  const actor = (await db.doc(`users/${request.auth.uid}`).get()).data();
+  if (!actor || !actor.active || actor.role !== 'ADMIN') throw new HttpsError('permission-denied', 'เฉพาะผู้ดูแลระบบ');
+  const data = request.data || {};
+  const { uid, email } = data;
+
+  if (typeof uid === 'string' && uid && !uid.includes('/')) {
+    try {
+      const user = await getAuth().getUser(uid);
+      return { status: 'LINKED', exists: true, uid: user.uid, authUid: user.uid, email: user.email || '', disabled: !!user.disabled };
+    } catch (err) {
+      if (err.code !== 'auth/user-not-found') throw err;
+    }
+  }
+
+  if (typeof email === 'string' && email.includes('@')) {
+    try {
+      const user = await getAuth().getUserByEmail(email.trim().toLowerCase());
+      return { status: 'AUTH_FOUND_BUT_NOT_LINKED', exists: true, uid: uid || '', authUid: user.uid, email: user.email || '', disabled: !!user.disabled };
+    } catch (err) {
+      if (err.code !== 'auth/user-not-found') throw err;
+    }
+  }
+
+  return { status: 'NO_AUTH_ACCOUNT', exists: false };
 });

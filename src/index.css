@@ -6,10 +6,22 @@
     color: #1F2937;
     background-color: #F6F9FC;
     -webkit-tap-highlight-color: transparent;
+    line-height: 1.5;
+    word-break: normal;
+    overflow-wrap: break-word;
   }
 
   body {
     min-height: 100vh;
+  }
+
+  table {
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  th, td {
+    word-break: normal;
   }
 }
 

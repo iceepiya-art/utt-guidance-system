@@ -10,7 +10,7 @@ import {
   Users,
   Car,
 } from 'lucide-react';
-import { Appointment, School, TeamId } from '../../types';
+import { Appointment, DocumentSubmission, School, TeamId } from '../../types';
 import {
   formatThaiMonthYear,
   formatThaiFullDate,
@@ -22,11 +22,13 @@ import {
 import { AppointmentDetailModal } from './AppointmentDetailModal';
 import { AppointmentFormModal } from './AppointmentFormModal';
 import { createAppointment, updateAppointment } from '../../firebase/dbService';
+import { formatVehicleDisplay, formatAppointmentTime } from '../../utils/appointmentUtils';
 import { useAuth } from '../../context/AuthContext';
 
 interface CalendarViewProps {
   appointments: Appointment[];
   schools: School[];
+  submissions: DocumentSubmission[];
   onRecordTrip: (appointment: Appointment) => void;
 }
 
@@ -35,6 +37,7 @@ type ViewMode = 'month' | 'week' | 'day';
 export const CalendarView: React.FC<CalendarViewProps> = ({
   appointments,
   schools,
+  submissions,
   onRecordTrip,
 }) => {
   const { currentUser, canEdit } = useAuth();
@@ -358,7 +361,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         </span>
                         <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
                           <Clock className="w-3.5 h-3.5 text-[#087CC1]" />
-                          <span>{appt.startTime} - {appt.endTime} น.</span>
+                          <span>{formatAppointmentTime(appt.startTime, appt.endTime)}</span>
                         </div>
                       </div>
 
@@ -379,7 +382,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         )}
                         <div className="text-slate-500 text-[11px] flex items-center gap-1 pt-1">
                           <Car className="w-3 h-3 text-slate-400" />
-                          <span>{appt.vehicleName || 'รถตู้ส่วนกลาง'}</span>
+                          <span>{formatVehicleDisplay(appt.vehicleName)}</span>
                         </div>
                       </div>
                     </div>
@@ -431,6 +434,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           setAppointmentToEdit(null);
         }}
         schools={schools}
+        submissions={submissions}
         appointmentToEdit={appointmentToEdit}
         prefilledData={prefilledDate ? { date: prefilledDate } : null}
         onSave={handleSaveAppointment}

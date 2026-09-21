@@ -74,6 +74,7 @@ export type PostSubmissionStatus =
   | 'CALL_LATER'           // ขอให้ติดต่อภายหลัง
   | 'WAITING_APPOINTMENT'  // รอนัดหมาย
   | 'APPOINTED'            // นัดหมายแล้ว
+  | 'GUIDANCE_COMPLETED'   // ออกแนะแนวแล้ว
   | 'NOT_READY';           // โรงเรียนยังไม่พร้อม
 
 export interface DocumentSubmission {
@@ -162,6 +163,7 @@ export interface Appointment {
   academicYear?: string;
   source: 'DOCUMENT_SUBMISSION' | 'MANUAL' | 'FOLLOW_UP';
   note: string;
+  photos?: PhotoItem[];
   reminders: ReminderConfig[];
   createdAt: string;
   createdBy?: string;
@@ -180,6 +182,7 @@ export interface FieldTripSchool {
 
 export interface FieldTrip {
   submissionId?: string;
+  appointmentId?: string;
   id: string;
   date: string; // YYYY-MM-DD
   departureTime?: string;

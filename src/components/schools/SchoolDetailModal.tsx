@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { School, DocumentSubmission, Appointment, FieldTrip } from '../../types';
 import { formatThaiShortDate, formatThaiFullDate } from '../../utils/dateUtils';
+import { formatAppointmentTime } from '../../utils/appointmentUtils';
 
 interface SchoolDetailModalProps {
   school: School | null;
@@ -50,24 +51,6 @@ export const SchoolDetailModal: React.FC<SchoolDetailModalProps> = ({
     t.schools?.some((s) => s.schoolId === school.id || s.schoolName === school.schoolName)
   );
 
-  const getStatusBadge = () => {
-    const config: Record<string, { label: string; color: string }> = {
-      NOT_STARTED: { label: 'ยังไม่ดำเนินการ', color: 'bg-slate-100 text-slate-700 border-slate-200' },
-      DOCUMENT_SUBMITTED: { label: 'ยื่นหนังสือแล้ว', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-      WAITING_CONTACT: { label: 'รอติดต่อกลับ', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-      WAITING_APPOINTMENT: { label: 'รอนัดหมาย', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-      APPOINTED: { label: 'นัดหมายแล้ว', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-      GUIDANCE_COMPLETED: { label: 'ออกแนะแนวแล้ว', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      CANCELLED: { label: 'ยกเลิก', color: 'bg-red-50 text-red-700 border-red-200' },
-    };
-    const c = config[school.currentStatus] || config.NOT_STARTED;
-    return (
-      <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${c.color}`}>
-        {c.label}
-      </span>
-    );
-  };
-
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
@@ -85,7 +68,6 @@ export const SchoolDetailModal: React.FC<SchoolDetailModalProps> = ({
               >
                 {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
               </span>
-              {getStatusBadge()}
             </div>
             <h2 className="text-xl font-bold text-slate-800 tracking-tight">
               {school.schoolName}
@@ -234,7 +216,7 @@ export const SchoolDetailModal: React.FC<SchoolDetailModalProps> = ({
                     {schoolAppointments.map((appt) => (
                       <div key={appt.id} className="p-2 bg-slate-50 rounded-lg border border-slate-200">
                         <div className="font-medium text-slate-800">
-                          วันที่ {formatThaiFullDate(appt.date)} เวลา {appt.startTime} - {appt.endTime} น.
+                          วันที่ {formatThaiFullDate(appt.date)} เวลา {formatAppointmentTime(appt.startTime, appt.endTime)}
                         </div>
                         <div className="text-slate-500">
                           อาจารย์: {appt.counselorName} • สถานะ: {appt.status}

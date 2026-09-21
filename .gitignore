@@ -6,3 +6,12 @@ coverage/
 *.log
 .env*
 !.env.example
+scratch/
+backup/
+.deployment-checkout/
+.firebase/
+cookies.txt
+*.xlsx
+migration_*
+safe_migration_*
+
