@@ -2,6 +2,7 @@ import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
 import { Appointment, NotificationLog } from '../types';
 import { formatThaiFullDate } from '../utils/dateUtils';
+import { formatAppointmentTime } from '../utils/appointmentUtils';
 
 export interface EmailReminderPayload {
   to: string;
@@ -33,7 +34,7 @@ export function buildReminderEmailBody(payload: EmailReminderPayload): string {
 ========================================
 โรงเรียน: ${payload.schoolName}
 วันที่: ${formatThaiFullDate(payload.appointmentDate)}
-เวลา: ${payload.startTime} - ${payload.endTime} น.
+เวลา: ${formatAppointmentTime(payload.startTime, payload.endTime)}
 สายการปฏิบัติงาน: ${payload.teamName}
 อาจารย์ผู้รับผิดชอบ: ${payload.counselorName}
 

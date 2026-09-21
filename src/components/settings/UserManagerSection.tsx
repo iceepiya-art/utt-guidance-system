@@ -22,6 +22,17 @@ import { useAuth } from '../../context/AuthContext';
 import { UserProfile, UserRole, TeamId } from '../../types';
 import { createUser, updateUser, deleteUser } from '../../firebase/dbService';
 
+export type AuthLinkageStatus = 'LINKED' | 'AUTH_FOUND_BUT_NOT_LINKED' | 'NO_AUTH_ACCOUNT' | 'ERROR';
+
+interface AuthStatusState {
+  loading: boolean;
+  status: AuthLinkageStatus;
+  email?: string;
+  authUid?: string;
+  disabled?: boolean;
+  errorMessage?: string;
+}
+
 export const UserManagerSection: React.FC = () => {
   const { currentUser, isAdmin, users, updateCurrentUserProfile } = useAuth();
 
@@ -30,6 +41,10 @@ export const UserManagerSection: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [authStatus, setAuthStatus] = useState<AuthStatusState>({
+    loading: false,
+    status: 'NO_AUTH_ACCOUNT',
+  });
   const [formData, setFormData] = useState({
     uid: '',
     displayName: '',
@@ -56,22 +71,27 @@ export const UserManagerSection: React.FC = () => {
   };
 
   const handleOpenAdd = () => {
-    setEditingUser(null); setNewPassword(''); setConfirmPassword('');
+    setEditingUser(null);
+    setNewPassword('');
+    setConfirmPassword('');
     setFormData({
       uid: '',
-    displayName: '',
+      displayName: '',
       email: '',
       phone: '',
       role: 'STAFF',
       teamId: 'team1',
       active: true,
     });
+    setAuthStatus({ loading: false, status: 'NO_AUTH_ACCOUNT' });
     setFormError(null);
     setModalOpen(true);
   };
 
-  const handleOpenEdit = (user: UserProfile) => {
-    setEditingUser(user); setNewPassword(''); setConfirmPassword('');
+  const handleOpenEdit = async (user: UserProfile) => {
+    setEditingUser(user);
+    setNewPassword('');
+    setConfirmPassword('');
     setFormData({
       uid: user.id,
       displayName: user.displayName,
@@ -83,6 +103,42 @@ export const UserManagerSection: React.FC = () => {
     });
     setFormError(null);
     setModalOpen(true);
+
+    const isCurrent = currentUser?.id === user.id || currentUser?.email.toLowerCase() === user.email.toLowerCase();
+    if (isCurrent) {
+      setAuthStatus({
+        loading: false,
+        status: 'LINKED',
+        email: currentUser.email,
+        authUid: currentUser.id,
+        disabled: false,
+      });
+      return;
+    }
+
+    setAuthStatus({ loading: true, status: 'NO_AUTH_ACCOUNT' });
+    try {
+      const checkFn = httpsCallable(getFunctions(getApp(), 'asia-southeast1'), 'checkUserAuthStatus');
+      const res: any = await checkFn({ uid: user.id, email: user.email });
+      if (res.data && res.data.status) {
+        setAuthStatus({
+          loading: false,
+          status: res.data.status,
+          email: res.data.email || user.email,
+          authUid: res.data.authUid,
+          disabled: !!res.data.disabled,
+        });
+      } else {
+        setAuthStatus({ loading: false, status: 'NO_AUTH_ACCOUNT' });
+      }
+    } catch (err: any) {
+      console.warn('Auth linkage check error:', err);
+      setAuthStatus({
+        loading: false,
+        status: 'ERROR',
+        errorMessage: err?.message || 'ไม่สามารถตรวจสอบสถานะบัญชีได้ (เกิดข้อผิดพลาดในการติดต่อระบบ)',
+      });
+    }
   };
 
   const handleOpenProfile = () => {
@@ -119,7 +175,10 @@ export const UserManagerSection: React.FC = () => {
       return;
     }
 
-    if (newPassword && (newPassword.length < 8 || newPassword !== confirmPassword)) { setFormError('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษรและตรงกันทั้งสองช่อง'); return; }
+    if (newPassword && (newPassword.length < 8 || newPassword !== confirmPassword)) {
+      setFormError('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษรและตรงกันทั้งสองช่อง');
+      return;
+    }
     setFormError(null);
     setIsSubmitting(true);
 
@@ -134,28 +193,72 @@ export const UserManagerSection: React.FC = () => {
       };
 
       if (editingUser) {
-        // Update existing user
-        await httpsCallable(getFunctions(getApp(), 'asia-southeast1'), 'manageUser')({ ...userPayload, teamId: formData.teamId, uid: editingUser.id, ...(newPassword ? { password: newPassword } : {}) });
-        setNewPassword(''); setConfirmPassword('');
-        showToast(`อัปเดตข้อมูล ${userPayload.displayName} เรียบร้อยแล้ว`);
+        if (newPassword) {
+          if (authStatus.status !== 'LINKED') {
+            setFormError('ไม่สามารถเปลี่ยนรหัสผ่านได้ เนื่องจากบัญชีนี้ยังไม่ได้เชื่อมโยงกับ Authentication อย่างสมบูรณ์ (ต้องมีสถานะพร้อมใช้งาน LINKED เท่านั้น)');
+            setIsSubmitting(false);
+            return;
+          }
+          await httpsCallable(getFunctions(getApp(), 'asia-southeast1'), 'manageUser')({
+            ...userPayload,
+            teamId: formData.teamId,
+            uid: editingUser.id,
+            password: newPassword,
+          });
+          setNewPassword('');
+          setConfirmPassword('');
+          showToast(`อัปเดตข้อมูลและเปลี่ยนรหัสผ่าน ${userPayload.displayName} เรียบร้อยแล้ว`);
+        } else {
+          // No password changed
+          if (authStatus.status === 'LINKED') {
+            try {
+              await httpsCallable(getFunctions(getApp(), 'asia-southeast1'), 'manageUser')({
+                ...userPayload,
+                teamId: formData.teamId,
+                uid: editingUser.id,
+              });
+            } catch (authErr: any) {
+              if (authErr?.code === 'not-found' || authErr?.message?.includes('not-found') || authErr?.message?.includes('user-not-found')) {
+                await updateUser(editingUser.id, userPayload, currentUser);
+              } else {
+                throw authErr;
+              }
+            }
+          } else {
+            // Personnel profile without Auth account or unlinked -> directly update Firestore without calling Auth
+            await updateUser(editingUser.id, userPayload, currentUser);
+          }
+          showToast(`อัปเดตข้อมูล ${userPayload.displayName} เรียบร้อยแล้ว`);
+        }
       } else {
-        // Create new user
-        await createUser(userPayload, currentUser, formData.uid.trim());
-        showToast(`เพิ่มผู้ใช้งาน ${userPayload.displayName} สำเร็จ`);
+        // Create new personnel profile
+        await createUser(userPayload, currentUser, formData.uid.trim() || undefined);
+        showToast(`เพิ่มข้อมูลบุคลากร ${userPayload.displayName} เรียบร้อยแล้ว`);
       }
 
       setModalOpen(false);
     } catch (err: any) {
       console.error('Save user error:', err);
-      setFormError(err.message || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+      let friendlyMsg = err.message || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง';
+      if (friendlyMsg.includes('auth/user-not-found') || friendlyMsg.includes('404') || friendlyMsg.includes('not-found')) {
+        friendlyMsg = 'ยังไม่มีบัญชีเข้าสู่ระบบ กรุณาบันทึกเป็นข้อมูลบุคลากร หรือสร้างบัญชี Authentication ก่อน';
+      }
+      setFormError(friendlyMsg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteUser = async (user: UserProfile) => {
-    if (user.id === currentUser?.id) {
+    const isCurrent = user.id === currentUser?.id || (currentUser?.email && user.email.toLowerCase() === currentUser.email.toLowerCase());
+    if (isCurrent) {
       alert('ไม่สามารถลบบัญชีที่กำลังใช้งานอยู่ได้');
+      return;
+    }
+
+    const adminCount = users.filter((u) => u.role === 'ADMIN' && u.active !== false).length;
+    if (user.role === 'ADMIN' && adminCount <= 1) {
+      alert('ไม่สามารถลบผู้ดูแลระบบคนสุดท้ายของระบบได้');
       return;
     }
 
@@ -408,149 +511,284 @@ export const UserManagerSection: React.FC = () => {
 
             <form onSubmit={handleSaveUser} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="p-4 sm:p-6 space-y-4 overflow-y-auto min-h-0 flex-1" data-user-form-scroll>
-              {formError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{formError}</span>
-                </div>
-              )}
+                {formError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{formError}</span>
+                  </div>
+                )}
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  ชื่อ - นามสกุล / ตำแหน่ง <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.displayName}
-                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                  placeholder="เช่น อ.ปิยะ สุขสมบูรณ์ (หัวหน้างานแนะแนว)"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
-                />
-              </div>
+                {/* SECTION 1: ข้อมูลบุคลากร (Personnel Profile) */}
+                <div className="space-y-3.5">
+                  <div className="flex items-center gap-2 pb-1.5 border-b border-slate-200">
+                    <Users className="w-4 h-4 text-[#087CC1]" />
+                    <span className="font-bold text-xs uppercase tracking-wide text-slate-700">1. ข้อมูลบุคลากร (Personnel Profile)</span>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    อีเมล (สำหรับเข้าสู่ระบบ) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="เช่น teacher@utt.ac.th"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    เบอร์โทรศัพท์ติดต่อ
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="เช่น 081-234-5678"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              {!editingUser && <label className="block text-sm text-slate-700">Firebase Authentication UID
-                <input required value={formData.uid} onChange={(e) => setFormData({ ...formData, uid: e.target.value })} className="w-full border border-slate-300 rounded-xl p-3 mt-2" />
-                <span className="text-xs text-slate-500">สร้างบัญชีใน Firebase Authentication ก่อน แล้วคัดลอก UID เพื่อกำหนดสิทธิ์</span>
-              </label>}
-              {editingUser && <div className="space-y-2 rounded-xl border border-slate-200 p-3">
-                <label className="block text-xs font-semibold">รหัสผ่านใหม่<input aria-label="รหัสผ่านใหม่" type="password" autoComplete="new-password" minLength={8} maxLength={128} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1 w-full p-2 border rounded-lg" /></label>
-                <label className="block text-xs font-semibold">ยืนยันรหัสผ่านใหม่<input aria-label="ยืนยันรหัสผ่านใหม่" type="password" autoComplete="new-password" required={!!newPassword} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1 w-full p-2 border rounded-lg" /></label>
-                <p className="text-xs text-slate-500">เว้นว่างเพื่อใช้รหัสผ่านเดิม</p>
-              </div>}
-              {/* Role Selection */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  กำหนดสิทธิ์การใช้งาน (Role) <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {[
-                    {
-                      role: 'ADMIN' as UserRole,
-                      title: 'ผู้ดูแลระบบ',
-                      desc: 'สิทธิ์สูงสุด จัดการโรงเรียน นัดหมาย ลบข้อมูล และเพิ่มผู้ใช้',
-                      color: 'border-red-200 text-red-700 bg-red-50/40',
-                    },
-                    {
-                      role: 'MANAGER' as UserRole,
-                      title: 'หัวหน้างานแนะแนว',
-                      desc: 'ดูรายงานภาพรวมทั้งสองสาย ติดตามเป้าหมาย ส่งออก Excel',
-                      color: 'border-purple-200 text-purple-700 bg-purple-50/40',
-                    },
-                    {
-                      role: 'STAFF' as UserRole,
-                      title: 'เจ้าหน้าที่แนะแนว',
-                      desc: 'บันทึกข้อมูลโรงเรียน ยื่นหนังสือ นัดหมาย และลงรูปกิจกรรม',
-                      color: 'border-blue-200 text-[#075A9C] bg-blue-50/40',
-                    },
-                  ].map((r) => (
-                    <label
-                      key={r.role}
-                      className={`p-3 rounded-xl border cursor-pointer flex flex-col justify-between transition-all ${
-                        formData.role === r.role
-                          ? 'border-[#087CC1] ring-2 ring-[#087CC1]/20 bg-white shadow-2xs'
-                          : `${r.color} hover:border-slate-300`
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-bold">{r.title}</span>
-                        <input
-                          type="radio"
-                          name="user-role"
-                          checked={formData.role === r.role}
-                          onChange={() => setFormData({ ...formData, role: r.role })}
-                          className="text-[#087CC1]"
-                        />
-                      </div>
-                      <p className="text-[10px] text-slate-500 leading-tight">{r.desc}</p>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      ชื่อ - นามสกุล / ตำแหน่ง <span className="text-red-500">*</span>
                     </label>
-                  ))}
-                </div>
-              </div>
+                    <input
+                      type="text"
+                      required
+                      value={formData.displayName}
+                      onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                      placeholder="เช่น อ.ปิยะ สุขสมบูรณ์ (หัวหน้างานแนะแนว)"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
+                    />
+                  </div>
 
-              {/* Team Assignment */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  สายการปฏิบัติงาน (Assigned Team)
-                </label>
-                <select
-                  value={formData.teamId}
-                  onChange={(e) => setFormData({ ...formData, teamId: e.target.value as any })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
-                >
-                  <option value="team1">อุตรดิตถ์</option>
-                  <option value="team2">สุโขทัย</option>
-                  <option value="none">ส่วนกลาง / ไม่สังกัดสายงาน</option>
-                </select>
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        อีเมล (สำหรับติดต่อ/อ้างอิง) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="เช่น teacher@utt.ac.th"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
+                      />
+                    </div>
 
-              {/* Active Status Toggle */}
-              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div>
-                  <div className="text-xs font-semibold text-slate-800">สถานะการใช้งานบัญชี</div>
-                  <div className="text-[10px] text-slate-500">
-                    เปิดใช้งาน หรือระงับชั่วคราวเพื่อป้องกันการเข้าสู่ระบบ
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        เบอร์โทรศัพท์ติดต่อ
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="เช่น 081-234-5678"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Team Assignment */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      สายการปฏิบัติงาน (Assigned Team)
+                    </label>
+                    <select
+                      value={formData.teamId}
+                      onChange={(e) => setFormData({ ...formData, teamId: e.target.value as any })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
+                    >
+                      <option value="team1">อุตรดิตถ์</option>
+                      <option value="team2">สุโขทัย</option>
+                      <option value="none">ส่วนกลาง / ไม่สังกัดสายงาน</option>
+                    </select>
+                  </div>
+
+                  {/* Role Selection */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        กำหนดสิทธิ์การใช้งาน (Role) <span className="text-red-500">*</span>
+                      </label>
+                      {editingUser && (editingUser.id === currentUser?.id || editingUser.email.toLowerCase() === currentUser?.email.toLowerCase()) && (
+                        <span className="text-[10px] text-amber-700 font-medium">บัญชีของคุณต้องคงสิทธิ์ผู้ดูแลระบบ</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {[
+                        {
+                          role: 'ADMIN' as UserRole,
+                          title: 'ผู้ดูแลระบบ',
+                          desc: 'สิทธิ์สูงสุด จัดการโรงเรียน นัดหมาย ลบข้อมูล และเพิ่มผู้ใช้',
+                          color: 'border-red-200 text-red-700 bg-red-50/40',
+                        },
+                        {
+                          role: 'MANAGER' as UserRole,
+                          title: 'หัวหน้างานแนะแนว',
+                          desc: 'ดูรายงานภาพรวมทั้งสองสาย ติดตามเป้าหมาย ส่งออก Excel',
+                          color: 'border-purple-200 text-purple-700 bg-purple-50/40',
+                        },
+                        {
+                          role: 'STAFF' as UserRole,
+                          title: 'เจ้าหน้าที่แนะแนว',
+                          desc: 'บันทึกข้อมูลโรงเรียน ยื่นหนังสือ นัดหมาย และลงรูปกิจกรรม',
+                          color: 'border-blue-200 text-[#075A9C] bg-blue-50/40',
+                        },
+                      ].map((r) => {
+                        const isRoleDisabled = Boolean(
+                          editingUser &&
+                          (editingUser.id === currentUser?.id || editingUser.email.toLowerCase() === currentUser?.email.toLowerCase()) &&
+                          r.role !== 'ADMIN'
+                        );
+                        return (
+                          <label
+                            key={r.role}
+                            className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
+                              isRoleDisabled ? 'opacity-40 cursor-not-allowed bg-slate-50 border-slate-200' : 'cursor-pointer'
+                            } ${
+                              formData.role === r.role
+                                ? 'border-[#087CC1] ring-2 ring-[#087CC1]/20 bg-white shadow-2xs'
+                                : `${r.color} hover:border-slate-300`
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-bold">{r.title}</span>
+                              <input
+                                type="radio"
+                                name="user-role"
+                                disabled={isRoleDisabled}
+                                checked={formData.role === r.role}
+                                onChange={() => !isRoleDisabled && setFormData({ ...formData, role: r.role })}
+                                className="text-[#087CC1]"
+                              />
+                            </div>
+                            <p className="text-[10px] text-slate-500 leading-tight">{r.desc}</p>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {editingUser && authStatus.status !== 'LINKED' && (
+                      <p className="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1">
+                        <span className="text-amber-600 font-semibold">ℹ️ สิทธิ์นี้จะมีผลต่อการเข้าใช้งาน เมื่อมีบัญชี Authentication เชื่อมอยู่</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Active Status Toggle */}
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <div>
+                      <div className="text-xs font-semibold text-slate-800">สถานะบุคลากรในระบบ</div>
+                      <div className="text-[10px] text-slate-500">
+                        {editingUser && (editingUser.id === currentUser?.id || editingUser.email.toLowerCase() === currentUser?.email.toLowerCase())
+                          ? 'ไม่สามารถระงับสถานะของบัญชีตนเองได้'
+                          : 'เปิดใช้งาน หรือระงับชั่วคราวเพื่อป้องกันการใช้งานในระบบ'}
+                      </div>
+                    </div>
+                    <label className={`relative inline-flex items-center ${editingUser && (editingUser.id === currentUser?.id || editingUser.email.toLowerCase() === currentUser?.email.toLowerCase()) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                      <input
+                        type="checkbox"
+                        disabled={Boolean(editingUser && (editingUser.id === currentUser?.id || editingUser.email.toLowerCase() === currentUser?.email.toLowerCase()))}
+                        checked={formData.active}
+                        onChange={(e) => {
+                          const isCurrent = editingUser && (editingUser.id === currentUser?.id || editingUser.email.toLowerCase() === currentUser?.email.toLowerCase());
+                          if (!isCurrent) setFormData({ ...formData, active: e.target.checked });
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-10 h-5 bg-slate-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#087CC1]"></div>
+                    </label>
                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.active}
-                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-10 h-5 bg-slate-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#087CC1]"></div>
-                </label>
-              </div>
+
+                {/* SECTION 2: บัญชีเข้าสู่ระบบ (Login Account) */}
+                <div className="space-y-3.5 pt-2">
+                  <div className="flex items-center gap-2 pb-1.5 border-b border-slate-200">
+                    <Shield className="w-4 h-4 text-[#087CC1]" />
+                    <span className="font-bold text-xs uppercase tracking-wide text-slate-700">2. บัญชีเข้าสู่ระบบ (Login Account)</span>
+                  </div>
+
+                  {editingUser ? (
+                    <>
+                      {authStatus.loading ? (
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 flex items-center gap-2">
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#087CC1]" />
+                          <span>กำลังตรวจสอบการเชื่อมโยงบัญชี Authentication...</span>
+                        </div>
+                      ) : authStatus.status === 'LINKED' ? (
+                        <div className="space-y-3">
+                          <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs space-y-1.5">
+                            <div className="flex items-center gap-2 text-emerald-800 font-bold">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <span>บัญชีเข้าสู่ระบบ: เชื่อมโยงแล้ว (พร้อมใช้งาน)</span>
+                            </div>
+                            <div className="text-[11px] text-emerald-700 pl-6 space-y-0.5">
+                              <div>อีเมลสำหรับเข้าสู่ระบบ: <span className="font-medium text-slate-800">{authStatus.email || formData.email}</span></div>
+                              {authStatus.authUid && (
+                                <div>Auth UID: <span className="font-mono text-[10px] text-slate-700">{authStatus.authUid}</span></div>
+                              )}
+                              <div>สถานะสิทธิ์: <span className="font-medium">{authStatus.disabled ? 'ระงับการเข้าสู่ระบบ' : 'เปิดใช้งานปกติ'}</span></div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 rounded-xl border border-slate-200 p-3.5 bg-slate-50/50">
+                            <div className="text-xs font-bold text-slate-700 mb-1">เปลี่ยนรหัสผ่านเข้าสู่ระบบ</div>
+                            <label className="block text-xs font-semibold text-slate-600">
+                              รหัสผ่านใหม่
+                              <input aria-label="รหัสผ่านใหม่" type="password" autoComplete="new-password" minLength={8} maxLength={128} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="เว้นว่างหากไม่ต้องการเปลี่ยน" className="mt-1 w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs" />
+                            </label>
+                            <label className="block text-xs font-semibold text-slate-600">
+                              ยืนยันรหัสผ่านใหม่
+                              <input aria-label="ยืนยันรหัสผ่านใหม่" type="password" autoComplete="new-password" required={!!newPassword} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" className="mt-1 w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs" />
+                            </label>
+                            <p className="text-[11px] text-slate-400">เว้นว่างไว้เพื่อใช้รหัสผ่านเดิม</p>
+                          </div>
+                        </div>
+                      ) : authStatus.status === 'AUTH_FOUND_BUT_NOT_LINKED' ? (
+                        <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs space-y-2">
+                          <div className="flex items-center gap-2 text-amber-800 font-bold">
+                            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                            <span>พบบัญชีแต่ไม่ได้ผูกกับเอกสารนี้</span>
+                          </div>
+                          <p className="text-[11px] text-amber-900 pl-6 leading-relaxed">
+                            พบบัญชี Authentication ด้วยอีเมล <span className="font-semibold text-slate-800">{authStatus.email}</span> (Auth UID: <span className="font-mono text-[10px] text-slate-700">{authStatus.authUid}</span>) แต่ UID ไม่ตรงกับ Document ID บุคลากรนี้ (<span className="font-mono text-[10px] text-slate-700">{editingUser.id}</span>)
+                          </p>
+                          <div className="text-[11px] text-amber-900 bg-amber-100/60 p-2.5 rounded-lg border border-amber-300 ml-6 space-y-1">
+                            <div className="font-semibold">⚠️ คำแนะนำด้านความปลอดภัย:</div>
+                            <div>• การล็อกอินด้วยอีเมลนี้จะเชื่อมต่อกับโปรไฟล์ <span className="font-mono text-[10px] font-bold">users/{authStatus.authUid}</span> ไม่ใช่เอกสารนี้</div>
+                            <div>• ระบบป้องกันการเปลี่ยนรหัสผ่านเพื่อไม่ให้กระทบหรือเขียนทับสิทธิ์ผิดบัญชี</div>
+                            <div>• ควรปรับแต่งเอกสารบุคลากรให้มี Document ID ตรงกับ Auth UID ในกระบวนการตั้งค่าระบบ</div>
+                          </div>
+                        </div>
+                      ) : authStatus.status === 'ERROR' ? (
+                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs space-y-1.5">
+                          <div className="flex items-center gap-2 text-rose-800 font-bold">
+                            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                            <span>ไม่สามารถตรวจสอบสถานะบัญชีได้</span>
+                          </div>
+                          <p className="text-[11px] text-rose-700 pl-6 leading-relaxed">
+                            ระบบไม่สามารถเชื่อมต่อเพื่อยืนยันสถานะ Firebase Authentication ได้ ({authStatus.errorMessage || 'เกิดข้อผิดพลาดในการติดต่อระบบ'})
+                          </p>
+                          <p className="text-[11px] text-slate-500 pl-6 pt-0.5">
+                            เพื่อความปลอดภัย ฟังก์ชันการจัดการรหัสผ่านจะถูกปิดไว้ชั่วคราว แต่ยังสามารถแก้ไขข้อมูลทั่วไปของบุคลากรได้ตามปกติ
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1.5">
+                          <div className="flex items-center gap-2 text-slate-700 font-bold">
+                            <AlertCircle className="w-4 h-4 text-slate-500 shrink-0" />
+                            <span>ไม่มีบัญชีสำหรับเข้าสู่ระบบ</span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 pl-6 leading-relaxed">
+                            บุคลากรรายนี้มีข้อมูลอยู่ในระบบ แต่ยังไม่มีบัญชี Firebase Authentication จึงยังไม่สามารถเข้าสู่ระบบด้วยอีเมลและรหัสผ่านได้
+                          </p>
+                          <p className="text-[11px] text-slate-500 pl-6 pt-0.5">
+                            คุณสามารถบันทึกและแก้ไขข้อมูลบุคลากร (ชื่อ, เบอร์โทรศัพท์, สังกัดสายงาน) ลงในระบบได้ตามปกติ
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-xl text-xs space-y-1">
+                        <div className="font-bold text-sky-800">เชื่อมต่อบัญชีเข้าสู่ระบบ (ทางเลือก)</div>
+                        <p className="text-sky-700 text-[11px] leading-relaxed">
+                          หากต้องการให้บุคลากรเข้าใช้งานระบบได้ทันที ให้ระบุ UID จาก Firebase Authentication (หากเว้นว่างไว้ ระบบจะบันทึกเป็นข้อมูลบุคลากรในฐานข้อมูลโดยยังไม่มีสิทธิ์เข้าสู่ระบบ)
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Firebase Authentication UID (เว้นว่างได้)
+                        </label>
+                        <input
+                          value={formData.uid}
+                          onChange={(e) => setFormData({ ...formData, uid: e.target.value })}
+                          placeholder="เว้นว่างไว้เพื่อสร้างเฉพาะข้อมูลบุคลากร"
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
 
               </div>
               {/* Modal Footer Buttons */}

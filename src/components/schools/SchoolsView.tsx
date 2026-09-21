@@ -16,6 +16,7 @@ import { SchoolDetailModal } from './SchoolDetailModal';
 import { SchoolFormModal } from './SchoolFormModal';
 import { addSchool, updateSchool, deleteSchool } from '../../firebase/dbService';
 import { useAuth } from '../../context/AuthContext';
+import { formatSchoolDisplayName, getCleanSchoolCode } from '../../utils/schoolStatus';
 
 interface SchoolsViewProps {
   schools: School[];
@@ -244,8 +245,10 @@ export const SchoolsView: React.FC<SchoolsViewProps> = ({
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="font-bold text-slate-800 text-sm">{school.schoolName}</div>
-                        <div className="text-xs text-slate-400 mt-0.5">{school.schoolId}</div>
+                        <div className="font-bold text-slate-800 text-sm">{formatSchoolDisplayName(school.schoolName)}</div>
+                        {getCleanSchoolCode(school.schoolId) && (
+                          <div className="text-xs text-slate-400 mt-0.5">{getCleanSchoolCode(school.schoolId)}</div>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-slate-600 text-sm whitespace-nowrap">
                         อำเภอ{school.district}
@@ -337,10 +340,12 @@ export const SchoolsView: React.FC<SchoolsViewProps> = ({
                       >
                         {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                       </span>
-                      <span className="text-xs text-slate-400 font-mono">{school.schoolId}</span>
+                      {getCleanSchoolCode(school.schoolId) && (
+                        <span className="text-xs text-slate-400 font-mono">{getCleanSchoolCode(school.schoolId)}</span>
+                      )}
                     </div>
                     <h3 className="font-bold text-slate-800 text-base leading-snug">
-                      {school.schoolName}
+                      {formatSchoolDisplayName(school.schoolName)}
                     </h3>
                     <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                       <MapPin className="w-3 h-3 text-slate-400" />

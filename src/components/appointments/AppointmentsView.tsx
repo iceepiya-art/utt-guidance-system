@@ -16,8 +16,10 @@ import {
   Image as ImageIcon,
   CheckCircle2,
 } from 'lucide-react';
-import { Appointment, DocumentSubmission, School, TeamId, AppointmentStatus } from '../../types';
+import { Appointment, DocumentSubmission, School, TeamId, AppointmentStatus, FieldTrip } from '../../types';
 import { formatThaiShortDate, getRelativeThaiDayLabel, THAI_MONTHS, getBuddhistYear } from '../../utils/dateUtils';
+import { isAppointmentGuidanceCompleted, ACTIVE_APPOINTMENT_STATUSES, formatVehicleDisplay, formatAppointmentTime } from '../../utils/appointmentUtils';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 import { AppointmentDetailModal } from './AppointmentDetailModal';
 import { AppointmentFormModal } from './AppointmentFormModal';
 import { AppointmentImportModal } from './AppointmentImportModal';
@@ -28,6 +30,7 @@ interface AppointmentsViewProps {
   appointments: Appointment[];
   schools: School[];
   submissions: DocumentSubmission[];
+  fieldTrips?: FieldTrip[];
   onRecordTrip: (appointment: Appointment) => void;
 }
 
@@ -35,6 +38,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
   appointments,
   schools,
   submissions,
+  fieldTrips = [],
   onRecordTrip,
 }) => {
   const { currentUser, isAdmin, canEdit } = useAuth();
@@ -44,14 +48,29 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<'all' | AppointmentStatus>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
-  // Appointments that haven't done guidance yet (นัดหมายและยังไม่ได้แนะแนว)
-  const pendingAppointments = useMemo(() => {
-    return appointments.filter((a) => a.status !== 'COMPLETED');
+  // Appointments strictly active in the appointment workflow (excludes CANCELLED and Guidance Completed)
+  const activeAppointments = useMemo(() => {
+    return appointments.filter(
+      (a) =>
+        a.status !== 'CANCELLED' &&
+        ACTIVE_APPOINTMENT_STATUSES.includes(a.status) &&
+        !isAppointmentGuidanceCompleted(a, fieldTrips)
+    );
+  }, [appointments, fieldTrips]);
+
+  // Cancelled appointments kept for audit/history view
+  const cancelledAppointments = useMemo(() => {
+    return appointments.filter((a) => a.status === 'CANCELLED');
   }, [appointments]);
+
+  // Active base set depending on whether user explicitly selected Cancelled history
+  const baseAppointments = useMemo(() => {
+    return statusFilter === 'CANCELLED' ? cancelledAppointments : activeAppointments;
+  }, [statusFilter, cancelledAppointments, activeAppointments]);
 
   const availableMonths = useMemo(() => {
     const monthCounts = new Map<string, number>();
-    pendingAppointments.forEach((a) => {
+    baseAppointments.forEach((a) => {
       if (a.date && a.date.length >= 7) {
         const key = a.date.substring(0, 7);
         monthCounts.set(key, (monthCounts.get(key) || 0) + 1);
@@ -66,7 +85,16 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
         const label = `${THAI_MONTHS[monthIdx] || m} ${getBuddhistYear(year)}`;
         return { key, label, count };
       });
-  }, [pendingAppointments]);
+  }, [baseAppointments]);
+
+  const team1Count = useMemo(
+    () => baseAppointments.filter((a) => a.teamId === 'team1').length,
+    [baseAppointments]
+  );
+  const team2Count = useMemo(
+    () => baseAppointments.filter((a) => a.teamId === 'team2').length,
+    [baseAppointments]
+  );
 
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
@@ -74,7 +102,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const filteredAppointments = useMemo(() => {
-    return pendingAppointments.filter((appt) => {
+    return baseAppointments.filter((appt) => {
       const matchSearch =
         !searchTerm ||
         appt.schoolName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -82,12 +110,21 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
         appt.teacherName?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchTeam = teamFilter === 'all' || appt.teamId === teamFilter;
-      const matchStatus = statusFilter === 'all' || appt.status === statusFilter;
+      
+      let matchStatus = true;
+      if (statusFilter === 'all') {
+        matchStatus = true; // baseAppointments already enforces active statuses
+      } else if (statusFilter === 'TENTATIVE') {
+        matchStatus = appt.status === 'TENTATIVE' || appt.status === 'PENDING';
+      } else {
+        matchStatus = appt.status === statusFilter;
+      }
+
       const matchMonth = selectedMonth === 'all' || appt.date.startsWith(selectedMonth);
 
       return matchSearch && matchTeam && matchStatus && matchMonth;
     });
-  }, [pendingAppointments, searchTerm, teamFilter, statusFilter, selectedMonth]);
+  }, [baseAppointments, searchTerm, teamFilter, statusFilter, selectedMonth]);
 
   const handleSaveAppointment = async (data: Omit<Appointment, 'id'>) => {
     if (appointmentToEdit) {
@@ -142,10 +179,16 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
             <CalendarCheck className="w-6 h-6 text-[#087CC1]" />
-            <span>รายการนัดหมายแนะแนว ({filteredAppointments.length}{selectedMonth !== 'all' || teamFilter !== 'all' || statusFilter !== 'all' ? ` จาก ${pendingAppointments.length}` : ''} รายการ)</span>
+            <span>
+              {statusFilter === 'CANCELLED'
+                ? `รายการนัดหมายที่ยกเลิก (${filteredAppointments.length} รายการ)`
+                : `รายการนัดหมายแนะแนว (${filteredAppointments.length} รายการ)`}
+            </span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            ตารางกำหนดการนัดหมายลงพื้นที่ วิทยาลัยเทคโนโลยีอุตรดิตถ์ (รอลงพื้นที่แนะแนว)
+            {statusFilter === 'CANCELLED'
+              ? 'ประวัติรายการนัดหมายที่ถูกยกเลิก'
+              : 'ตารางกำหนดการนัดหมายลงพื้นที่ วิทยาลัยเทคโนโลยีอุตรดิตถ์ (รอลงพื้นที่แนะแนว)'}
           </p>
         </div>
 
@@ -201,7 +244,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
               onChange={(e) => setSelectedMonth(e.target.value)}
               className="bg-transparent text-sm font-semibold text-slate-700 outline-none cursor-pointer w-full"
             >
-              <option value="all">ทุกเดือน ({appointments.length})</option>
+              <option value="all">ทุกเดือน ({baseAppointments.length})</option>
               {availableMonths.map((m) => (
                 <option key={m.key} value={m.key}>
                   {m.label} ({m.count})
@@ -217,7 +260,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                 teamFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'
               }`}
             >
-              ทั้งหมด
+              ทั้งหมด ({baseAppointments.length})
             </button>
             <button
               onClick={() => setTeamFilter('team1')}
@@ -225,7 +268,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                 teamFilter === 'team1' ? 'bg-[#1976D2] text-white shadow-2xs' : 'text-[#1976D2]'
               }`}
             >
-              อุตรดิตถ์
+              อุตรดิตถ์ ({team1Count})
             </button>
             <button
               onClick={() => setTeamFilter('team2')}
@@ -233,7 +276,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                 teamFilter === 'team2' ? 'bg-[#F59E0B] text-white shadow-2xs' : 'text-[#F59E0B]'
               }`}
             >
-              สุโขทัย
+              สุโขทัย ({team2Count})
             </button>
           </div>
 
@@ -244,10 +287,11 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
               onChange={(e) => setStatusFilter(e.target.value as any)}
               className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-[#087CC1]"
             >
-              <option value="all">สถานะ: ทั้งหมด</option>
-              <option value="CONFIRMED">ยืนยันแล้ว (Confirmed)</option>
-              <option value="TENTATIVE">รอยืนยัน (Tentative)</option>
-              <option value="CANCELLED">ยกเลิก (Cancelled)</option>
+              <option value="all">สถานะ: ทั้งหมด (ที่ต้องดำเนินการ)</option>
+              <option value="CONFIRMED">ยืนยันแล้ว</option>
+              <option value="TENTATIVE">รอยืนยัน (Tentative / Pending)</option>
+              <option value="RESCHEDULED">เลื่อนนัด</option>
+              <option value="CANCELLED">ยกเลิกแล้ว (ประวัติ)</option>
             </select>
           </div>
         </div>
@@ -268,7 +312,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
               }`}
             >
-              ทุกเดือน ({appointments.length})
+              ทุกเดือน ({baseAppointments.length})
             </button>
             {availableMonths.map((m) => (
               <button
@@ -306,18 +350,18 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
       {/* Desktop Table View */}
       <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[1050px] border-collapse">
+          <table className="w-full text-left text-sm min-w-[880px] lg:min-w-[920px] border-collapse">
             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 text-sm font-semibold">
               <tr>
-                <th className="py-3.5 px-3.5 min-w-[90px] text-center">สาย</th>
-                <th className="py-3.5 px-3.5 min-w-[150px]">วันที่ / เวลา</th>
-                <th className="py-3.5 px-3.5 min-w-[200px]">โรงเรียน</th>
-                <th className="py-3.5 px-3.5 min-w-[170px]">อาจารย์ผู้รับผิดชอบ</th>
-                <th className="py-3.5 px-3.5 min-w-[140px]">ครูแนะแนว</th>
-                <th className="py-3.5 px-3.5 min-w-[130px]">ยานพาหนะ</th>
-                <th className="py-3.5 px-3.5 min-w-[95px] text-center">รูปภาพ</th>
-                <th className="py-3.5 px-3.5 min-w-[125px] text-center">สถานะ</th>
-                <th className="py-3.5 px-3.5 min-w-[130px] text-center">จัดการ</th>
+                <th className="py-2.5 px-2 w-14 min-w-[56px] text-center">สาย</th>
+                <th className="py-2.5 px-2 min-w-[115px]">วันที่ / เวลา</th>
+                <th className="py-2.5 px-2 min-w-[140px]">โรงเรียน</th>
+                <th className="py-2.5 px-2 min-w-[125px]">อาจารย์ผู้รับผิดชอบ</th>
+                <th className="py-2.5 px-2 min-w-[100px]">ครูแนะแนว</th>
+                <th className="py-2.5 px-2 min-w-[95px]">ยานพาหนะ</th>
+                <th className="py-2.5 px-1 w-14 min-w-[56px] text-center">รูปภาพ</th>
+                <th className="py-2.5 px-1 w-20 min-w-[80px] text-center">สถานะ</th>
+                <th className="py-2.5 px-2 min-w-[160px] text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -355,10 +399,9 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                     matchedSchool?.teacherPhone ||
                     matchedSchool?.contactPhone;
 
-                  const vehicleDisplay =
-                    appt.vehicleName ||
-                    matchedSub?.vehicleName ||
-                    (isTeam1 ? 'VIGO กข 9914 (กระบะ 4 ประตู)' : 'MITSU บน 6738 (กระบะ 4 ประตู)');
+                  const vehicleDisplay = formatVehicleDisplay(
+                    appt.vehicleName || matchedSub?.vehicleName
+                  );
 
                   return (
                     <tr
@@ -366,57 +409,59 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                       onClick={() => setSelectedAppointment(appt)}
                       className="hover:bg-slate-50/80 cursor-pointer transition-colors"
                     >
-                      <td className="py-3.5 px-3.5 text-center">
+                      <td className="py-2.5 px-2 text-center">
                         <span
-                          className={`inline-block px-2.5 py-1 rounded-md font-bold text-[12px] whitespace-nowrap ${
+                          className={`inline-block px-2 py-0.5 rounded-md font-bold text-[11px] whitespace-nowrap ${
                             isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
                           }`}
                         >
                           {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                         </span>
                       </td>
-                      <td className="py-3.5 px-3.5">
+                      <td className="py-2.5 px-2.5">
                         <div className="whitespace-nowrap font-medium text-slate-900 text-sm">
                           {formatThaiShortDate(appt.date)}
-                          <span className="ml-1.5 text-xs text-sky-700 font-normal">({relativeDay})</span>
+                          <span className="ml-1 text-xs text-sky-700 font-normal">({relativeDay})</span>
                         </div>
-                        <div className="whitespace-nowrap text-[13px] text-slate-500 font-normal mt-0.5">
-                          เวลา {appt.startTime} - {appt.endTime} น.
+                        <div className="whitespace-nowrap text-[12px] text-slate-500 font-normal mt-0.5">
+                          เวลา {formatAppointmentTime(appt.startTime, appt.endTime)}
                         </div>
                       </td>
-                      <td className="py-3.5 px-3.5">
-                        <div className="font-bold text-slate-900 text-sm leading-snug line-clamp-2">{appt.schoolName}</div>
-                        {appt.note && <div className="text-[13px] text-slate-500 line-clamp-1 max-w-xs mt-0.5" title={appt.note}>{appt.note}</div>}
+                      <td className="py-2.5 px-2.5">
+                        <div className="font-bold text-slate-900 text-sm leading-snug line-clamp-2">
+                          {formatSchoolDisplayName(appt.schoolName)}
+                        </div>
+                        {appt.note && <div className="text-[12px] text-slate-500 line-clamp-1 max-w-xs mt-0.5" title={appt.note}>{appt.note}</div>}
                       </td>
-                      <td className="py-3.5 px-3.5 text-slate-800 text-sm">
+                      <td className="py-2.5 px-2 text-slate-800 text-sm">
                         <div className="font-medium text-slate-800">{appt.counselorName}</div>
                         {appt.teamMemberNames && (
-                          <div className="text-[13px] text-slate-500 line-clamp-1 max-w-[160px]" title={appt.teamMemberNames}>
+                          <div className="text-[12px] text-slate-500 line-clamp-1 max-w-[150px]" title={appt.teamMemberNames}>
                             ทีมงาน: {appt.teamMemberNames}
                           </div>
                         )}
                       </td>
-                      <td className="py-3.5 px-3.5 text-slate-800 text-sm">
+                      <td className="py-2.5 px-2 text-slate-800 text-sm">
                         <div className="font-medium text-slate-800">{teacherDisplay}</div>
                         {phoneDisplay && (
-                          <div className="text-[13px] text-[#087CC1] font-semibold mt-0.5 whitespace-nowrap">
+                          <div className="text-[12px] text-[#087CC1] font-semibold mt-0.5 whitespace-nowrap">
                             <a href={`tel:${phoneDisplay}`} onClick={(e) => e.stopPropagation()} className="hover:underline">
                               {phoneDisplay}
                             </a>
                           </div>
                         )}
                       </td>
-                      <td className="py-3.5 px-3.5 text-slate-700 text-sm">
-                        <div className="truncate max-w-[140px]" title={vehicleDisplay}>
+                      <td className="py-2.5 px-2 text-slate-700 text-sm">
+                        <div className="truncate max-w-[130px]" title={vehicleDisplay}>
                           {vehicleDisplay}
                         </div>
                       </td>
-                      <td className="py-3.5 px-3.5 text-center" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-2.5 px-2 text-center" onClick={(e) => e.stopPropagation()}>
                         {photosCount > 0 ? (
                           <button
                             type="button"
                             onClick={() => setSelectedAppointment(appt)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer"
                             title="คลิกเพื่อดูรูปภาพ"
                           >
                             <ImageIcon className="w-3.5 h-3.5 text-[#087CC1]" />
@@ -426,29 +471,20 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                           <span className="text-xs text-slate-300 font-medium">-</span>
                         )}
                       </td>
-                      <td className="py-3.5 px-3.5 text-center">
+                      <td className="py-2.5 px-2 text-center">
                         {getStatusBadge(appt.status)}
                       </td>
-                      <td className="py-3.5 px-3.5 text-center" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
-                          {canEdit && appt.status !== 'COMPLETED' && appt.status !== 'CANCELLED' && (
+                      <td className="py-2.5 px-2 text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1 whitespace-nowrap">
+                          {canEdit && !isAppointmentGuidanceCompleted(appt, fieldTrips) && appt.status !== 'CANCELLED' && (
                             <button
                               type="button"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                if (
-                                  confirm(
-                                    `ยืนยันการเปลี่ยนสถานะ "${appt.schoolName}" เป็น "ออกแนะแนวแล้ว" หรือไม่?\n(ข้อมูลจะไปแสดงในหน้าประวัติการออกแนะแนวทันที)`
-                                  )
-                                ) {
-                                  await updateAppointment(appt.id, { status: 'COMPLETED' }, currentUser);
-                                }
-                              }}
-                              title="เปลี่ยนสถานะเป็น: ออกแนะแนวแล้ว"
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-xl border border-emerald-200 transition-colors"
+                              onClick={() => onRecordTrip(appt)}
+                              title="บันทึกการออกแนะแนว"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs"
                             >
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>ออกแนะแนวแล้ว</span>
+                              <Compass className="w-3.5 h-3.5" />
+                              <span>ออกแนะแนว</span>
                             </button>
                           )}
                           <button
@@ -456,7 +492,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                             onClick={() => setSelectedAppointment(appt)}
                             aria-label={`ดูรายละเอียด ${appt.schoolName}`}
                             title="ดูรายละเอียด"
-                            className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-[#087CC1] hover:bg-sky-50 rounded-xl transition-colors border border-transparent hover:border-sky-200"
+                            className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-[#087CC1] hover:bg-sky-50 rounded-lg transition-colors border border-transparent hover:border-sky-200"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -469,7 +505,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                               }}
                               aria-label={`แก้ไขนัดหมาย ${appt.schoolName}`}
                               title="แก้ไข"
-                              className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition-colors border border-transparent hover:border-amber-200"
+                              className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors border border-transparent hover:border-amber-200"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
@@ -480,7 +516,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                               onClick={() => handleDelete(appt)}
                               aria-label={`ลบนัดหมาย ${appt.schoolName}`}
                               title="ลบ"
-                              className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-200"
+                              className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -530,10 +566,9 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
               matchedSchool?.teacherPhone ||
               matchedSchool?.contactPhone;
 
-            const vehicleDisplay =
-              appt.vehicleName ||
-              matchedSub?.vehicleName ||
-              (isTeam1 ? 'VIGO กข 9914 (กระบะ 4 ประตู)' : 'MITSU บน 6738 (กระบะ 4 ประตู)');
+            const vehicleDisplay = formatVehicleDisplay(
+              appt.vehicleName || matchedSub?.vehicleName
+            );
             return (
               <div
                 key={appt.id}
@@ -559,7 +594,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                       {getStatusBadge(appt.status)}
                     </div>
                     <h3 className="font-bold text-slate-800 text-base">
-                      {appt.schoolName}
+                      {formatSchoolDisplayName(appt.schoolName)}
                     </h3>
                   </div>
                   <div className="text-right shrink-0">
@@ -572,7 +607,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                 <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-[#087CC1]" />
-                    <span>{formatThaiShortDate(appt.date)} {appt.startTime} น.</span>
+                    <span>{formatThaiShortDate(appt.date)} {formatAppointmentTime(appt.startTime, appt.endTime)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Car className="w-3.5 h-3.5 text-amber-500" />
@@ -598,23 +633,15 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                   )}
                 </div>
 
-                {canEdit && appt.status !== 'COMPLETED' && appt.status !== 'CANCELLED' && (
+                {canEdit && !isAppointmentGuidanceCompleted(appt, fieldTrips) && appt.status !== 'CANCELLED' && (
                   <div className="pt-2 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
                     <button
                       type="button"
-                      onClick={async () => {
-                        if (
-                          confirm(
-                            `ยืนยันการเปลี่ยนสถานะ "${appt.schoolName}" เป็น "ออกแนะแนวแล้ว" หรือไม่?\n(ข้อมูลจะไปแสดงในหน้าประวัติการออกแนะแนวทันที)`
-                          )
-                        ) {
-                          await updateAppointment(appt.id, { status: 'COMPLETED' }, currentUser);
-                        }
-                      }}
-                      className="w-full py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg border border-emerald-200 flex items-center justify-center gap-1 transition-colors"
+                      onClick={() => onRecordTrip(appt)}
+                      className="w-full py-2 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>เปลี่ยนสถานะเป็น: ออกแนะแนวแล้ว</span>
+                      <Compass className="w-4 h-4" />
+                      <span>ออกแนะแนว</span>
                     </button>
                   </div>
                 )}
@@ -639,6 +666,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
             onRecordTrip(appt);
           }}
           submissions={submissions}
+          fieldTrips={fieldTrips}
         />
       )}
 

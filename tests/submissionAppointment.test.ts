@@ -14,6 +14,7 @@ it('links submission to a confirmed calendar appointment in one commit', async (
  const [s, a] = mocks.set.mock.calls;
  expect(s[1].appointmentId).toBe(a[0].id);
  expect(a[1].submissionId).toBe(s[0].id);
+ expect(a[1].teamMemberNames).toBe('');
  expect(a[1]).toMatchObject({ ...schedule, status: 'CONFIRMED', source: 'DOCUMENT_SUBMISSION' });
  expect(mocks.commit).toHaveBeenCalledTimes(1);
 });

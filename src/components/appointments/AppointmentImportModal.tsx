@@ -153,13 +153,34 @@ export const AppointmentImportModal: React.FC<AppointmentImportModalProps> = ({
     for (let idx = 0; idx < candidates.length; idx++) {
       const item = candidates[idx];
       try {
+        let parsedStart = '09:00';
+        let parsedEnd = '11:30';
+        if (item.time && item.time.includes('-')) {
+          const parts = item.time.split('-').map((s: string) => s.trim());
+          if (parts[0]) parsedStart = parts[0];
+          if (parts[1] && parts[1] > parsedStart) parsedEnd = parts[1];
+        } else if (item.time && item.time.trim()) {
+          parsedStart = item.time.trim();
+          const [hStr, mStr] = parsedStart.split(':');
+          const h = parseInt(hStr, 10);
+          if (!isNaN(h)) {
+            const endH = Math.min(h + 2, 23);
+            parsedEnd = `${String(endH).padStart(2, '0')}:${mStr || '00'}`;
+          }
+        }
+        if (parsedEnd <= parsedStart) {
+          const [hStr, mStr] = parsedStart.split(':');
+          const h = parseInt(hStr, 10);
+          parsedEnd = `${String(Math.min((isNaN(h) ? 9 : h) + 2, 23)).padStart(2, '0')}:${mStr || '00'}`;
+        }
+
         await createAppointment(
           {
             schoolId: item.schoolId,
             schoolName: item.schoolName,
             date: item.date,
-            startTime: item.time || '09:00',
-            endTime: '12:00',
+            startTime: parsedStart,
+            endTime: parsedEnd,
             teamId: item.teamId,
             counselorName: item.counselorName || 'อ.ประชา',
             teacherName: '',

@@ -39,6 +39,7 @@ import {
   INITIAL_USERS,
 } from './seedData';
 import { isTimeOverlapping } from '../utils/dateUtils';
+import { formatAppointmentTime } from '../utils/appointmentUtils';
 import { compressImageFile, fileToDataUrl } from '../utils/imageCompressor';
 
 // Helper to log activities
@@ -400,21 +401,21 @@ export async function checkAppointmentConflict(
         return {
           hasConflict: true,
           conflictingAppointment: appt,
-          reason: `สายที่ ${teamId === 'team1' ? '1' : '2'} มีนัดหมายแล้วที่ "${appt.schoolName}" เวลา ${appt.startTime} - ${appt.endTime} น.`,
+          reason: `สายที่ ${teamId === 'team1' ? '1' : '2'} มีนัดหมายแล้วที่ "${appt.schoolName}" เวลา ${formatAppointmentTime(appt.startTime, appt.endTime)}`,
         };
       }
       if (counselorId && appt.counselorId === counselorId) {
         return {
           hasConflict: true,
           conflictingAppointment: appt,
-          reason: `${appt.counselorName} ติดนัดหมายที่ "${appt.schoolName}" เวลา ${appt.startTime} - ${appt.endTime} น.`,
+          reason: `${appt.counselorName} ติดนัดหมายที่ "${appt.schoolName}" เวลา ${formatAppointmentTime(appt.startTime, appt.endTime)}`,
         };
       }
       if (vehicleId && vehicleId !== 'veh_personal' && appt.vehicleId === vehicleId) {
         return {
           hasConflict: true,
           conflictingAppointment: appt,
-          reason: `ยานพาหนะ "${appt.vehicleName || vehicleId}" มีกำหนดใช้งานแล้วที่ "${appt.schoolName}" เวลา ${appt.startTime} - ${appt.endTime} น.`,
+          reason: `ยานพาหนะ "${appt.vehicleName || vehicleId}" มีกำหนดใช้งานแล้วที่ "${appt.schoolName}" เวลา ${formatAppointmentTime(appt.startTime, appt.endTime)}`,
         };
       }
     }
@@ -441,11 +442,34 @@ export async function createAppointment(
     throw new Error(conflict.reason || 'ช่วงเวลานี้มีนัดหมายแล้ว กรุณาเลือกเวลาอื่น');
   }
 
+  // 1.5 Prevent duplicate active appointment for the same submission
+  if (appointment.submissionId) {
+    const existingSnap = await getDocs(
+      query(
+        collection(db, 'appointments'),
+        where('submissionId', '==', appointment.submissionId)
+      )
+    );
+    const activeApptDoc = existingSnap.docs.find((d) => {
+      const data = d.data();
+      return data.status !== 'CANCELLED';
+    });
+    if (activeApptDoc) {
+      const activeAppt = activeApptDoc.data();
+      throw new Error(
+        `รายการยื่นหนังสือนี้มีนัดหมายอยู่แล้ว (วันที่ ${activeAppt.date || '-'} เวลา ${activeAppt.startTime || '-'} น.) ไม่สามารถสร้างนัดหมายซ้ำได้`
+      );
+    }
+  }
+
   // 2. Insert into Firestore
   const colRef = collection(db, 'appointments');
   const now = new Date().toISOString();
+  const cleanAppointment = Object.fromEntries(
+    Object.entries(appointment).filter(([, value]) => value !== undefined)
+  );
   const docRef = await addDoc(colRef, {
-    ...appointment,
+    ...cleanAppointment,
     approvalStatus: appointment.approvalStatus || (user?.role === 'ADMIN' || user?.role === 'MANAGER' ? 'APPROVED' : 'PENDING_APPROVAL'),
     createdAt: now,
     updatedAt: now,
@@ -487,7 +511,7 @@ export async function createAppointment(
     'สร้างนัดหมายแนะแนว',
     'appointment',
     docRef.id,
-    `นัดหมาย ${appointment.schoolName} วันที่ ${appointment.date} (${appointment.startTime} - ${appointment.endTime})`
+    `นัดหมาย ${appointment.schoolName} วันที่ ${appointment.date} (${formatAppointmentTime(appointment.startTime, appointment.endTime)})`
   );
 
   return docRef.id;
@@ -748,18 +772,78 @@ export function subscribeFieldTrips(callback: (trips: FieldTrip[]) => void) {
   );
 }
 
+export function sanitizeFirestorePayload<T extends Record<string, any>>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== undefined)
+  ) as Partial<T>;
+}
+
 export async function createFieldTrip(
   trip: Omit<FieldTrip, 'id'>,
   user?: UserProfile | null
 ): Promise<string> {
+  // Validate Required Fields explicitly - do not let undefined silently bypass
+  if (!trip.date || typeof trip.date !== 'string') {
+    throw new Error('กรุณาระบุวันที่ออกแนะแนว (date is required)');
+  }
+  if (!trip.teamId) {
+    throw new Error('กรุณาระบุสายการปฏิบัติงาน (teamId is required)');
+  }
+  if (!trip.counselorName || !trip.counselorName.trim()) {
+    throw new Error('กรุณาระบุอาจารย์ผู้รับผิดชอบ (counselorName is required)');
+  }
+  if (!trip.workType || !trip.workType.trim()) {
+    throw new Error('กรุณาระบุประเภทกิจกรรม/งานที่ปฏิบัติ (workType is required)');
+  }
+  if (!trip.schools || !Array.isArray(trip.schools) || trip.schools.length === 0) {
+    throw new Error('กรุณาระบุโรงเรียนอย่างน้อย 1 แห่ง (schools is required)');
+  }
+
   const colRef = collection(db, 'fieldTrips');
   const now = new Date().toISOString();
-  const docRef = await addDoc(colRef, {
-    ...trip,
+
+  // Clean and construct payload using explicit conditional object construction:
+  // Required fields are always present; optional relations are only included when they have truthy string values.
+  const submissionId = trip.submissionId && trip.submissionId.trim() ? trip.submissionId.trim() : null;
+  const appointmentId = trip.appointmentId && trip.appointmentId.trim() ? trip.appointmentId.trim() : null;
+
+  const payload: Record<string, any> = {
+    date: trip.date,
+    teamId: trip.teamId,
+    workType: trip.workType,
+    counselorId: trip.counselorId || '',
+    counselorName: trip.counselorName,
+    vehicleId: trip.vehicleId || '',
+    vehicleName: trip.vehicleName || '',
+    schools: trip.schools.map((s) => ({
+      schoolId: s.schoolId || '',
+      schoolName: s.schoolName || '',
+      ...(s.timeSlot ? { timeSlot: s.timeSlot } : {}),
+      studentCount: typeof s.studentCount === 'number' ? s.studentCount : 0,
+      note: s.note || s.notes || '',
+    })),
+    photos: trip.photos || [],
+    summary: trip.summary || '',
+    issues: trip.issues || '',
     createdAt: now,
     updatedAt: now,
     createdBy: user?.displayName || trip.counselorName,
-  });
+    ...(submissionId ? { submissionId } : {}),
+    ...(appointmentId ? { appointmentId } : {}),
+    ...(trip.teamMemberNames ? { teamMemberNames: trip.teamMemberNames } : {}),
+    ...(trip.departureTime ? { departureTime: trip.departureTime } : {}),
+    ...(trip.returnTime ? { returnTime: trip.returnTime } : {}),
+    ...(trip.academicYear ? { academicYear: trip.academicYear } : {}),
+    ...(trip.approvalStatus ? { approvalStatus: trip.approvalStatus } : {}),
+    ...(trip.approvedBy ? { approvedBy: trip.approvedBy } : {}),
+    ...(trip.approvedByName ? { approvedByName: trip.approvedByName } : {}),
+    ...(trip.approvedAt ? { approvedAt: trip.approvedAt } : {}),
+    ...(trip.approvalNote ? { approvalNote: trip.approvalNote } : {}),
+    ...(trip.budgetAllowance !== undefined && trip.budgetAllowance !== null ? { budgetAllowance: Number(trip.budgetAllowance) } : {}),
+    ...(trip.budgetFuel !== undefined && trip.budgetFuel !== null ? { budgetFuel: Number(trip.budgetFuel) } : {}),
+  };
+
+  const docRef = await addDoc(colRef, payload);
 
   // Automatically update visited schools to GUIDANCE_COMPLETED if workType is guidance
   if (trip.workType.includes('แนะแนว') && trip.schools && trip.schools.length > 0) {
@@ -779,28 +863,28 @@ export async function createFieldTrip(
     }
   }
 
-  if (trip.appointmentId) {
+  if (appointmentId) {
     try {
-      await updateDoc(doc(db, 'appointments', trip.appointmentId), {
+      await updateDoc(doc(db, 'appointments', appointmentId), {
         status: 'COMPLETED',
         updatedAt: now,
         updatedBy: user?.displayName || trip.counselorName,
       });
     } catch (e) {
-      console.warn('Could not auto-update appointment status for', trip.appointmentId, e);
+      console.warn('Could not auto-update appointment status for', appointmentId, e);
     }
   }
 
-  if (trip.submissionId) {
+  if (submissionId) {
     try {
-      await updateDoc(doc(db, 'documentSubmissions', trip.submissionId), {
+      await updateDoc(doc(db, 'documentSubmissions', submissionId), {
         status: 'GUIDANCE_COMPLETED',
         fieldTripId: docRef.id,
         updatedAt: now,
         updatedBy: user?.displayName || trip.counselorName,
       });
     } catch (e) {
-      console.warn('Could not link document submission to field trip for', trip.submissionId, e);
+      console.warn('Could not link document submission to field trip for', submissionId, e);
     }
   }
 
@@ -823,11 +907,28 @@ export async function updateFieldTrip(
 ): Promise<void> {
   const docRef = doc(db, 'fieldTrips', id);
   const now = new Date().toISOString();
-  await updateDoc(docRef, {
-    ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)),
+
+  const updatePayload: Record<string, any> = {
     updatedAt: now,
     updatedBy: user?.displayName || 'เจ้าหน้าที่',
-  });
+  };
+
+  // Only assign fields that are explicitly provided and not undefined
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      updatePayload[key] = value;
+    }
+  }
+
+  // Handle optional relations: omit empty/null string values or undefined
+  if ('submissionId' in updatePayload && !updatePayload.submissionId) {
+    delete updatePayload.submissionId;
+  }
+  if ('appointmentId' in updatePayload && !updatePayload.appointmentId) {
+    delete updatePayload.appointmentId;
+  }
+
+  await updateDoc(docRef, updatePayload);
 }
 
 export async function deleteFieldTrip(id: string, user?: UserProfile | null): Promise<void> {
@@ -1099,9 +1200,9 @@ export async function createUser(
   authUid?: string
 ): Promise<UserProfile> {
   const colRef = collection(db, 'users');
-  if (!authUid || authUid.includes('/')) throw new Error('กรุณาระบุ Firebase Authentication UID ที่ถูกต้อง');
-  const newDocRef = doc(colRef, authUid);
-  if ((await getDoc(newDocRef)).exists()) throw new Error('UID นี้มีสิทธิ์ในระบบแล้ว');
+  if (authUid && authUid.includes('/')) throw new Error('Firebase Authentication UID ไม่ถูกต้อง');
+  const newDocRef = authUid && authUid.trim() ? doc(colRef, authUid.trim()) : doc(colRef);
+  if ((await getDoc(newDocRef)).exists()) throw new Error('ID หรือ UID นี้มีสิทธิ์ในระบบแล้ว');
   const now = new Date().toISOString();
   const user: UserProfile = {
     ...userData,

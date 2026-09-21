@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { School, DocumentSubmission, Appointment, FieldTrip } from '../../types';
 import { formatThaiShortDate, formatThaiFullDate } from '../../utils/dateUtils';
+import { formatAppointmentTime } from '../../utils/appointmentUtils';
+import { formatSchoolDisplayName, getCleanSchoolCode } from '../../utils/schoolStatus';
 
 interface SchoolDetailModalProps {
   school: School | null;
@@ -57,9 +59,11 @@ export const SchoolDetailModal: React.FC<SchoolDetailModalProps> = ({
         <div className="p-5 border-b border-slate-100 flex items-start justify-between bg-slate-50/70 rounded-t-2xl">
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              <span className="text-xs font-mono font-bold text-slate-400 bg-white px-2 py-0.5 rounded-md border border-slate-200">
-                {school.schoolId || 'SCH'}
-              </span>
+              {getCleanSchoolCode(school.schoolId) && (
+                <span className="text-xs font-mono font-bold text-slate-400 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                  {getCleanSchoolCode(school.schoolId)}
+                </span>
+              )}
               <span
                 className={`text-xs font-bold px-2.5 py-0.5 rounded-sm ${
                   isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
@@ -69,7 +73,7 @@ export const SchoolDetailModal: React.FC<SchoolDetailModalProps> = ({
               </span>
             </div>
             <h2 className="text-xl font-bold text-slate-800 tracking-tight">
-              {school.schoolName}
+              {formatSchoolDisplayName(school.schoolName)}
             </h2>
             <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
               <MapPin className="w-3.5 h-3.5 text-slate-400" />
@@ -215,7 +219,7 @@ export const SchoolDetailModal: React.FC<SchoolDetailModalProps> = ({
                     {schoolAppointments.map((appt) => (
                       <div key={appt.id} className="p-2 bg-slate-50 rounded-lg border border-slate-200">
                         <div className="font-medium text-slate-800">
-                          วันที่ {formatThaiFullDate(appt.date)} เวลา {appt.startTime} - {appt.endTime} น.
+                          วันที่ {formatThaiFullDate(appt.date)} เวลา {formatAppointmentTime(appt.startTime, appt.endTime)}
                         </div>
                         <div className="text-slate-500">
                           อาจารย์: {appt.counselorName} • สถานะ: {appt.status}

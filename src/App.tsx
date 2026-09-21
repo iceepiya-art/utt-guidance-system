@@ -226,6 +226,7 @@ function MainApplication() {
           schools={schools}
           appointments={appointments}
           onOpenInstantAppointment={handleInstantAppointmentFromSubmission}
+          onSelectAppointment={(appt) => setSelectedAppointmentForDetail(appt)}
         />
       )}
 
@@ -234,6 +235,7 @@ function MainApplication() {
           appointments={appointments}
           schools={schools}
           submissions={submissions}
+          fieldTrips={fieldTrips}
           onRecordTrip={handleRecordTripFromAppointment}
         />
       )}
@@ -323,6 +325,7 @@ function MainApplication() {
             setSelectedAppointmentForDetail(null);
             handleRecordTripFromAppointment(appt);
           }}
+          fieldTrips={fieldTrips}
         />
       )}
 

@@ -14,7 +14,15 @@ export function TripVehiclePicker({ value, name, onChange, disabled = false }: {
   const [plate, setPlate] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => subscribeVehicles(list => setVehicles([...mainVehicles, ...list.filter(v => v.active && !['veh_01', 'veh_02', 'veh_03', 'veh_personal', 'mitsu-6738', 'vigo-9914'].includes(v.id))])), []);
+  useEffect(() => subscribeVehicles(list => {
+    const cleanList = (list || []).filter(v =>
+      v.active &&
+      !['veh_01', 'veh_02', 'veh_03', 'veh_personal', 'mitsu-6738', 'vigo-9914'].includes(v.id) &&
+      !v.vehicleName?.includes('ไจ๋เจา') &&
+      !v.registrationNumber?.includes('4163')
+    );
+    setVehicles([...mainVehicles, ...cleanList]);
+  }), []);
   const add = async () => {
     if (!model.trim() || !plate.trim()) { setError('กรุณาระบุชื่อรถและทะเบียน'); return; }
     setSaving(true); setError('');
@@ -28,9 +36,24 @@ export function TripVehiclePicker({ value, name, onChange, disabled = false }: {
     finally { setSaving(false); }
   };
   return <div className="space-y-2">
-    <select aria-label="ยานพาหนะ" value={value} disabled={disabled || saving} onChange={e => { const vehicle = vehicles.find(v => v.id === e.target.value); if(vehicle) onChange(vehicle.id, vehicle.vehicleName); }} className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs">
-      {!value && <option value="">— เลือกยานพาหนะ —</option>}
-      {value && !vehicles.some(v => v.id === value) && <option value={value}>{name}</option>}
+    <select
+      aria-label="ยานพาหนะ"
+      value={value || ''}
+      disabled={disabled || saving}
+      onChange={e => {
+        const val = e.target.value;
+        if (!val) {
+          onChange('', '');
+          return;
+        }
+        const vehicle = vehicles.find(v => v.id === val);
+        if (vehicle) onChange(vehicle.id, vehicle.vehicleName);
+        else onChange(val, name || val);
+      }}
+      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+    >
+      <option value="">— ไม่ระบุ / ไม่มียานพาหนะ —</option>
+      {value && !vehicles.some(v => v.id === value) && <option value={value}>{name || value}</option>}
       {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicleName}</option>)}
     </select>
     {isAdmin && !adding && <button type="button" disabled={disabled} onClick={() => setAdding(true)} className="text-sm font-semibold text-sky-700">+ เพิ่มรถ</button>}

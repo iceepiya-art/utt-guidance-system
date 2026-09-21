@@ -19,11 +19,14 @@ import {
   Mail,
   UserCheck,
 } from 'lucide-react';
-import { Appointment, DocumentSubmission, NotificationLog } from '../../types';
+import { Appointment, DocumentSubmission, NotificationLog, FieldTrip } from '../../types';
 import { formatThaiFullDate, formatThaiShortDate, getRelativeThaiDayLabel } from '../../utils/dateUtils';
+import { formatAppointmentTime } from '../../utils/appointmentUtils';
 import { sendManualNotificationTest } from '../../services/reminderService';
 import { updateAppointment } from '../../firebase/dbService';
 import { useAuth } from '../../context/AuthContext';
+import { isAppointmentGuidanceCompleted, formatVehicleDisplay } from '../../utils/appointmentUtils';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 
 interface AppointmentDetailModalProps {
   appointment: Appointment | null;
@@ -31,6 +34,7 @@ interface AppointmentDetailModalProps {
   onEdit: (appointment: Appointment) => void;
   onRecordTrip: (appointment: Appointment) => void;
   submissions?: DocumentSubmission[];
+  fieldTrips?: FieldTrip[];
 }
 
 export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
@@ -39,6 +43,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
   onEdit,
   onRecordTrip,
   submissions = [],
+  fieldTrips = [],
 }) => {
   const { canEdit, currentUser, users = [] } = useAuth();
   const [isCancelling, setIsCancelling] = useState(false);
@@ -60,20 +65,6 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
   };
   const [testingEmail, setTestingEmail] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  const handleMarkCompleted = async () => {
-    if (!appointment || !currentUser) return;
-    try {
-      setIsUpdating(true);
-      await updateAppointment(appointment.id, { status: 'COMPLETED' }, currentUser);
-      setIsUpdating(false);
-      onClose();
-    } catch (err: any) {
-      alert(err?.message || 'ไม่สามารถบันทึกสถานะได้');
-      setIsUpdating(false);
-    }
-  };
 
   if (!appointment) return null;
 
@@ -247,7 +238,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
               {getStatusBadge()}
             </div>
             <h2 className="text-xl font-bold text-slate-800 tracking-tight">
-              {appointment.schoolName}
+              {formatSchoolDisplayName(appointment.schoolName)}
             </h2>
           </div>
           <button
@@ -273,7 +264,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             </div>
             <div className="flex items-center gap-2 text-slate-700 font-semibold text-xs">
               <Clock className="w-4 h-4 text-[#087CC1]" />
-              <span>เวลา {appointment.startTime} - {appointment.endTime} น.</span>
+              <span>เวลา {formatAppointmentTime(appointment.startTime, appointment.endTime)}</span>
             </div>
           </div>
 
@@ -355,7 +346,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
               <div className="text-right shrink-0">
                 <div className="inline-flex items-center gap-1 text-xs text-slate-600 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200">
                   <Car className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="font-medium">{appointment.vehicleName || effectiveSubmission?.vehicleName || (isTeam1 ? 'VIGO กข 9914' : 'MITSU บน 6738')}</span>
+                  <span className="font-medium">{formatVehicleDisplay(appointment.vehicleName || effectiveSubmission?.vehicleName)}</span>
                 </div>
               </div>
             </div>
@@ -513,19 +504,21 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             )}
           </div>
 
-          {canEdit && appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED' && (
+          {canEdit && appointment.status !== 'CANCELLED' && !isAppointmentGuidanceCompleted(appointment, fieldTrips) && (
             <button
               type="button"
-              onClick={handleMarkCompleted}
-              disabled={isUpdating}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors disabled:opacity-50"
+              onClick={() => {
+                onClose();
+                onRecordTrip(appointment);
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{isUpdating ? 'กำลังบันทึก...' : 'เปลี่ยนสถานะเป็น: ออกแนะแนวแล้ว'}</span>
+              <Compass className="w-4 h-4" />
+              <span>ออกแนะแนว</span>
             </button>
           )}
 
-          {appointment.status === 'COMPLETED' && (
+          {(appointment.status === 'COMPLETED' || isAppointmentGuidanceCompleted(appointment, fieldTrips)) && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-xl border border-emerald-200">
               <CheckCircle2 className="w-4 h-4" />
               <span>ออกแนะแนวเรียบร้อยแล้ว (แสดงในประวัติออกแนะแนว)</span>

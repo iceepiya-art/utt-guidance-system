@@ -18,6 +18,8 @@ import { formatThaiShortDate, THAI_MONTHS, getBuddhistYear } from '../../utils/d
 import { FieldTripFormModal } from './FieldTripFormModal';
 import { createFieldTrip, updateFieldTrip, deleteFieldTrip } from '../../firebase/dbService';
 import { useAuth } from '../../context/AuthContext';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
+import { formatAppointmentTime, isValidTimeRange } from '../../utils/appointmentUtils';
 
 interface FieldTripsViewProps {
   fieldTrips: FieldTrip[];
@@ -47,7 +49,11 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
     const list: FieldTrip[] = fieldTrips.filter((ft) => !ft.workType || ft.workType.includes('แนะแนว'));
 
     const cleanSchool = (s: string) =>
-      (s || '').replace(/^(โรงเรียน|รร\.)\s*/, '').trim().toLowerCase();
+      (s || '')
+        .replace(/^(โรงเรียน|รร\.)\s*/, '')
+        .replace(/\s+/g, '')
+        .trim()
+        .toLowerCase();
 
     // Identify only completed guidance appointments
     const completedAppts = appointments.filter((appt) => appt.status === 'COMPLETED');
@@ -56,10 +62,22 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
       const apptSchoolClean = cleanSchool(appt.schoolName);
 
       const isAlreadyInTrips = list.some((ft) => {
+        // 1. Match by appointmentId
         if (ft.appointmentId && ft.appointmentId === appt.id) return true;
-        if (ft.date === appt.date) {
+
+        // 2. Match by submissionId if both present
+        if (ft.submissionId && appt.submissionId && ft.submissionId === appt.submissionId) return true;
+
+        // 3. Match by schoolId + date
+        if (ft.date === appt.date && appt.schoolId && ft.schools?.some((s) => s.schoolId && s.schoolId === appt.schoolId)) {
+          return true;
+        }
+
+        // 4. Legacy fallback: normalized schoolName + date
+        if (ft.date === appt.date && apptSchoolClean) {
           return ft.schools?.some((s) => cleanSchool(s.schoolName) === apptSchoolClean);
         }
+
         return false;
       });
 
@@ -67,14 +85,8 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
         const matchedSub = submissions.find(
           (s) => s.id === appt.submissionId || cleanSchool(s.schoolName) === apptSchoolClean
         );
-        const vehName =
-          appt.vehicleName ||
-          matchedSub?.vehicleName ||
-          (appt.teamId === 'team1' ? 'VIGO กข 9914 (กระบะ 4 ประตู)' : 'MITSU บน 6738 (กระบะ 4 ประตู)');
-        const vehId =
-          appt.vehicleId ||
-          matchedSub?.vehicleId ||
-          (appt.teamId === 'team1' ? 'vigo-9914' : 'mitsu-6738');
+        const vehName = appt.vehicleName || matchedSub?.vehicleName || '';
+        const vehId = appt.vehicleId || matchedSub?.vehicleId || '';
 
         list.push({
           id: `completed_appt_${appt.id}`,
@@ -82,19 +94,19 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
           submissionId: appt.submissionId,
           date: appt.date,
           departureTime: appt.startTime || '08:30',
-          returnTime: appt.endTime || '12:00',
+          returnTime: isValidTimeRange(appt.startTime, appt.endTime) ? appt.endTime : '',
           teamId: appt.teamId,
           vehicleId: vehId,
           vehicleName: vehName,
           workType: appt.workType || 'แนะแนวการศึกษา',
           counselorId: appt.counselorId || '',
-          counselorName: appt.counselorName || 'อ.ประชา กัปปนารก',
+          counselorName: appt.counselorName || 'อ.ประชา กัลปนารถ',
           teamMemberNames: appt.teamMemberNames || '',
           schools: [
             {
               schoolId: appt.schoolId,
               schoolName: appt.schoolName,
-              timeSlot: `${appt.startTime || '08:30'} - ${appt.endTime || '12:00'} น.`,
+              timeSlot: formatAppointmentTime(appt.startTime, appt.endTime),
               note: appt.note,
             },
           ],
@@ -270,17 +282,17 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
       {/* Desktop Table View */}
       <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[1050px]">
+          <table className="w-full text-left text-sm min-w-[880px] lg:min-w-[900px]">
           <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold text-sm">
             <tr>
-              <th className="py-3.5 px-4 whitespace-nowrap min-w-[90px]">สาย</th>
-              <th className="py-3.5 px-4 whitespace-nowrap min-w-[120px]">วันที่ / เวลา</th>
-              <th className="py-3.5 px-4 min-w-[200px]">โรงเรียนที่จัดกิจกรรม</th>
-              <th className="py-3.5 px-4 min-w-[130px]">กิจกรรม</th>
-              <th className="py-3.5 px-4 min-w-[180px]">อาจารย์ผู้รับผิดชอบ</th>
-              <th className="py-3.5 px-4 min-w-[110px]">ยานพาหนะ</th>
-              <th className="py-3.5 px-4 text-center min-w-[100px] whitespace-nowrap">รูปกิจกรรม</th>
-              <th className="py-3.5 px-4 text-right min-w-[140px] whitespace-nowrap">จัดการ</th>
+              <th className="py-2.5 px-2 whitespace-nowrap min-w-[70px]">สาย</th>
+              <th className="py-2.5 px-2.5 whitespace-nowrap min-w-[120px]">วันที่ / เวลา</th>
+              <th className="py-2.5 px-2.5 min-w-[160px]">โรงเรียนที่จัดกิจกรรม</th>
+              <th className="py-2.5 px-2 min-w-[100px]">กิจกรรม</th>
+              <th className="py-2.5 px-2 min-w-[140px]">อาจารย์ผู้รับผิดชอบ</th>
+              <th className="py-2.5 px-2 min-w-[100px]">ยานพาหนะ</th>
+              <th className="py-2.5 px-2 text-center min-w-[75px] whitespace-nowrap">รูปกิจกรรม</th>
+              <th className="py-2.5 px-2 text-right min-w-[105px] whitespace-nowrap">จัดการ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -294,32 +306,52 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
               filteredTrips.map((trip) => {
                 const isTeam1 = trip.teamId === 'team1';
                 return (
-                  <tr key={trip.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-3 px-4">
+                  <tr
+                    key={trip.id}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`ดูรายละเอียดการออกแนะแนว ${trip.schools?.map(s => s.schoolName).join(', ')}`}
+                    onClick={() => setSelectedTrip(trip)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        const target = e.target as HTMLElement;
+                        if (target.tagName !== 'BUTTON' && target.tagName !== 'A') {
+                          e.preventDefault();
+                          setSelectedTrip(trip);
+                        }
+                      }
+                    }}
+                    className="hover:bg-slate-50/80 cursor-pointer transition-colors focus:outline-none focus-visible:bg-sky-50/60"
+                  >
+                    <td className="py-2.5 px-2">
                       <span
-                        className={`inline-block px-2.5 py-1 rounded-md font-semibold text-xs whitespace-nowrap ${
+                        className={`inline-block px-2 py-0.5 rounded-md font-semibold text-xs whitespace-nowrap ${
                           isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
                         }`}
                       >
                         {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-2.5">
                       <div className="font-semibold text-slate-800 text-sm whitespace-nowrap">
                         {formatThaiShortDate(trip.date)}
                       </div>
                       <div className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
-                        {trip.departureTime || '08:00'} - {trip.returnTime || '15:30'} น.
+                        เวลา {formatAppointmentTime(trip.departureTime || '08:00', trip.returnTime)}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="space-y-1">
+                    <td className="py-2.5 px-2.5">
+                      <div className="space-y-1.5 w-full">
                         {trip.schools?.map((s, sIdx) => (
-                          <div key={sIdx} className="font-semibold text-slate-800 flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#087CC1]" />
-                            <span>{s.schoolName}</span>
+                          <div key={sIdx} className="font-semibold text-slate-800 flex items-center justify-between gap-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#087CC1] shrink-0" />
+                              <span className="text-sm text-slate-800 truncate">
+                                {formatSchoolDisplayName(s.schoolName)}
+                              </span>
+                            </div>
                             {s.studentCount ? (
-                              <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md whitespace-nowrap">
+                              <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
                                 ({s.studentCount} คน)
                               </span>
                             ) : null}
@@ -327,22 +359,25 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
                         ))}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-slate-700 font-medium">
+                    <td className="py-2.5 px-2 text-slate-700 font-medium">
                       {trip.workType}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-2">
                       <div className="font-semibold text-slate-800 text-sm">{trip.counselorName}</div>
-                      <div className="text-xs text-slate-500 line-clamp-2 max-w-[180px] mt-0.5">{trip.teamMemberNames}</div>
+                      <div className="text-xs text-slate-500 line-clamp-2 max-w-[170px] mt-0.5">{trip.teamMemberNames}</div>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-600 text-sm">
+                    <td className="py-2.5 px-2 text-slate-600 text-sm">
                       {trip.vehicleName || '-'}
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-2.5 px-2 text-center" onClick={(e) => e.stopPropagation()}>
                       {trip.photos && trip.photos.length > 0 ? (
                         <button
                           type="button"
-                          onClick={() => setSelectedPhoto(trip.photos[0].url)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium whitespace-nowrap"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPhoto(trip.photos[0].url);
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium whitespace-nowrap cursor-pointer"
                         >
                           <ImageIcon className="w-3.5 h-3.5 text-[#087CC1]" />
                           <span>{trip.photos.length} รูป</span>
@@ -351,32 +386,39 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
                         <span className="text-[11px] text-slate-300">-</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-2.5 px-2 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => setSelectedTrip(trip)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTrip(trip);
+                          }}
                           title="ดูรายละเอียด"
-                          className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-[#087CC1] hover:bg-slate-100 rounded-lg transition-colors"
+                          className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-[#087CC1] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         {canEdit && (
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setTripToEdit(trip);
                               setIsFormOpen(true);
                             }}
                             title="แก้ไข"
-                            className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                         )}
                         {isAdmin && (
                           <button
-                            onClick={() => handleDelete(trip)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(trip);
+                            }}
                             title="ลบ"
-                            className="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -407,8 +449,15 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
                 onClick={() => setSelectedTrip(trip)}
                 className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-2.5 cursor-pointer"
               >
-                <div className="flex items-start justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedTrip(trip);
+                    }}
+                    className="flex-1 text-left p-2 -m-1 rounded-xl hover:bg-sky-50/70 active:bg-sky-100/70 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#087CC1] group"
+                  >
                     <div className="flex items-center gap-1.5 mb-1">
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-sm ${
@@ -421,13 +470,13 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
                         {formatThaiShortDate(trip.date)}
                       </span>
                     </div>
-                    <div className="font-bold text-slate-800 text-base">
-                      {trip.schools?.map((s) => s.schoolName).join(', ') || 'ออกแนะแนว'}
+                    <div className="font-bold text-slate-800 text-base group-hover:text-[#087CC1] transition-colors mt-0.5">
+                      {trip.schools?.map((s) => formatSchoolDisplayName(s.schoolName)).join(', ') || 'ออกแนะแนว'}
                     </div>
                     <div className="text-xs text-[#087CC1] font-medium mt-0.5">
                       {trip.workType}
                     </div>
-                  </div>
+                  </button>
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
@@ -473,12 +522,24 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
             <div className="space-y-3 text-xs">
               <div className="p-3 bg-slate-50 rounded-xl space-y-1">
                 <div className="font-bold text-slate-800">โรงเรียนที่จัดกิจกรรม:</div>
-                {selectedTrip.schools?.map((s, idx) => (
-                  <div key={idx} className="flex justify-between text-slate-700">
-                    <span>• {s.schoolName} ({s.timeSlot || 'ช่วงเวลาปกติ'})</span>
-                    <span className="font-semibold text-emerald-700">{s.studentCount || 0} คน</span>
-                  </div>
-                ))}
+                {selectedTrip.schools?.map((s, idx) => {
+                  let formattedSlot = 'ช่วงเวลาปกติ';
+                  if (s.timeSlot && s.timeSlot.trim()) {
+                    const clean = s.timeSlot.replace(/\s*น\.\s*$/, '').trim();
+                    if (clean.includes('-')) {
+                      const parts = clean.split('-').map((p) => p.trim());
+                      formattedSlot = formatAppointmentTime(parts[0], parts[1]);
+                    } else {
+                      formattedSlot = s.timeSlot;
+                    }
+                  }
+                  return (
+                    <div key={idx} className="flex justify-between text-slate-700">
+                      <span>• {formatSchoolDisplayName(s.schoolName)} ({formattedSlot})</span>
+                      <span className="font-semibold text-emerald-700">{s.studentCount || 0} คน</span>
+                    </div>
+                  );
+                })}
               </div>
 
               {selectedTrip.summary && (

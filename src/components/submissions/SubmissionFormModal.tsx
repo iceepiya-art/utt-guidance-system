@@ -1,32 +1,35 @@
 import { TripVehiclePicker } from '../common/TripVehiclePicker';
 import { saveSubmissionAppointment } from '../../firebase/submissionAppointmentService';
 import { SchoolPicker } from '../common/SchoolPicker';
-import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, Clock, FileText, CalendarCheck, AlertCircle } from 'lucide-react';
+import { ThaiDatePicker } from '../common/ThaiDatePicker';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Save, Calendar, Clock, FileText, CalendarCheck, AlertCircle, Lock } from 'lucide-react';
 import { School, DocumentSubmission, PostSubmissionStatus, TeamId, PhotoItem } from '../../types';
 import { PhotoUploader } from '../common/PhotoUploader';
 import { getTodayISO } from '../../utils/dateUtils';
 import { useAuth } from '../../context/AuthContext';
-
-
+import {
+  getSelectablePersonnel,
+  getDefaultSubmitterNames,
+  findMatchingPersonnel,
+  resolvePersonnelDisplayName,
+  cleanTeacherName,
+  SelectablePersonnel,
+} from '../../utils/personnelSelector';
+import { isNormalGuidanceActivity } from '../../utils/submissionUtils';
+import { isTimeRangeValid } from '../../utils/appointmentUtils';
+import { formatSchoolDisplayName, getCleanSchoolCode } from '../../utils/schoolStatus';
 
 export const normalizeTeacherName = (name: string, choices: string[]): string => {
   if (!name || !name.trim()) return '';
   const trimmed = name.trim();
   if (choices.includes(trimmed)) return trimmed;
 
-  const clean = (s: string) =>
-    s
-      .replace(/^(อ\.|อาจารย์|นาย|นาง|นางสาว)\s*/, '')
-      .replace(/\s*\(.*?\)/g, '')
-      .trim()
-      .toLowerCase();
-
-  const targetClean = clean(trimmed);
+  const targetClean = cleanTeacherName(trimmed);
   if (!targetClean) return trimmed;
 
   const matched = choices.find(c => {
-    const cClean = clean(c);
+    const cClean = cleanTeacherName(c);
     return (
       cClean === targetClean ||
       cClean.startsWith(targetClean) ||
@@ -69,48 +72,17 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   onOpenInstantAppointment,
 }) => {
   const { currentUser, users = [] } = useAuth();
-  const defaultTeacherChoices = [
-    'อ.ประชา กัลปนารถ (หัวหน้างานแนะแนว)',
-    'อ.ณิชชัยกุญช์ โลราช (แนะแนวสาย 1)',
-    'อ.ปิยะ สีดาชัย (แนะแนวสาย 2)',
-  ];
+
+  const selectablePersonnel = React.useMemo(() => {
+    return getSelectablePersonnel(users);
+  }, [users]);
 
   const teacherChoices = React.useMemo(() => {
-    const list: string[] = [];
-    (users || [])
-      .filter(u => u.active)
-      .forEach(u => {
-        const name = u.displayName?.trim();
-        if (name) list.push(name);
-      });
-
-    if (currentUser?.displayName?.trim()) {
-      list.push(currentUser.displayName.trim());
-    }
-
-    const clean = (s: string) =>
-      s.replace(/^(อ\.|อาจารย์|นาย|นาง|นางสาว)\s*/, '').replace(/\s*\(.*?\)/g, '').trim().toLowerCase();
-
-    defaultTeacherChoices.forEach(def => {
-      const defClean = clean(def);
-      const exists = list.some(existing => {
-        const exClean = clean(existing);
-        return exClean === defClean || exClean.startsWith(defClean) || defClean.startsWith(exClean);
-      });
-      if (!exists) list.push(def);
-    });
-
-    return [...new Set(list)].sort((a, b) => a.localeCompare(b, 'th'));
-  }, [users, currentUser]);
+    return selectablePersonnel.map(p => p.displayName);
+  }, [selectablePersonnel]);
 
   const defaultSubmitters = (team: TeamId): string[] => {
-    if (team === 'team1') {
-      const p1 = normalizeTeacherName('อ.ประชา', teacherChoices) || 'อ.ประชา กัลปนารถ (หัวหน้างานแนะแนว)';
-      const p2 = normalizeTeacherName('อ.ณิชชัยกุญช์', teacherChoices) || 'อ.ณิชชัยกุญช์ โลราช (แนะแนวสาย 1)';
-      return [p1, p2];
-    }
-    const p3 = normalizeTeacherName('อ.ปิยะ', teacherChoices) || 'อ.ปิยะ สีดาชัย (แนะแนวสาย 2)';
-    return [p3];
+    return getDefaultSubmitterNames(team, selectablePersonnel);
   };
 
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>(preselectedSchool?.id || '');
@@ -138,19 +110,19 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [appointmentDate, setAppointmentDate] = useState('');
   const [appointmentStart, setAppointmentStart] = useState('');
   const [appointmentEnd, setAppointmentEnd] = useState('');
-  const defaultVehicle = (team: TeamId) => team === 'team2' ? { id: 'mitsu-6738', name: 'MITSU บน 6738' } : { id: 'vigo-9914', name: 'VIGO กข 9914' };
-  const [vehicleId, setVehicleId] = useState(defaultVehicle(teamId).id);
-  const [vehicleName, setVehicleName] = useState(defaultVehicle(teamId).name);
+  const [vehicleId, setVehicleId] = useState<string>('');
+  const [vehicleName, setVehicleName] = useState<string>('');
   const selectTeam = (nextTeam: TeamId) => {
     setTeamId(nextTeam);
-    const vehicle = defaultVehicle(nextTeam);
-    setVehicleId(vehicle.id);
-    setVehicleName(vehicle.name);
     if (!submissionToEdit) {
-      setSubmitterNames(defaultSubmitters(nextTeam));
+      const newRequired = defaultSubmitters(nextTeam);
+      const currentRequired = defaultSubmitters(teamId);
+      const additional = submitterNames.filter(n => !currentRequired.includes(n));
+      setSubmitterNames([...newRequired, ...additional]);
       setCustomIndices({});
     }
   };
@@ -160,21 +132,29 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
   useEffect(() => {
     if (!submissionToEdit) return;
     const data = submissionToEdit;
-    setVehicleId(data.vehicleId || defaultVehicle(data.teamId).id); setVehicleName(data.vehicleName || defaultVehicle(data.teamId).name);
-    setSelectedSchoolId(data.schoolId); setDocumentNumber(data.documentNumber);
-    setSubmissionDate(data.submissionDate); setSubmissionTime(data.submissionTime || '');
+    setVehicleId(data.vehicleId || '');
+    setVehicleName(data.vehicleName || '');
+    setSelectedSchoolId(data.schoolId);
+    setDocumentNumber(data.documentNumber);
+    setSubmissionDate(data.submissionDate);
+    setSubmissionTime(data.submissionTime || '');
     setTeamId(data.teamId);
     const rawNames: string[] =
       data.submittedByNames && data.submittedByNames.length > 0
         ? data.submittedByNames
         : (data.submittedByName ? data.submittedByName.split(/[,+]/).map(s => s.trim()).filter(Boolean) : defaultSubmitters(data.teamId));
-    const resolved = rawNames.map(name => normalizeTeacherName(name, teacherChoices));
-    setSubmitterNames(resolved.length > 0 ? resolved : defaultSubmitters(data.teamId));
+
+    // Resolve known verified legacy aliases directly to standard profile name without modifying count or adding extra people
+    const resolvedNames = rawNames.map(name => {
+      const resolved = resolvePersonnelDisplayName(name, selectablePersonnel);
+      return resolved.matched ? resolved.displayName : name;
+    });
+    setSubmitterNames(resolvedNames.length > 0 ? resolvedNames : defaultSubmitters(data.teamId));
     setCustomIndices({});
     setTeacherName(data.teacherName || ''); setTeacherPhone(data.teacherPhone || '');
     setTeacherPosition(data.teacherPosition || ''); setTeacherLine(data.teacherLine || '');
     setPreferredContactTime(data.preferredContactTime || '');
-    setStatus(data.status === 'DOCUMENT_SUBMITTED' ? 'WAITING_APPOINTMENT' : (data.status || 'WAITING_APPOINTMENT'));
+    setStatus(data.status || 'WAITING_APPOINTMENT');
     setOtherActivityDetails(data.otherActivityDetails || (data.activities && data.activities.length > 0 ? data.activities.join(', ') : ''));
     setNote(data.note || (data.status === 'APPOINTED' ? '' : 'รอติดต่อกลับ'));
     setPhotos(data.photos || []);
@@ -182,7 +162,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     setAppointmentStart(data.appointmentStartTime || '');
     setAppointmentEnd(data.appointmentEndTime || '');
     setAppointmentNote(data.appointmentNote || '');
-  }, [submissionToEdit]);
+  }, [submissionToEdit, selectablePersonnel]);
 
   // Sync when preselectedSchool changes
   useEffect(() => {
@@ -211,7 +191,32 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     }
   };
 
-  const getTargetSchool = () => schools.find((s) => s.id === selectedSchoolId);
+  const getTargetSchool = (): School | undefined => {
+    // 1. exact submission.schoolId === school.id
+    const fromId = schools.find((s) => s.id === selectedSchoolId);
+    if (fromId) return fromId;
+
+    // 2. exact UNIQUE submission.schoolId === school.schoolId
+    if (selectedSchoolId) {
+      const fromSchoolId = schools.filter((s) => s.schoolId === selectedSchoolId);
+      if (fromSchoolId.length === 1) return fromSchoolId[0];
+    }
+
+    if (submissionToEdit) {
+      // Check if submissionToEdit.schoolId matches unique school.schoolId
+      if (submissionToEdit.schoolId) {
+        const fromSchoolId = schools.filter((s) => s.schoolId === submissionToEdit.schoolId);
+        if (fromSchoolId.length === 1) return fromSchoolId[0];
+      }
+      // 3. Fallback: preserve original record identity without guessing or fuzzy matching
+      return {
+        id: submissionToEdit.schoolId || '',
+        schoolName: submissionToEdit.schoolName,
+        teamId: submissionToEdit.teamId,
+      } as School;
+    }
+    return undefined;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,6 +234,8 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     }
 
     setError(null);
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       const data: Omit<DocumentSubmission, 'id'> = {
@@ -256,8 +263,16 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
       };
       if (status === 'OTHER_ACTIVITY' && otherActivityDetails.trim()) {
         data.otherActivityDetails = otherActivityDetails.trim();
+      } else {
+        data.otherActivityDetails = '';
       }
       if (status === 'APPOINTED') {
+        if (!isTimeRangeValid(appointmentStart, appointmentEnd)) {
+          setError('เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มต้น');
+          setIsSubmitting(false);
+          isSubmittingRef.current = false;
+          return;
+        }
         if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
         await saveSubmissionAppointment(data, { date: appointmentDate, startTime: appointmentStart, endTime: appointmentEnd, note: appointmentNote }, currentUser, submissionToEdit || undefined);
       } else { await onSave(data); }
@@ -265,6 +280,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     } catch (err: any) {
       setError(err.message || 'บันทึกการยื่นหนังสือไม่สำเร็จ');
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -365,7 +381,44 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 โรงเรียนเป้าหมาย <span className="text-red-500">*</span>
               </label>
-              <SchoolPicker schools={schools} value={selectedSchoolId} onChange={handleSchoolSelect} disabled={isSubmitting || !!submissionToEdit}/>
+              {submissionToEdit ? (() => {
+                const targetSchool = getTargetSchool();
+                const cleanSchoolCode = getCleanSchoolCode(targetSchool?.schoolId) || getCleanSchoolCode(submissionToEdit.schoolId);
+                const displaySchoolName = formatSchoolDisplayName(targetSchool?.schoolName || submissionToEdit.schoolName);
+                const districtName = targetSchool?.district?.trim();
+                const displayDistrict = districtName ? `อำเภอ${districtName.replace(/^อำเภอ/, '')}` : null;
+
+                return (
+                  <div className="w-full px-3 py-2 bg-slate-100 border border-slate-300 rounded-xl text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                        {displaySchoolName}
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sky-100 text-sky-800">
+                        {submissionToEdit.teamId === 'team2' ? 'สาย 2: สุโขทัย' : 'สาย 1: อุตรดิตถ์'}
+                      </span>
+                    </div>
+                    {(displayDistrict || cleanSchoolCode) && (
+                      <div className="flex items-center gap-2 text-slate-500 text-[11px]">
+                        {displayDistrict && <span>{displayDistrict}</span>}
+                        {cleanSchoolCode && (
+                          <span className="font-mono text-[10px] text-slate-400">
+                            รหัส: {cleanSchoolCode}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })() : (
+                <SchoolPicker
+                  schools={schools}
+                  value={selectedSchoolId}
+                  onChange={handleSchoolSelect}
+                  disabled={isSubmitting}
+                />
+              )}
             </div>
 
             <div>
@@ -385,14 +438,10 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
           {/* Date, Time, Team & Submitter */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                วันที่ยื่น
-              </label>
-              <input
-                type="date"
+              <ThaiDatePicker
+                label="วันที่ยื่น"
                 value={submissionDate}
-                onChange={(e) => setSubmissionDate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                onChange={setSubmissionDate}
                 required
               />
             </div>
@@ -419,46 +468,73 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                   อาจารย์ผู้ยื่น (เลือกจากระบบ / เพิ่มได้หลายคน) *
                 </label>
                 <span className="text-xs text-slate-500">
-                  บุคลากรในระบบ ({teacherChoices.length} ท่าน)
+                  บุคลากรในระบบ ({selectablePersonnel.length} ท่าน)
                 </span>
               </div>
 
               <div className="space-y-2">
                 {submitterNames.map((name, index) => {
                   const isCustom = !!customIndices[index];
-                  const showCurrentAsOption = !isCustom && name && !teacherChoices.includes(name);
+                  const showCurrentAsOption = !isCustom && name && !selectablePersonnel.some(p => p.displayName === name);
 
                   return (
-                    <div key={index} className="flex items-center gap-2">
+                    <div key={index} className="flex items-start gap-2">
                       {isCustom ? (
-                        <div className="flex-1 flex gap-2">
-                          <input
-                            type="text"
-                            required
-                            aria-label={`อาจารย์ผู้ยื่นคนที่ ${index + 1}`}
-                            value={name}
-                            disabled={isSubmitting}
-                            placeholder="พิมพ์ชื่อ–นามสกุลอาจารย์"
-                            onChange={e =>
-                              setSubmitterNames(names =>
-                                names.map((n, i) => (i === index ? e.target.value : n))
-                              )
-                            }
-                            className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#075A9C]"
-                            autoFocus
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCustomIndices(prev => ({ ...prev, [index]: false }));
-                              setSubmitterNames(names =>
-                                names.map((n, i) => (i === index ? (teacherChoices[0] || '') : n))
+                        <div className="flex-1 space-y-1.5">
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              required
+                              aria-label={`อาจารย์ผู้ยื่นคนที่ ${index + 1}`}
+                              value={name}
+                              disabled={isSubmitting}
+                              placeholder="พิมพ์ชื่อ–นามสกุลอาจารย์"
+                              onChange={e =>
+                                setSubmitterNames(names =>
+                                  names.map((n, i) => (i === index ? e.target.value : n))
+                                )
+                              }
+                              className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#075A9C]"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCustomIndices(prev => ({ ...prev, [index]: false }));
+                                setSubmitterNames(names =>
+                                  names.map((n, i) => (i === index ? (teacherChoices[0] || '') : n))
+                                );
+                              }}
+                              className="px-3 py-1.5 text-xs text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-lg whitespace-nowrap font-medium transition-colors cursor-pointer"
+                            >
+                              เลือกจากระบบ
+                            </button>
+                          </div>
+                          {(() => {
+                            const trimmed = name.trim();
+                            if (!trimmed) return null;
+                            const matched = findMatchingPersonnel(trimmed, selectablePersonnel);
+                            if (matched && matched.displayName !== trimmed) {
+                              return (
+                                <div className="flex items-center justify-between text-[11px] bg-sky-50 text-sky-800 px-2.5 py-1.5 rounded-lg border border-sky-200">
+                                  <span>💡 ในระบบมีอาจารย์ <b>{matched.displayName}</b> ({matched.secondaryText})</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCustomIndices(prev => ({ ...prev, [index]: false }));
+                                      setSubmitterNames(names =>
+                                        names.map((n, i) => (i === index ? matched.displayName : n))
+                                      );
+                                    }}
+                                    className="font-bold underline text-[#075A9C] hover:text-[#06487c] ml-2 shrink-0 cursor-pointer"
+                                  >
+                                    ใช้ชื่อนี้จากระบบ
+                                  </button>
+                                </div>
                               );
-                            }}
-                            className="px-3 py-1.5 text-xs text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-lg whitespace-nowrap font-medium transition-colors"
-                          >
-                            เลือกจากระบบ
-                          </button>
+                            }
+                            return null;
+                          })()}
                         </div>
                       ) : (
                         <div className="flex-1 relative">
@@ -483,11 +559,11 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                           >
                             <option value="" disabled>-- เลือกอาจารย์จากระบบ --</option>
                             {showCurrentAsOption && (
-                              <option value={name}>{name}</option>
+                              <option value={name}>{name} (บันทึกเดิม)</option>
                             )}
-                            {teacherChoices.map(choice => (
-                              <option key={choice} value={choice}>
-                                {choice}
+                            {selectablePersonnel.map(p => (
+                              <option key={p.id} value={p.displayName}>
+                                {p.label}
                               </option>
                             ))}
                             <option value="__CUSTOM__">+ พิมพ์ชื่ออาจารย์ท่านอื่น (ระบุเอง)...</option>
@@ -659,7 +735,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                   required
                   value={otherActivityDetails}
                   onChange={(e) => setOtherActivityDetails(e.target.value)}
-                  placeholder="เช่น เข้าร่วมกิจกรรมหน้าเสาธง, นิทรรศการสัญจร, แนะแนวนักเรียนทันที"
+                  placeholder="เช่น ยื่นใบเสร็จ, ประสานงานพิเศษ, นิทรรศการสัญจร"
                   className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1]"
                 />
               </div>
@@ -669,9 +745,14 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
           {status === 'APPOINTED' && <section className="p-4 rounded-xl border border-sky-200 bg-sky-50 space-y-3">
             <h3 className="text-sm font-semibold text-sky-800">วันและเวลานัดแนะแนว</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <label className="text-xs font-semibold">วันที่นัด *<input aria-label="วันที่นัดแนะแนว" type="date" required value={appointmentDate} onChange={e => setAppointmentDate(e.target.value)} className="mt-1 w-full p-2 rounded-lg border border-slate-300" /></label>
-              <label className="text-xs font-semibold">เวลาเริ่ม *<input aria-label="เวลาเริ่มนัดแนะแนว" type="time" required value={appointmentStart} onChange={e => setAppointmentStart(e.target.value)} className="mt-1 w-full p-2 rounded-lg border border-slate-300" /></label>
-              <label className="text-xs font-semibold">เวลาสิ้นสุด *<input aria-label="เวลาสิ้นสุดนัดแนะแนว" type="time" required value={appointmentEnd} onChange={e => setAppointmentEnd(e.target.value)} className="mt-1 w-full p-2 rounded-lg border border-slate-300" /></label>
+              <ThaiDatePicker
+                label="วันที่นัด"
+                value={appointmentDate}
+                onChange={setAppointmentDate}
+                required
+              />
+              <label className="text-xs font-semibold text-slate-700">เวลาเริ่ม *<input aria-label="เวลาเริ่มนัดแนะแนว" type="time" required value={appointmentStart} onChange={e => setAppointmentStart(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-xs" /></label>
+              <label className="text-xs font-semibold text-slate-700">เวลาสิ้นสุด *<input aria-label="เวลาสิ้นสุดนัดแนะแนว" type="time" required value={appointmentEnd} onChange={e => setAppointmentEnd(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-xs" /></label>
             </div>
             <label className="block text-xs font-semibold">รายละเอียดนัดหมาย / สถานที่<textarea aria-label="รายละเอียดนัดหมาย" value={appointmentNote} onChange={e => setAppointmentNote(e.target.value)} placeholder="เช่น ห้องประชุม แนะแนวนักเรียน ม.3" className="mt-1 w-full p-2 rounded-lg border border-slate-300" /></label>
             <p className="text-xs text-slate-600">บันทึกการยื่นหนังสือและนัดหมายลงปฏิทินพร้อมกัน ผู้รับผิดชอบ: {currentUser?.displayName}</p>

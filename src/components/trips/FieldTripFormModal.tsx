@@ -1,13 +1,18 @@
 import type { DocumentSubmission } from '../../types';
 import { TripVehiclePicker } from '../common/TripVehiclePicker';
 import { SchoolPicker } from '../common/SchoolPicker';
-import React, { useState, useEffect } from 'react';
+import { ThaiDatePicker } from '../common/ThaiDatePicker';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Compass, Plus, Trash2, CalendarCheck, FileText } from 'lucide-react';
 import { School, FieldTrip, TeamId, PhotoItem, Appointment, Vehicle, ApprovalStatus } from '../../types';
 import { PhotoUploader } from '../common/PhotoUploader';
 import { formatThaiShortDate, getTodayISO } from '../../utils/dateUtils';
 import { useAuth } from '../../context/AuthContext';
 import { subscribeVehicles } from '../../firebase/dbService';
+import { getSelectablePersonnel, isEligiblePersonnel, resolveResponsibleCounselor } from '../../utils/personnelSelector';
+import { getDefaultVehicleForPersonnel } from '../../utils/vehicleMapping';
+import { isTimeRangeValid, isValidTimeRange, formatAppointmentTime } from '../../utils/appointmentUtils';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 
 interface FieldTripFormModalProps {
   isOpen: boolean;
@@ -80,30 +85,28 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
     });
   }, []);
 
-  const counselors = React.useMemo(() => {
-    const activeStaff = users.filter((u) => u.active && u.role !== 'VIEWER');
-    if (activeStaff.length > 0) {
-      return activeStaff.map((u) => ({ id: u.id, name: u.displayName, teamId: u.teamId || 'team1' }));
-    }
-    return [
-      { id: 'usr_counselor_1', name: 'อ.ปิยะ สุขสมบูรณ์', teamId: 'team1' as TeamId },
-      { id: 'usr_staff_1', name: 'อ.สมศักดิ์ วงศ์สว่าง', teamId: 'team1' as TeamId },
-      { id: 'usr_staff_2', name: 'อ.นภาพร ใจดี', teamId: 'team2' as TeamId },
-      { id: 'usr_staff_3', name: 'อ.วรวิทย์ ศิริชัย', teamId: 'team2' as TeamId },
-      { id: 'usr_manager_1', name: 'ดร.สุรชัย มั่นคง', teamId: 'team1' as TeamId },
-    ];
+  const selectablePersonnel = React.useMemo(() => {
+    return getSelectablePersonnel(users);
   }, [users]);
+
+  const defaultCounselor = React.useMemo(() => {
+    if (currentUser && isEligiblePersonnel(currentUser)) {
+      return { id: currentUser.id, name: currentUser.displayName || 'อ.ประชา กัลปนารถ' };
+    }
+    const eligible = selectablePersonnel[0];
+    return eligible ? { id: eligible.id, name: eligible.displayName } : { id: 'usr_admin', name: 'อ.ประชา กัลปนารถ' };
+  }, [currentUser, selectablePersonnel]);
 
   const [date, setDate] = useState<string>(getTodayISO());
   const [departureTime, setDepartureTime] = useState<string>('08:00');
   const [returnTime, setReturnTime] = useState<string>('');
   const [teamId, setTeamId] = useState<TeamId>('team1');
-  const [counselorName, setCounselorName] = useState<string>(currentUser?.displayName || 'อ.ปิยะ สุขสมบูรณ์');
-  const [counselorId, setCounselorId] = useState<string>(currentUser?.id || 'usr_counselor_1');
+  const [counselorName, setCounselorName] = useState<string>(defaultCounselor.name);
+  const [counselorId, setCounselorId] = useState<string>(defaultCounselor.id);
   const [teamMemberNames, setTeamMemberNames] = useState<string>('');
   const [workType, setWorkType] = useState<string>('แนะแนวการศึกษา ม.3 และ ม.6');
-  const [vehicleId, setVehicleId] = useState<string>('mitsu-6738');
-  const [vehicleName, setVehicleName] = useState<string>('MITSU บน 6738');
+  const [vehicleId, setVehicleId] = useState<string>('');
+  const [vehicleName, setVehicleName] = useState<string>('');
   const [summary, setSummary] = useState<string>('');
   const [issues, setIssues] = useState<string>('');
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -121,12 +124,8 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
   >([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
-
-  const defaultVehicleForTeam = (team: TeamId) =>
-    team === 'team2'
-      ? { id: 'mitsu-6738', name: 'MITSU บน 6738' }
-      : { id: 'vigo-9914', name: 'VIGO กข 9914' };
 
   const getSchool = (schoolId?: string) => schools.find((school) => school.id === schoolId);
 
@@ -158,13 +157,13 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       .map((appt) => ({
         key: `appointment:${appt.id}`,
         kind: 'appointment',
-        label: `${formatThaiShortDate(appt.date)} · ${appt.schoolName}`,
-        detail: `${appt.startTime} - ${appt.endTime} น. · ${appt.counselorName || 'ยังไม่ระบุผู้รับผิดชอบ'}`,
+        label: `${formatThaiShortDate(appt.date)} · ${formatSchoolDisplayName(appt.schoolName)}`,
+        detail: `${formatAppointmentTime(appt.startTime, appt.endTime)} · ${appt.counselorName || 'ยังไม่ระบุผู้รับผิดชอบ'}`,
         schoolId: appt.schoolId,
         schoolName: appt.schoolName,
         teamId: appt.teamId,
         date: appt.date,
-        timeSlot: `${appt.startTime} - ${appt.endTime}`,
+        timeSlot: formatAppointmentTime(appt.startTime, appt.endTime, { suffix: false }),
         teacherName: appt.teacherName,
         teacherPhone: appt.teacherPhone,
         counselorId: appt.counselorId,
@@ -185,15 +184,15 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
         return {
           key: `submission:${sub.id}`,
           kind: 'submission',
-          label: `${formatThaiShortDate(sub.appointmentDate || sub.submissionDate)} · ${sub.schoolName}`,
+          label: `${formatThaiShortDate(sub.appointmentDate || sub.submissionDate)} · ${formatSchoolDisplayName(sub.schoolName)}`,
           detail: hasAppointmentTime
-            ? `${sub.appointmentStartTime} - ${sub.appointmentEndTime} น. · จากหน้ายื่นหนังสือ`
+            ? `${formatAppointmentTime(sub.appointmentStartTime, sub.appointmentEndTime)} · จากหน้ายื่นหนังสือ`
             : `${sub.status === 'APPOINTED' ? 'นัดหมายแล้ว' : 'ยื่นหนังสือแล้ว'} · ${sub.submittedByName}`,
           schoolId: sub.schoolId,
           schoolName: sub.schoolName,
           teamId: sub.teamId,
           date: sub.appointmentDate,
-          timeSlot: hasAppointmentTime ? `${sub.appointmentStartTime} - ${sub.appointmentEndTime}` : undefined,
+          timeSlot: hasAppointmentTime ? formatAppointmentTime(sub.appointmentStartTime, sub.appointmentEndTime, { suffix: false }) : undefined,
           teacherName: sub.teacherName,
           teacherPhone: sub.teacherPhone,
           teamMemberNames: sub.submittedByNames?.join(', ') || sub.submittedByName,
@@ -216,10 +215,22 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
   const submissionLinkedSources = linkedSources.filter((source) => source.kind === 'submission');
 
   const applyLinkedSource = (source: LinkedSource) => {
-    const defaultVehicle = defaultVehicleForTeam(source.teamId);
-    const sourceVehicleId = source.vehicleId || defaultVehicle.id;
-    const sourceVehicleName = source.vehicleName || defaultVehicle.name;
-    const currentCounselor = currentUser || users.find((user) => user.id === source.counselorId);
+    const resolvedCounselor = resolveResponsibleCounselor(
+      source.counselorId,
+      source.counselorName,
+      selectablePersonnel
+    );
+
+    // Vehicle Priority: 1. Stored vehicle, 2. Personnel default, 3. Empty
+    let sourceVehicleId = source.vehicleId || '';
+    let sourceVehicleName = source.vehicleName || '';
+    if (!sourceVehicleId) {
+      const defVeh = getDefaultVehicleForPersonnel(resolvedCounselor.id, resolvedCounselor.name);
+      if (defVeh) {
+        sourceVehicleId = defVeh.id;
+        sourceVehicleName = defVeh.name;
+      }
+    }
 
     setSourceKey(source.key);
     setSubmissionId(source.submissionId);
@@ -228,8 +239,8 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
     setTeamId(source.teamId);
     setVehicleId(sourceVehicleId);
     setVehicleName(sourceVehicleName);
-    setCounselorId(source.counselorId || currentCounselor?.id || currentUser?.id || 'usr_counselor_1');
-    setCounselorName(source.counselorName || currentCounselor?.displayName || currentUser?.displayName || 'อ.ปิยะ สุขสมบูรณ์');
+    setCounselorId(resolvedCounselor.isLegacyFallback ? (currentUser?.id || defaultCounselor.id) : resolvedCounselor.id);
+    setCounselorName(resolvedCounselor.isLegacyFallback ? (currentUser?.displayName || defaultCounselor.name) : resolvedCounselor.name);
     setTeamMemberNames(source.teamMemberNames || '');
     setWorkType(source.workType?.includes('แนะแนว') ? source.workType : 'แนะแนวการศึกษา ม.3 และ ม.6');
     setTripSchools([
@@ -257,12 +268,30 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       setDepartureTime(tripToEdit.departureTime || '08:00');
       setReturnTime(tripToEdit.returnTime || '');
       setTeamId(tripToEdit.teamId);
-      setCounselorName(tripToEdit.counselorName);
-      setCounselorId(tripToEdit.counselorId);
+
+      // Resolve counselor identity using central personnelSelector
+      const resolved = resolveResponsibleCounselor(
+        tripToEdit.counselorId,
+        tripToEdit.counselorName,
+        selectablePersonnel
+      );
+      setCounselorId(resolved.id);
+      setCounselorName(resolved.name);
+
       setTeamMemberNames(tripToEdit.teamMemberNames || '');
       setWorkType(tripToEdit.workType);
-      setVehicleId(tripToEdit.vehicleId || 'mitsu-6738');
-      setVehicleName(tripToEdit.vehicleName || 'MITSU บน 6738');
+      // Priority: 1. Stored vehicle, 2. Personnel default, 3. Empty
+      let editVehId = tripToEdit.vehicleId || '';
+      let editVehName = tripToEdit.vehicleName || '';
+      if (!editVehId) {
+        const defVeh = getDefaultVehicleForPersonnel(resolved.id, resolved.name);
+        if (defVeh) {
+          editVehId = defVeh.id;
+          editVehName = defVeh.name;
+        }
+      }
+      setVehicleId(editVehId);
+      setVehicleName(editVehName);
       setSummary(tripToEdit.summary || '');
       setIssues(tripToEdit.issues || '');
       setPhotos(tripToEdit.photos || []);
@@ -278,14 +307,14 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       applyLinkedSource({
         key: prefilledSubmission.id ? `submission:${prefilledSubmission.id}` : 'prefilled-submission',
         kind: 'submission',
-        label: prefilledSubmission.schoolName,
+        label: formatSchoolDisplayName(prefilledSubmission.schoolName),
         detail: prefilledSubmission.submittedByName,
         schoolId: prefilledSubmission.schoolId,
         schoolName: prefilledSubmission.schoolName,
         teamId: prefilledSubmission.teamId,
         date: prefilledSubmission.appointmentDate || prefilledSubmission.submissionDate,
         timeSlot: prefilledSubmission.appointmentStartTime && prefilledSubmission.appointmentEndTime
-          ? `${prefilledSubmission.appointmentStartTime} - ${prefilledSubmission.appointmentEndTime}`
+          ? formatAppointmentTime(prefilledSubmission.appointmentStartTime, prefilledSubmission.appointmentEndTime, { suffix: false })
           : undefined,
         teacherName: prefilledSubmission.teacherName,
         teacherPhone: prefilledSubmission.teacherPhone,
@@ -300,13 +329,13 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       applyLinkedSource({
         key: `appointment:${prefilledAppointment.id}`,
         kind: 'appointment',
-        label: prefilledAppointment.schoolName,
-        detail: `${prefilledAppointment.startTime} - ${prefilledAppointment.endTime}`,
+        label: formatSchoolDisplayName(prefilledAppointment.schoolName),
+        detail: formatAppointmentTime(prefilledAppointment.startTime, prefilledAppointment.endTime),
         schoolId: prefilledAppointment.schoolId,
         schoolName: prefilledAppointment.schoolName,
         teamId: prefilledAppointment.teamId,
         date: prefilledAppointment.date,
-        timeSlot: `${prefilledAppointment.startTime} - ${prefilledAppointment.endTime}`,
+        timeSlot: formatAppointmentTime(prefilledAppointment.startTime, prefilledAppointment.endTime, { suffix: false }),
         teacherName: prefilledAppointment.teacherName,
         teacherPhone: prefilledAppointment.teacherPhone,
         counselorId: prefilledAppointment.counselorId,
@@ -321,17 +350,17 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       });
     } else {
       const defaultTeam = currentUser?.teamId || 'team1';
-      const defaultVehicle = defaultVehicleForTeam(defaultTeam);
       setDate(getTodayISO());
       setDepartureTime('08:00');
       setReturnTime('');
       setTeamId(defaultTeam);
-      setCounselorName(currentUser?.displayName || 'อ.ปิยะ สุขสมบูรณ์');
-      setCounselorId(currentUser?.id || 'usr_counselor_1');
+      setCounselorName(defaultCounselor.name);
+      setCounselorId(defaultCounselor.id);
       setTeamMemberNames('');
       setWorkType('แนะแนวการศึกษา ม.3 และ ม.6');
-      setVehicleId(defaultVehicle.id);
-      setVehicleName(defaultVehicle.name);
+      const initVeh = getDefaultVehicleForPersonnel(defaultCounselor.id, defaultCounselor.name);
+      setVehicleId(initVeh?.id || '');
+      setVehicleName(initVeh?.name || '');
       setSummary('');
       setIssues('');
       setPhotos([]);
@@ -391,10 +420,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
   };
 
   const handleTeamChange = (nextTeam: TeamId) => {
-    const defaultVehicle = defaultVehicleForTeam(nextTeam);
     setTeamId(nextTeam);
-    setVehicleId(defaultVehicle.id);
-    setVehicleName(defaultVehicle.name);
     clearLinkedSource();
   };
 
@@ -405,25 +431,48 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
       return;
     }
 
+    if (departureTime && returnTime && returnTime <= departureTime) {
+      setError('เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มต้น');
+      return;
+    }
+
+    for (const s of tripSchools) {
+      if (s.timeSlot) {
+        const match = s.timeSlot.match(/^(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/);
+        if (match && match[2] <= match[1]) {
+          setError('เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มต้น');
+          return;
+        }
+      }
+    }
+
     setError(null);
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
-      await onSave({
+      const cleanSchools = tripSchools.map((s) => ({
+        schoolId: s.schoolId || '',
+        schoolName: s.schoolName || '',
+        ...(s.timeSlot ? { timeSlot: s.timeSlot } : {}),
+        studentCount: typeof s.studentCount === 'number' ? s.studentCount : 0,
+        note: s.notes || s.note || '',
+      }));
+
+      const payload: Omit<FieldTrip, 'id'> = {
         date,
         departureTime,
-        returnTime,
+        returnTime: returnTime || '',
         teamId,
-        submissionId,
-        appointmentId,
         counselorName,
         counselorId,
         teamMemberNames,
         workType,
-        vehicleId,
-        vehicleName,
-        schools: tripSchools,
-        summary,
-        issues,
+        vehicleId: vehicleId || '',
+        vehicleName: vehicleName || '',
+        schools: cleanSchools,
+        summary: summary || '',
+        issues: issues || '',
         photos,
         approvalStatus,
         academicYear,
@@ -431,11 +480,16 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
         budgetFuel,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      });
+        ...(submissionId && submissionId.trim() ? { submissionId: submissionId.trim() } : {}),
+        ...(appointmentId && appointmentId.trim() ? { appointmentId: appointmentId.trim() } : {}),
+      };
+
+      await onSave(payload);
       onClose();
     } catch (err: any) {
       setError(err.message || 'บันทึกข้อมูลไม่สำเร็จ');
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -523,7 +577,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                   <div className="rounded-lg bg-white border border-sky-100 p-2">
                     <div className="text-slate-500">โรงเรียน</div>
-                    <div className="font-semibold text-slate-800">{selectedLinkedSource.schoolName}</div>
+                    <div className="font-semibold text-slate-800">{formatSchoolDisplayName(selectedLinkedSource.schoolName)}</div>
                   </div>
                   <div className="rounded-lg bg-white border border-sky-100 p-2">
                     <div className="text-slate-500">วันเวลา</div>
@@ -545,14 +599,10 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
           {/* Date & Team */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                วันที่ออกแนะแนว
-              </label>
-              <input
-                type="date"
+              <ThaiDatePicker
+                label="วันที่ออกแนะแนว"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                onChange={setDate}
                 required
               />
             </div>
@@ -606,9 +656,28 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 อาจารย์ผู้รับผิดชอบ
               </label>
-              <select aria-label="อาจารย์ผู้รับผิดชอบ" value={counselorId} onChange={e => { const user = users.find(u => u.id === e.target.value); if(user) { setCounselorId(user.id); setCounselorName(user.displayName); } }} className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs">
-                {!users.some(u => u.active && u.id === counselorId) && <option value={counselorId}>{counselorName || 'เลือกอาจารย์'}</option>}
-                {users.filter(u => u.active).map(u => <option key={u.id} value={u.id}>{u.displayName}</option>)}
+              <select
+                aria-label="อาจารย์ผู้รับผิดชอบ"
+                value={counselorId}
+                onChange={(e) => {
+                  const p = selectablePersonnel.find((u) => u.id === e.target.value);
+                  if (p) {
+                    setCounselorId(p.id);
+                    setCounselorName(p.displayName);
+                  }
+                }}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#087CC1] focus:border-transparent transition-all"
+              >
+                {tripToEdit && !selectablePersonnel.some((p) => p.id === counselorId) && (
+                  <option value={counselorId}>
+                    {counselorName || 'ชื่อเดิม'} (บันทึกเดิม)
+                  </option>
+                )}
+                {selectablePersonnel.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -638,31 +707,61 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
               <button
                 type="button"
                 onClick={handleAddSchoolRow}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-white hover:bg-slate-100 text-[#087CC1] border border-[#087CC1]/30 rounded-lg text-xs font-semibold transition-colors"
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-slate-100 text-[#087CC1] border border-[#087CC1]/30 rounded-lg text-xs font-semibold transition-colors shadow-2xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>เพิ่มโรงเรียน</span>
               </button>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {tripSchools.map((item, index) => {
                 const schoolInfo = getSchool(item.schoolId);
                 return (
                   <div
                     key={index}
-                    className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-2.5"
+                    className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-2.5"
                   >
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                      <div className="sm:col-span-2">
-                        <label className="block text-[11px] font-medium text-slate-500 mb-0.5">
-                          โรงเรียน #{index + 1}
+                    {/* Header with Row Title and Remove Button */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">
+                        โรงเรียน #{index + 1}
+                      </span>
+                      {tripSchools.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSchoolRow(index)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
+                          title={`ลบโรงเรียน #${index + 1}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>ลบโรงเรียนนี้</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Responsive Grid:
+                        - Desktop (lg): 3 columns [~49% school, ~29.5% time, ~21.5% students]
+                        - Tablet (sm): School full row, then Time (50%) & Students (50%)
+                        - Mobile (<sm): 1 column stacked (100% each)
+                    */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(240px,1.5fr)_minmax(180px,0.9fr)_minmax(140px,0.65fr)] gap-3 items-end">
+                      {/* Column 1: School */}
+                      <div className="sm:col-span-2 lg:col-span-1 min-w-0">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5 h-4 flex items-center">
+                          โรงเรียน
                         </label>
-                        <SchoolPicker schools={schools} value={item.schoolId} onChange={id => handleUpdateSchoolRow(index, 'schoolId', id)} disabled={isSubmitting}/>
+                        <SchoolPicker
+                          schools={schools}
+                          value={item.schoolId}
+                          onChange={(id) => handleUpdateSchoolRow(index, 'schoolId', id)}
+                          disabled={isSubmitting}
+                        />
                       </div>
 
-                      <div>
-                        <label className="block text-[11px] font-medium text-slate-500 mb-0.5">
+                      {/* Column 2: Time Slot */}
+                      <div className="sm:col-span-1 min-w-0">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5 h-4 flex items-center">
                           ช่วงเวลาจัดกิจกรรม
                         </label>
                         <input
@@ -670,39 +769,42 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
                           value={item.timeSlot || ''}
                           onChange={(e) => handleUpdateSchoolRow(index, 'timeSlot', e.target.value)}
                           placeholder="09:00 - 11:30"
-                          className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs"
+                          className="w-full h-11 px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#087CC1] focus:border-transparent transition-all outline-none"
                         />
                       </div>
 
-                      <div className="flex items-center gap-1.5">
-                        <div className="flex-1">
-                          <label className="block text-[11px] font-medium text-slate-500 mb-0.5">
-                            นร. เข้าร่วมจริง (คน)
-                          </label>
-                          <input
-                            type="number"
-                            value={item.studentCount || ''}
-                            onChange={(e) =>
-                              handleUpdateSchoolRow(index, 'studentCount', Number(e.target.value))
+                      {/* Column 3: Actual Students */}
+                      <div className="sm:col-span-1 min-w-0">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5 h-4 flex items-center">
+                          นร. เข้าร่วมจริง (คน)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={item.studentCount !== undefined && item.studentCount !== null ? item.studentCount : ''}
+                          onChange={(e) => {
+                            const rawVal = e.target.value;
+                            if (rawVal === '') {
+                              handleUpdateSchoolRow(index, 'studentCount', 0);
+                              return;
                             }
-                            placeholder="จำนวน"
-                            className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold"
-                          />
-                        </div>
-                        {tripSchools.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSchoolRow(index)}
-                            className="mt-4 p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
+                            const num = Math.max(0, parseInt(rawVal, 10) || 0);
+                            handleUpdateSchoolRow(index, 'studentCount', num);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                              e.preventDefault();
+                            }
+                          }}
+                          placeholder="จำนวน"
+                          className="w-full h-11 px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#087CC1] focus:border-transparent transition-all outline-none"
+                        />
                       </div>
                     </div>
 
+                    {/* School summary row full width */}
                     {schoolInfo && (
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-lg bg-slate-50 border border-slate-200 p-2 text-[11px] text-slate-600">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-lg bg-slate-50 border border-slate-200 p-2.5 text-[11px] sm:text-xs text-slate-600 mt-1">
                         <div>
                           <span className="text-slate-400">ครูแนะแนว: </span>
                           <span className="font-semibold text-slate-700">{schoolInfo.teacherName || '-'}</span>

@@ -91,3 +91,44 @@ export function getSchoolEffectiveStatus(
   return 'NOT_STARTED';
 }
 
+/**
+ * Formats school name for concise list/table presentation by removing the leading "โรงเรียน" or "รร." prefix.
+ * Preserves the actual school name without modifying underlying database records.
+ * Examples:
+ * - "โรงเรียนทองแสนขันวิทยา" -> "ทองแสนขันวิทยา"
+ * - "โรงเรียนบ้านวังดิน" -> "บ้านวังดิน"
+ * - "โรงเรียนบ้านแพะ" -> "บ้านแพะ"
+ * - "โรงเรียนเตรียมอุดมศึกษาน้อมเกล้า อุตรดิตถ์" -> "เตรียมอุดมศึกษาน้อมเกล้า อุตรดิตถ์"
+ * - "โรงเรียนเทศบาลวัดหนองผา" -> "เทศบาลวัดหนองผา"
+ */
+export const formatSchoolDisplayName = (name?: string | null): string => {
+  if (!name) return '';
+  let cleaned = name.trim();
+  while (/^(โรงเรียน|รร\.)\s*/.test(cleaned)) {
+    cleaned = cleaned.replace(/^(โรงเรียน|รร\.)\s*/, '').trim();
+  }
+  return cleaned;
+};
+
+/**
+ * Returns genuine user-facing school code (e.g. 10-digit MOE code or SCH-xxx).
+ * Strips technical/database identifiers (Firestore document IDs, import prefixes, etc.).
+ * Returns null if no genuine user-facing school code exists.
+ */
+export const getCleanSchoolCode = (rawCode?: string | null): string | null => {
+  if (!rawCode) return null;
+  const trimmed = rawCode.trim();
+  if (!trimmed) return null;
+  // Ignore internal technical IDs
+  if (/^(import_|manual_|legacy_|sch_)/i.test(trimmed)) return null;
+  // Ignore Firestore document IDs (typically 18-32 random alphanumeric characters)
+  if (/^[a-zA-Z0-9_-]{18,32}$/.test(trimmed) && !/^\d+$/.test(trimmed) && !/^SCH-\d+/i.test(trimmed)) {
+    return null;
+  }
+  // Allow official 6-12 digit MOE school code or standard SCH-xxx
+  if (/^\d{6,12}$/.test(trimmed) || /^SCH-\d+/i.test(trimmed)) {
+    return trimmed;
+  }
+  return null;
+};
+

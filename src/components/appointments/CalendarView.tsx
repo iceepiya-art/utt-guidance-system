@@ -22,6 +22,8 @@ import {
 import { AppointmentDetailModal } from './AppointmentDetailModal';
 import { AppointmentFormModal } from './AppointmentFormModal';
 import { createAppointment, updateAppointment } from '../../firebase/dbService';
+import { formatVehicleDisplay, formatAppointmentTime } from '../../utils/appointmentUtils';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 import { useAuth } from '../../context/AuthContext';
 
 interface CalendarViewProps {
@@ -280,7 +282,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           title={`${appt.startTime} ${appt.schoolName}`}
                         >
                           <span className="font-bold">{appt.startTime.substring(0, 5)}</span>{' '}
-                          {appt.schoolName}
+                          {formatSchoolDisplayName(appt.schoolName)}
                         </div>
                       );
                     })}
@@ -360,12 +362,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         </span>
                         <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
                           <Clock className="w-3.5 h-3.5 text-[#087CC1]" />
-                          <span>{appt.startTime} - {appt.endTime} น.</span>
+                          <span>{formatAppointmentTime(appt.startTime, appt.endTime)}</span>
                         </div>
                       </div>
 
                       <div className="font-bold text-slate-800 text-sm">
-                        {appt.schoolName}
+                        {formatSchoolDisplayName(appt.schoolName)}
                       </div>
 
                       <div className="mt-2 text-xs text-slate-600 space-y-1">
@@ -381,7 +383,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         )}
                         <div className="text-slate-500 text-[11px] flex items-center gap-1 pt-1">
                           <Car className="w-3 h-3 text-slate-400" />
-                          <span>{appt.vehicleName || 'รถตู้ส่วนกลาง'}</span>
+                          <span>{formatVehicleDisplay(appt.vehicleName)}</span>
                         </div>
                       </div>
                     </div>

@@ -1,9 +1,14 @@
 import { SchoolPicker } from '../common/SchoolPicker';
-import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, AlertTriangle, Bell, Car, Users, Save, Check } from 'lucide-react';
+import { ThaiDatePicker } from '../common/ThaiDatePicker';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Calendar, Clock, AlertTriangle, Bell, Car, Users, Save, Check, FileText } from 'lucide-react';
 import { School, Appointment, TeamId, AppointmentStatus, DocumentSubmission } from '../../types';
 import { formatThaiShortDate, getTodayISO } from '../../utils/dateUtils';
 import { checkAppointmentConflict } from '../../firebase/dbService';
+import { getSelectablePersonnel, isEligiblePersonnel, resolveResponsibleCounselor } from '../../utils/personnelSelector';
+import { getDefaultVehicleForPersonnel } from '../../utils/vehicleMapping';
+import { isValidTimeRange, isTimeRangeValid } from '../../utils/appointmentUtils';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 
 interface AppointmentFormModalProps {
   isOpen: boolean;
@@ -42,22 +47,17 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
 }) => {
   const { users = [], currentUser } = useAuth();
 
+  const selectablePersonnel = React.useMemo(() => getSelectablePersonnel(users), [users]);
+
   const counselors = React.useMemo(() => {
-    const activeStaff = users.filter((u) => u.active && u.role !== 'VIEWER');
-    if (activeStaff.length > 0) {
-      return activeStaff.map((u) => ({
-        id: u.id,
-        name: u.displayName,
-        teamId: (u.teamId || 'team1') as TeamId,
-        phone: u.phone,
-      }));
-    }
-    return [
-      { id: 'usr_admin', name: 'อ.ประชา กัปปนารก (หัวหน้างานแนะแนว)', teamId: 'team1' as TeamId },
-      { id: 'usr_staff1', name: 'อ.ณิชชับภิญญ์ โคราช (แนะแนวสาย 1)', teamId: 'team1' as TeamId },
-      { id: 'usr_staff2', name: 'อ.ปิยะ สีผาชัย (แนะแนวสาย 2)', teamId: 'team2' as TeamId },
-    ];
-  }, [users]);
+    return selectablePersonnel.map((p) => ({
+      id: p.id,
+      name: p.displayName,
+      teamId: (p.teamId || 'team1') as TeamId,
+      phone: p.phone,
+      label: p.label,
+    }));
+  }, [selectablePersonnel]);
 
   const availableSubmissions = React.useMemo(
     () => submissions.filter((sub) =>
@@ -70,19 +70,23 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
   );
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
   const [submissionId, setSubmissionId] = useState<string>('');
+  const defaultCounselor = React.useMemo(() => {
+    if (currentUser && isEligiblePersonnel(currentUser)) {
+      return { id: currentUser.id, name: currentUser.displayName || 'อ.ประชา กัลปนารถ' };
+    }
+    const eligible = counselors[0];
+    return eligible ? { id: eligible.id, name: eligible.name } : { id: 'usr_admin', name: 'อ.ประชา กัลปนารถ' };
+  }, [currentUser, counselors]);
+
   const [date, setDate] = useState<string>(getTodayISO());
   const [startTime, setStartTime] = useState<string>('09:00');
-  const [endTime, setEndTime] = useState<string>('11:30');
+  const [endTime, setEndTime] = useState<string>('');
   const [teamId, setTeamId] = useState<TeamId>('team1');
-  const [counselorName, setCounselorName] = useState<string>(
-    currentUser?.displayName || 'อ.ประชา กัปปนารก'
-  );
-  const [counselorId, setCounselorId] = useState<string>(
-    currentUser?.id || 'usr_admin'
-  );
+  const [counselorName, setCounselorName] = useState<string>(defaultCounselor.name);
+  const [counselorId, setCounselorId] = useState<string>(defaultCounselor.id);
   const [teamMemberNames, setTeamMemberNames] = useState<string>('');
-  const [vehicleId, setVehicleId] = useState<string>('veh_01');
-  const [vehicleName, setVehicleName] = useState<string>('รถตู้โตโยต้า คอมมิวเตอร์ (นข-4521 อต)');
+  const [vehicleId, setVehicleId] = useState<string>('');
+  const [vehicleName, setVehicleName] = useState<string>('');
   const [teacherName, setTeacherName] = useState<string>('');
   const [teacherPhone, setTeacherPhone] = useState<string>('');
   const [status, setStatus] = useState<AppointmentStatus>('CONFIRMED');
@@ -94,6 +98,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
 
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -103,14 +108,23 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
       setSubmissionId(appointmentToEdit.submissionId || '');
       setSelectedSchoolId(appointmentToEdit.schoolId);
       setDate(appointmentToEdit.date);
-      setStartTime(appointmentToEdit.startTime);
-      setEndTime(appointmentToEdit.endTime);
+      setStartTime(appointmentToEdit.startTime || '09:00');
+      setEndTime(appointmentToEdit.endTime || '');
       setTeamId(appointmentToEdit.teamId);
-      setCounselorName(appointmentToEdit.counselorName);
-      setCounselorId(appointmentToEdit.counselorId);
+      const resolved = resolveResponsibleCounselor(
+        appointmentToEdit.counselorId,
+        appointmentToEdit.counselorName,
+        selectablePersonnel
+      );
+      setCounselorName(resolved.name);
+      setCounselorId(resolved.id);
       setTeamMemberNames(appointmentToEdit.teamMemberNames || '');
-      setVehicleId(appointmentToEdit.vehicleId || 'veh_01');
-      setVehicleName(appointmentToEdit.vehicleName || 'รถตู้โตโยต้า คอมมิวเตอร์ (นข-4521 อต)');
+      // Priority: 1. Stored vehicle of record, 2. Counselor default vehicle, 3. Empty
+      const resolvedVeh = appointmentToEdit.vehicleId
+        ? { id: appointmentToEdit.vehicleId, name: appointmentToEdit.vehicleName || '' }
+        : getDefaultVehicleForPersonnel(resolved.id, resolved.name);
+      setVehicleId(resolvedVeh?.id || '');
+      setVehicleName(resolvedVeh?.name || '');
       setTeacherName(appointmentToEdit.teacherName || '');
       setTeacherPhone(appointmentToEdit.teacherPhone || '');
       setStatus(appointmentToEdit.status);
@@ -131,44 +145,43 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
       if (prefilledData.teacherPhone) setTeacherPhone(prefilledData.teacherPhone);
       if (prefilledData.date) setDate(prefilledData.date);
       if (prefilledData.startTime) setStartTime(prefilledData.startTime);
-      if (prefilledData.endTime) setEndTime(prefilledData.endTime);
-      if (prefilledData.vehicleId) setVehicleId(prefilledData.vehicleId);
-      if (prefilledData.vehicleName) setVehicleName(prefilledData.vehicleName);
+      setEndTime(prefilledData.endTime || '');
+      const pVeh = prefilledData.vehicleId
+        ? { id: prefilledData.vehicleId, name: prefilledData.vehicleName || '' }
+        : getDefaultVehicleForPersonnel(counselorId, counselorName);
+      setVehicleId(pVeh?.id || '');
+      setVehicleName(pVeh?.name || '');
     } else {
       setSubmissionId('');
       setSelectedSchoolId('');
       setDate(getTodayISO());
       setStartTime('09:00');
-      setEndTime('11:30');
+      setEndTime('');
       setTeamId('team1');
+      setCounselorName(defaultCounselor.name);
+      setCounselorId(defaultCounselor.id);
+      const initVeh = getDefaultVehicleForPersonnel(defaultCounselor.id, defaultCounselor.name);
+      setVehicleId(initVeh?.id || '');
+      setVehicleName(initVeh?.name || '');
       setTeacherName('');
       setTeacherPhone('');
       setStatus('CONFIRMED');
       setNote('');
     }
-  }, [isOpen, appointmentToEdit?.id, prefilledData, schools, submissions]);
-
-  const defaultVehicleForTeam = (t: TeamId) => {
-    return t === 'team2'
-      ? { id: 'mitsu-6738', name: 'MITSU บน 6738 (กระบะ 4 ประตู)' }
-      : { id: 'vigo-9914', name: 'VIGO กข 9914 (กระบะ 4 ประตู)' };
-  };
+  }, [isOpen, appointmentToEdit?.id, prefilledData, schools, submissions, defaultCounselor]);
 
   const defaultCounselorForTeam = (t: TeamId) => {
     const match = counselors.find((c) => c.teamId === t);
     return (
       match ||
       (t === 'team2'
-        ? { id: 'usr_staff2', name: 'อ.ปิยะ สีผาชัย (แนะแนวสาย 2)', teamId: 'team2' as TeamId }
-        : { id: 'usr_admin', name: 'อ.ประชา กัปปนารก (หัวหน้างานแนะแนว)', teamId: 'team1' as TeamId })
+        ? { id: 'usr_staff2', name: 'อ.ปิยะ สีตาชัย', teamId: 'team2' as TeamId }
+        : { id: 'usr_admin', name: 'อ.ประชา กัลปนารถ', teamId: 'team1' as TeamId })
     );
   };
 
   const handleTeamChange = (nextTeam: TeamId) => {
     setTeamId(nextTeam);
-    const defVeh = defaultVehicleForTeam(nextTeam);
-    setVehicleId(defVeh.id);
-    setVehicleName(defVeh.name);
 
     // If current counselor doesn't belong to this team, switch to team's default counselor
     const currCounselor = counselors.find((c) => c.name === counselorName || c.id === counselorId);
@@ -176,6 +189,10 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
       const defC = defaultCounselorForTeam(nextTeam);
       setCounselorId(defC.id);
       setCounselorName(defC.name);
+      // Auto-set vehicle to default of newly assigned counselor
+      const defVeh = getDefaultVehicleForPersonnel(defC.id, defC.name);
+      setVehicleId(defVeh?.id || '');
+      setVehicleName(defVeh?.name || '');
     }
   };
 
@@ -198,13 +215,20 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
     setCounselorId(matchedCounselor.id);
     setCounselorName(matchedCounselor.name);
 
-    const defVeh = defaultVehicleForTeam(submission.teamId);
-    setVehicleId(submission.vehicleId || defVeh.id);
-    setVehicleName(submission.vehicleName || defVeh.name);
+    // Priority: Stored vehicle in submission, or counselor default vehicle
+    const subVeh = submission.vehicleId
+      ? { id: submission.vehicleId, name: submission.vehicleName || '' }
+      : getDefaultVehicleForPersonnel(matchedCounselor.id, matchedCounselor.name);
+    setVehicleId(subVeh?.id || '');
+    setVehicleName(subVeh?.name || '');
 
     setTeacherName(submission.teacherName || '');
     setTeacherPhone(submission.teacherPhone || '');
-    setTeamMemberNames(submission.submittedByNames?.join(', ') || submission.submittedByName || '');
+    // Decouple: do NOT copy submittedByNames to appointment teamMemberNames automatically
+    // If editing an existing appointment, preserve its existing teamMemberNames
+    if (!appointmentToEdit) {
+      setTeamMemberNames('');
+    }
     setNote(submission.appointmentNote || submission.note || '');
     if (submission.appointmentDate) setDate(submission.appointmentDate);
     if (submission.appointmentStartTime) setStartTime(submission.appointmentStartTime);
@@ -214,26 +238,17 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
   const handleSchoolSelect = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
     if (!schoolId) {
-      setSubmissionId('');
+      if (!appointmentToEdit) {
+        setSubmissionId('');
+      }
       setTeacherName('');
       setTeacherPhone('');
       return;
     }
 
-    // Check if there is an existing submission for this school
-    const matchedSub = submissions.find((s) => s.schoolId === schoolId && !s.fieldTripId);
-    if (matchedSub) {
-      applySubmission(matchedSub);
-      return;
-    }
-
-    setSubmissionId('');
     const target = schools.find((s) => s.id === schoolId);
     if (target) {
       setTeamId(target.teamId);
-      const defVeh = defaultVehicleForTeam(target.teamId);
-      setVehicleId(defVeh.id);
-      setVehicleName(defVeh.name);
       const defC = defaultCounselorForTeam(target.teamId);
       setCounselorId(defC.id);
       setCounselorName(defC.name);
@@ -250,10 +265,11 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
       setCounselorName(found.name);
       if (found.teamId !== teamId) {
         setTeamId(found.teamId);
-        const defVeh = defaultVehicleForTeam(found.teamId);
-        setVehicleId(defVeh.id);
-        setVehicleName(defVeh.name);
       }
+      // Business Rule: Auto default vehicle according to responsible personnel
+      const defVeh = getDefaultVehicleForPersonnel(found.id, found.name);
+      setVehicleId(defVeh?.id || '');
+      setVehicleName(defVeh?.name || '');
     }
   };
 
@@ -296,21 +312,32 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
       return;
     }
 
-    if (!submissionId) {
-      setError('กรุณาเลือกข้อมูลการยื่นหนังสือเดิมก่อนสร้างนัดหมาย');
+    if (!startTime) {
+      setError('กรุณาระบุเวลาเริ่มต้น');
       return;
     }
 
-    if (startTime >= endTime) {
-      setError('เวลาเริ่มต้องมาก่อนเวลาสิ้นสุด');
+    if (!endTime) {
+      setError('กรุณาระบุเวลาสิ้นสุด');
+      return;
+    }
+
+    if (!isValidTimeRange(startTime, endTime)) {
+      setError('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น');
       return;
     }
 
     setError(null);
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
+      const targetSubmissionId = appointmentToEdit
+        ? (appointmentToEdit.submissionId || submissionId || undefined)
+        : (submissionId || undefined);
+
       await onSave({
-        submissionId,
+        submissionId: targetSubmissionId,
         schoolId: school.id,
         schoolName: school.schoolName,
         date,
@@ -325,8 +352,12 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
         teacherName,
         teacherPhone,
         status,
-        source: 'DOCUMENT_SUBMISSION',
+        source: appointmentToEdit
+          ? (appointmentToEdit.source || (targetSubmissionId ? 'DOCUMENT_SUBMISSION' : 'MANUAL'))
+          : (targetSubmissionId ? 'DOCUMENT_SUBMISSION' : 'MANUAL'),
         note,
+        academicYear: appointmentToEdit?.academicYear,
+        photos: appointmentToEdit?.photos || [],
         reminders: [
           {
             type: 'email',
@@ -334,13 +365,14 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
             enabled: reminderEnabled,
           },
         ],
-        createdAt: new Date().toISOString(),
+        createdAt: appointmentToEdit?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
       onClose();
     } catch (err: any) {
       setError(err.message || 'บันทึกนัดหมายไม่สำเร็จ');
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -387,102 +419,168 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
           )}
 
           {/* Submission reference */}
-          <div className="p-4 bg-sky-50/70 rounded-xl border border-sky-200 space-y-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                อ้างอิงรายการยื่นหนังสือ <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={submissionId}
-                disabled={isSubmitting || !!appointmentToEdit?.submissionId}
-                onChange={(e) => {
-                  const submission = submissions.find((sub) => sub.id === e.target.value);
-                  if (submission) applySubmission(submission);
-                  else setSubmissionId('');
-                }}
-                className="w-full px-3 py-2 bg-white border border-sky-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-[#087CC1] disabled:bg-slate-100"
-                required
-              >
-                <option value="">— เลือกรายการยื่นหนังสือเดิม —</option>
-                {availableSubmissions.map((sub) => (
-                  <option key={sub.id} value={sub.id}>
-                    {formatThaiShortDate(sub.submissionDate)} · {sub.schoolName} · {sub.documentNumber || 'ไม่มีเลขหนังสือ'}
-                  </option>
-                ))}
-                {submissionId && !availableSubmissions.some((sub) => sub.id === submissionId) && (
-                  <option value={submissionId}>
-                    {appointmentToEdit?.schoolName || prefilledData?.schoolName || 'รายการยื่นหนังสือที่เชื่อมไว้'}
-                  </option>
-                )}
-              </select>
-            </div>
+          {appointmentToEdit ? (
+            appointmentToEdit.submissionId ? (
+              <div className="p-4 bg-sky-50/70 rounded-xl border border-sky-200 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-sky-900 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-[#087CC1]" />
+                    อ้างอิงการยื่นหนังสือ
+                  </span>
+                  <span className="text-[11px] font-semibold text-sky-700 bg-sky-100/80 px-2.5 py-0.5 rounded-full border border-sky-200">
+                    เชื่อมโยงแล้ว (Read-only)
+                  </span>
+                </div>
+                {(() => {
+                  const linked = submissions.find((s) => s.id === appointmentToEdit.submissionId);
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs pt-1">
+                      <div className="rounded-lg bg-white border border-sky-100 p-2.5 shadow-2xs">
+                        <div className="text-slate-400 text-[11px] font-medium">โรงเรียน</div>
+                        <div className="font-bold text-slate-800 mt-0.5 truncate" title={linked?.schoolName || appointmentToEdit.schoolName}>
+                          {formatSchoolDisplayName(linked?.schoolName || appointmentToEdit.schoolName)}
+                        </div>
+                      </div>
+                      <div className="rounded-lg bg-white border border-sky-100 p-2.5 shadow-2xs">
+                        <div className="text-slate-400 text-[11px] font-medium">เลขที่หนังสือ</div>
+                        <div className="font-semibold text-slate-800 mt-0.5 truncate" title={linked?.documentNumber || 'ไม่ระบุเลขที่หนังสือ'}>
+                          {linked?.documentNumber || 'ไม่ระบุเลขที่หนังสือ'}
+                        </div>
+                      </div>
+                      <div className="rounded-lg bg-white border border-sky-100 p-2.5 shadow-2xs">
+                        <div className="text-slate-400 text-[11px] font-medium">วันที่ยื่นหนังสือ</div>
+                        <div className="font-semibold text-slate-800 mt-0.5">
+                          {linked?.submissionDate ? formatThaiShortDate(linked?.submissionDate) : '-'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : (
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-slate-400" />
+                  <span className="font-medium">รายการนัดหมายเดิม (ไม่ได้เชื่อมโยงกับรายการยื่นหนังสือ)</span>
+                </div>
+                <span className="text-[11px] text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                  แก้ไขข้อมูลนัดหมายได้โดยไม่ต้องระบุการยื่นหนังสือ
+                </span>
+              </div>
+            )
+          ) : (
+            <div className="p-4 bg-sky-50/70 rounded-xl border border-sky-200 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  อ้างอิงรายการยื่นหนังสือ
+                </label>
+                <select
+                  value={submissionId}
+                  disabled={isSubmitting}
+                  onChange={(e) => {
+                    const submission = submissions.find((sub) => sub.id === e.target.value);
+                    if (submission) applySubmission(submission);
+                    else setSubmissionId('');
+                  }}
+                  className="w-full px-3 py-2 bg-white border border-sky-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-[#087CC1] disabled:bg-slate-100"
+                >
+                  <option value="">— เลือกรายการยื่นหนังสือเดิม (ถ้ามี) —</option>
+                  {availableSubmissions.map((sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {formatThaiShortDate(sub.submissionDate)} · {formatSchoolDisplayName(sub.schoolName)} · {sub.documentNumber || 'ไม่มีเลขหนังสือ'}
+                    </option>
+                  ))}
+                  {submissionId && !availableSubmissions.some((sub) => sub.id === submissionId) && (
+                    <option value={submissionId}>
+                      {formatSchoolDisplayName(prefilledData?.schoolName) || 'รายการยื่นหนังสือที่เชื่อมไว้'}
+                    </option>
+                  )}
+                </select>
+              </div>
 
-            {submissionId && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                <div className="rounded-lg bg-white border border-sky-100 p-2">
-                  <div className="text-slate-500">โรงเรียน</div>
-                  <div className="font-semibold text-slate-800">{schools.find((s) => s.id === selectedSchoolId)?.schoolName || '-'}</div>
-                </div>
-                <div className="rounded-lg bg-white border border-sky-100 p-2">
-                  <div className="text-slate-500">ครูแนะแนว</div>
-                  <div className="font-semibold text-slate-800">{teacherName || '-'}{teacherPhone ? ` · ${teacherPhone}` : ''}</div>
-                </div>
-                <div className="rounded-lg bg-white border border-sky-100 p-2">
-                  <div className="text-slate-500">สาย / รถ</div>
-                  <div className="font-semibold text-slate-800">
-                    {teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'} · {vehicleName || '-'}
+              {submissionId && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  <div className="rounded-lg bg-white border border-sky-100 p-2">
+                    <div className="text-slate-500">โรงเรียน</div>
+                    <div className="font-semibold text-slate-800">{formatSchoolDisplayName(schools.find((s) => s.id === selectedSchoolId)?.schoolName) || '-'}</div>
+                  </div>
+                  <div className="rounded-lg bg-white border border-sky-100 p-2">
+                    <div className="text-slate-500">ครูแนะแนว</div>
+                    <div className="font-semibold text-slate-800">{teacherName || '-'}{teacherPhone ? ` · ${teacherPhone}` : ''}</div>
+                  </div>
+                  <div className="rounded-lg bg-white border border-sky-100 p-2">
+                    <div className="text-slate-500">สาย / รถ</div>
+                    <div className="font-semibold text-slate-800">
+                      {teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'} · {vehicleName || '-'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* School selection */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               โรงเรียนเป้าหมาย <span className="text-red-500">*</span>
             </label>
-            <SchoolPicker schools={schools} value={selectedSchoolId} onChange={handleSchoolSelect} disabled={isSubmitting || !!submissionId}/>
+            <SchoolPicker
+              schools={schools}
+              value={selectedSchoolId}
+              onChange={handleSchoolSelect}
+              disabled={isSubmitting || (!!appointmentToEdit && !!appointmentToEdit.submissionId) || (!appointmentToEdit && !!submissionId)}
+            />
           </div>
 
           {/* Date & Time slots */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                วันที่นัดหมาย <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-[#087CC1]"
-                required
-              />
+          <div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <ThaiDatePicker
+                  label="วันที่นัดหมาย"
+                  value={date}
+                  onChange={setDate}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  เวลาเริ่มต้น <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className={`w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs transition-colors ${
+                    startTime && endTime && !isValidTimeRange(startTime, endTime)
+                      ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
+                      : 'border-slate-300'
+                  }`}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  เวลาสิ้นสุด <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className={`w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs transition-colors ${
+                    startTime && endTime && !isValidTimeRange(startTime, endTime)
+                      ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
+                      : 'border-slate-300'
+                  }`}
+                  required
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                เวลาเริ่มต้น
-              </label>
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                เวลาสิ้นสุด
-              </label>
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-                required
-              />
-            </div>
+            {startTime && endTime && !isValidTimeRange(startTime, endTime) && (
+              <p className="text-xs text-red-600 font-medium mt-1.5 flex items-center gap-1">
+                <span>⚠️ เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น (ช่วงเวลาปัจจุบัน: {startTime} - {endTime} น. ไม่ถูกต้อง)</span>
+              </p>
+            )}
           </div>
 
           {/* Team & Counselor & Vehicle */}
@@ -509,14 +607,20 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
                 onChange={(e) => handleCounselorChange(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
               >
+                {appointmentToEdit && counselorName && !counselors.some(c => c.name === counselorName) && (
+                  <option value={counselorName}>{counselorName} (บันทึกเดิม)</option>
+                )}
                 {counselors.map((c) => (
                   <option key={c.id} value={c.name}>
-                    {c.name} ({c.teamId === 'team1' ? 'อุตรดิตถ์' : 'สุโขทัย'})
+                    {c.label}
                   </option>
                 ))}
               </select>
             </div>
             <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                ยานพาหนะ
+              </label>
               <TripVehiclePicker
                 value={vehicleId}
                 name={vehicleName}

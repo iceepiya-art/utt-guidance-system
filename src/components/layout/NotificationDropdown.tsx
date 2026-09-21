@@ -12,6 +12,8 @@ import {
 import { Appointment, FieldTrip, School, AppNotification } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { formatThaiShortDate, getDaysDifference } from '../../utils/dateUtils';
+import { formatAppointmentTime } from '../../utils/appointmentUtils';
+import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 import { ActiveTab } from './AppLayout';
 
 interface NotificationDropdownProps {
@@ -74,8 +76,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         if (diffDays >= 0 && diffDays <= 2) {
           list.push({
             id: `notif-appt-${appt.id}`,
-            title: `นัดหมาย ${diffDays === 0 ? 'วันนี้' : diffDays === 1 ? 'พรุ่งนี้' : 'อีก 2 วัน'}: ${appt.schoolName}`,
-            message: `เวลา ${appt.startTime} - ${appt.endTime} น. (${appt.counselorName || 'สายแนะแนว'})`,
+            title: `นัดหมาย ${diffDays === 0 ? 'วันนี้' : diffDays === 1 ? 'พรุ่งนี้' : 'อีก 2 วัน'}: ${formatSchoolDisplayName(appt.schoolName)}`,
+            message: `เวลา ${formatAppointmentTime(appt.startTime, appt.endTime)} (${appt.counselorName || 'สายแนะแนว'})`,
             type: 'APPOINTMENT_REMINDER',
             timestamp: appt.date,
             read: false,

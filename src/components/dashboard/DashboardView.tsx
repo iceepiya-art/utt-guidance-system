@@ -21,7 +21,8 @@ import {
   getRelativeThaiDayLabel,
   getBuddhistYear,
 } from '../../utils/dateUtils';
-import { getSchoolEffectiveStatus } from '../../utils/schoolStatus';
+import { getSchoolEffectiveStatus, formatSchoolDisplayName } from '../../utils/schoolStatus';
+import { formatAppointmentTime } from '../../utils/appointmentUtils';
 import { ActiveTab } from '../layout/AppLayout';
 
 interface DashboardViewProps {
@@ -411,10 +412,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     {/* Time & School */}
                     <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{appt.startTime} - {appt.endTime} น.</span>
+                      <span>{formatAppointmentTime(appt.startTime, appt.endTime)}</span>
                     </div>
                     <div className="text-base font-bold text-slate-800 mt-1 truncate">
-                      {appt.schoolName}
+                      {formatSchoolDisplayName(appt.schoolName)}
                     </div>
 
                     {/* Guidance Teacher & Contact */}
