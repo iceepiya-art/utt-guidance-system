@@ -820,6 +820,35 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
             </div>
           </div>
 
+          {/* Performance Summary & Issues Section */}
+          <div className="space-y-3 p-4 bg-slate-50/70 rounded-2xl border border-slate-200">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                ผลการปฏิบัติงาน / สรุปภาพรวม
+              </label>
+              <textarea
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                rows={3}
+                placeholder="สรุปผลการจัดกิจกรรม บรรยากาศ และการตอบรับของนักเรียน..."
+                className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-[#087CC1] focus:border-transparent transition-all outline-none resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                ปัญหา / อุปสรรค (ถ้ามี)
+              </label>
+              <textarea
+                value={issues}
+                onChange={(e) => setIssues(e.target.value)}
+                rows={2}
+                placeholder="ระบุปัญหา หรือข้อเสนอแนะในการปรับปรุงการลงพื้นที่..."
+                className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-[#087CC1] focus:border-transparent transition-all outline-none resize-none"
+              />
+            </div>
+          </div>
+
           {/* Photos Upload Section */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
