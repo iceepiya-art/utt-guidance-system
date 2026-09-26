@@ -42,74 +42,103 @@ function ReportTable({
 }) {
   const days = [...new Set(data.rows.map(row => row.date))];
   return (
-    <table className="monthly-table">
-      <caption className="text-left p-3">รวมออกปฏิบัติงาน {days.length} วัน ตามตัวกรองที่เลือก</caption>
-      <thead>
-        <tr>
-          {[
-            "ลำดับวัน",
-            "วัน",
-            "วัน/เดือน/ปี",
-            "ชื่อโรงเรียน",
-            "รถที่ใช้",
-            "งานที่ปฏิบัติ",
-            "อาจารย์แนะแนว",
-          ].map((h) => (
-            <th key={h} scope="col">
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {data.rows.map((row, index) => {
-          const date = reportDateLabels(row.date);
-          const firstOfDay = index === 0 || data.rows[index - 1].date !== row.date;
-          const dayRows = data.rows.filter(r => r.date === row.date).length;
-          return (
-            <tr
-              key={row.key}
-              tabIndex={onOpen ? 0 : undefined}
-              aria-label={
-                onOpen
-                  ? `ตรวจสอบ ${row.schoolName} ${row.activityLabel} ${date.date}`
-                  : undefined
-              }
-              onClick={onOpen ? () => onOpen(row) : undefined}
-              onKeyDown={
-                onOpen
-                  ? (e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onOpen(row);
+    <div className="overflow-x-auto w-full">
+      <table className="monthly-table">
+        <caption className="monthly-caption">รวมออกปฏิบัติงาน {days.length} วัน ตามตัวกรองที่เลือก</caption>
+        <thead>
+          <tr>
+            {[
+              "ลำดับวัน",
+              "วัน",
+              "วัน/เดือน/ปี",
+              "ชื่อโรงเรียน",
+              "สาย",
+              "รถที่ใช้",
+              "งานที่ปฏิบัติ",
+              "อาจารย์แนะแนว",
+            ].map((h) => (
+              <th key={h} scope="col">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.rows.map((row, index) => {
+            const date = reportDateLabels(row.date);
+            const dayNum = days.indexOf(row.date) + 1;
+            const isFirstOfDay = index === 0 || data.rows[index - 1].date !== row.date;
+            return (
+              <tr
+                key={row.key}
+                tabIndex={onOpen ? 0 : undefined}
+                className={isFirstOfDay ? "day-start-row" : ""}
+                aria-label={
+                  onOpen
+                    ? `ตรวจสอบ ${row.schoolName} ${row.activityLabel} ${date.date}`
+                    : undefined
+                }
+                onClick={onOpen ? () => onOpen(row) : undefined}
+                onKeyDown={
+                  onOpen
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onOpen(row);
+                        }
                       }
-                    }
-                  : undefined
-              }
-            >
-              {firstOfDay && <td rowSpan={dayRows}>{days.indexOf(row.date) + 1}</td>}
-              {firstOfDay && <td rowSpan={dayRows}>{date.weekday}</td>}
-              {firstOfDay && <td rowSpan={dayRows}>{date.date}</td>}
-              <td>{row.schoolName}</td>
-              <td>{row.vehicleName}</td>
-              <td>{row.activityLabel}</td>
-              <td>
-                {names(row).length
-                  ? names(row).map((name, i) => <div key={i}>{name}</div>)
-                  : "ไม่ระบุ"}
+                    : undefined
+                }
+              >
+                <td className="text-center font-semibold text-slate-500">{dayNum}</td>
+                <td className="font-medium text-slate-700">{date.weekday}</td>
+                <td className="text-slate-600 whitespace-nowrap">{date.date}</td>
+                <td className="font-semibold text-slate-900">{row.schoolName}</td>
+                <td>
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded-sm text-xs font-semibold ${
+                      row.team === "team1"
+                        ? "bg-blue-50 text-blue-700 border border-blue-200"
+                        : row.team === "team2"
+                        ? "bg-amber-50 text-amber-700 border border-amber-200"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {reportTeamLabel(row.team)}
+                  </span>
+                </td>
+                <td className="text-slate-700">{row.vehicleName}</td>
+                <td>
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded-sm text-xs font-semibold ${
+                      row.activityLabel.includes("แนะแนว") && row.activityLabel.includes("ยื่น")
+                        ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                        : row.activityLabel.includes("แนะแนว")
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        : "bg-sky-50 text-sky-700 border border-sky-200"
+                    }`}
+                  >
+                    {row.activityLabel}
+                  </span>
+                </td>
+                <td className="text-slate-700">
+                  {names(row).length
+                    ? names(row).map((name, i) => <div key={i}>{name}</div>)
+                    : "ไม่ระบุ"}
+                </td>
+              </tr>
+            );
+          })}
+          {!data.rows.length && (
+            <tr>
+              <td colSpan={8} className="monthly-empty">
+                ไม่มีรายการปฏิบัติงานตามตัวกรองที่เลือก
               </td>
             </tr>
-          );
-        })}
-        {!data.rows.length && (
-          <tr>
-            <td colSpan={7} className="monthly-empty">
-              ไม่มีรายการปฏิบัติงานตามตัวกรองที่เลือก
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }
 function ReportSummary({ data }: { data: MonthlyReportDataset }) {
