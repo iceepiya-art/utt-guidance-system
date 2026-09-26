@@ -259,6 +259,8 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
         status,
         note: note || '',
         photos: photos || [],
+        ...(submissionToEdit?.appointmentId ? { appointmentId: submissionToEdit.appointmentId } : {}),
+        ...(submissionToEdit?.fieldTripId ? { fieldTripId: submissionToEdit.fieldTripId } : {}),
         createdAt: submissionToEdit?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

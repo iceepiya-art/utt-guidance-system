@@ -688,7 +688,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
       )}
 
       {resultDetail && <FieldTripDetailModal selectedTrip={resultDetail} responsibleNames={activityPeople(resultDetail).map(p => p.name)} onClose={() => setResultDetail(null)} onPhoto={setSelectedPhotoModal} />}
-      {detail && <SubmissionDetailModal statusOverride={getSubmissionWorkflow(detail, appointments, results).display} noteOverride={getSubmissionWorkflowNote(detail, appointments, results)} detail={detail} submitterNames={getDisplaySubmitters(detail)} onClose={() => setDetail(null)} onPhoto={setSelectedPhotoModal} />}
+      {detail && <SubmissionDetailModal statusOverride={getSubmissionWorkflow(detail, appointments, results).display} noteOverride={getSubmissionWorkflowNote(detail, appointments, results)} detail={detail} submitterNames={getDisplaySubmitters(detail)} onClose={() => setDetail(null)} onPhoto={setSelectedPhotoModal} onEdit={(sub) => { setDetail(null); setSubmissionToEdit(sub); setIsFormOpen(true); }} />}
       {deleting && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"><div role="alertdialog" aria-modal="true" aria-label="ยืนยันลบการยื่นหนังสือ" className="bg-white rounded-2xl p-5 max-w-md w-full space-y-4">
         <h2 className="font-bold">ลบรายการยื่นหนังสือ?</h2><p className="text-sm">{deleting.schoolName} — {deleting.documentNumber}</p>
         {deleting.appointmentId || deleting.fieldTripId ? <p className="text-sm text-amber-700">รายการนี้เชื่อมกับนัดหมายหรือผลแนะแนว กรุณาจัดการรายการที่เชื่อมก่อน จึงจะลบได้</p> : <p className="text-sm text-slate-600">จะลบเฉพาะประวัติการยื่นหนังสือนี้ ข้อมูลโรงเรียนและนัดหมายอื่นจะยังอยู่</p>}

@@ -1,20 +1,25 @@
 import React from "react";
+import { Edit2 } from "lucide-react";
 import type { FieldTrip } from "../../types";
 import { formatThaiShortDate } from "../../utils/dateUtils";
 import { formatSchoolDisplayName } from "../../utils/schoolStatus";
 import { formatAppointmentTime } from "../../utils/appointmentUtils";
+import { useAuth } from "../../context/AuthContext";
 
 export function FieldTripDetailModal({
   selectedTrip,
   responsibleNames,
   onClose,
   onPhoto,
+  onEdit,
 }: {
   selectedTrip: FieldTrip;
   responsibleNames: string[];
   onClose: () => void;
   onPhoto: (url: string) => void;
+  onEdit?: (trip: FieldTrip) => void;
 }) {
+  const { canEdit } = useAuth();
   return (
     <>
       {
@@ -39,13 +44,26 @@ export function FieldTripDetailModal({
                   วันที่ {formatThaiShortDate(selectedTrip.date)}
                 </h3>
               </div>
-              <button
-                aria-label="ปิดรายละเอียด"
-                onClick={() => onClose()}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-1.5">
+                {onEdit && canEdit && (
+                  <button
+                    type="button"
+                    aria-label="แก้ไขข้อมูลการออกแนะแนว"
+                    onClick={() => onEdit(selectedTrip)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#087CC1] hover:text-[#075A9C] hover:bg-sky-50 rounded-xl transition-colors cursor-pointer border border-sky-100"
+                  >
+                    <Edit2 size={14} />
+                    <span>แก้ไขข้อมูล</span>
+                  </button>
+                )}
+                <button
+                  aria-label="ปิดรายละเอียด"
+                  onClick={() => onClose()}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3 text-xs">
@@ -124,6 +142,29 @@ export function FieldTripDetailModal({
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Modal Footer with Actions */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <div>
+                {onEdit && canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => onEdit(selectedTrip)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Edit2 size={14} />
+                    <span>แก้ไขข้อมูล</span>
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => onClose()}
+                className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer shadow-xs"
+              >
+                ปิดหน้าต่าง
+              </button>
             </div>
           </div>
         </div>

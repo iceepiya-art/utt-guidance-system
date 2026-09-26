@@ -347,6 +347,65 @@ export async function updateDocumentSubmission(
     updatedAt: now,
     updatedBy: user?.displayName || 'เจ้าหน้าที่',
   });
+
+  // Keep linked school record in sync with edited contact and status info
+  if (data.schoolId) {
+    try {
+      const schoolRef = doc(db, 'schools', data.schoolId);
+      const updatePayload: Partial<School> = {
+        updatedAt: now,
+        updatedBy: user?.displayName || 'เจ้าหน้าที่',
+      };
+      if (data.teacherName !== undefined) updatePayload.teacherName = data.teacherName;
+      if (data.teacherPosition !== undefined) updatePayload.teacherPosition = data.teacherPosition;
+      if (data.teacherPhone !== undefined) updatePayload.teacherPhone = data.teacherPhone;
+      if (data.teacherLine !== undefined) updatePayload.teacherLine = data.teacherLine;
+      if (data.preferredContactTime !== undefined) updatePayload.preferredContactTime = data.preferredContactTime;
+
+      if (data.status === 'APPOINTED') {
+        updatePayload.currentStatus = 'APPOINTED';
+      } else if (data.status === 'WAITING_CONTACT' || data.status === 'CALL_LATER') {
+        updatePayload.currentStatus = 'WAITING_CONTACT';
+      } else if (data.status === 'WAITING_APPOINTMENT') {
+        updatePayload.currentStatus = 'WAITING_APPOINTMENT';
+      }
+
+      await updateDoc(schoolRef, updatePayload);
+    } catch (e) {
+      console.warn('Could not auto-update school for submission edit:', e);
+    }
+  }
+
+  // Keep linked appointment in sync if an appointmentId exists
+  if (data.appointmentId) {
+    try {
+      const apptRef = doc(db, 'appointments', data.appointmentId);
+      const apptUpdate: Record<string, any> = {
+        updatedAt: now,
+        updatedBy: user?.displayName || 'เจ้าหน้าที่',
+      };
+      if (data.vehicleId !== undefined) apptUpdate.vehicleId = data.vehicleId;
+      if (data.vehicleName !== undefined) apptUpdate.vehicleName = data.vehicleName;
+      if (data.teamId !== undefined) apptUpdate.teamId = data.teamId;
+      if (data.teacherName !== undefined) apptUpdate.teacherName = data.teacherName;
+      if (data.teacherPhone !== undefined) apptUpdate.teacherPhone = data.teacherPhone;
+      if (data.schoolName !== undefined) apptUpdate.schoolName = data.schoolName;
+      if (data.schoolId !== undefined) apptUpdate.schoolId = data.schoolId;
+
+      await updateDoc(apptRef, apptUpdate);
+    } catch (e) {
+      console.warn('Could not auto-sync appointment for submission edit:', e);
+    }
+  }
+
+  await logActivity(
+    user?.id || 'sys',
+    user?.displayName || 'เจ้าหน้าที่',
+    'แก้ไขข้อมูลการยื่นหนังสือ',
+    'document',
+    id,
+    `แก้ไขข้อมูลการยื่นหนังสือ ${data.schoolName || ''} (เลขที่: ${data.documentNumber || ''})`
+  );
 }
 
 // -------------------------------------------------------------

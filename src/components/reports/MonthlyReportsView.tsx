@@ -23,6 +23,10 @@ import {
 } from "../../utils/monthlyReportExport";
 import { SubmissionDetailModal } from "../submissions/SubmissionDetailModal";
 import { FieldTripDetailModal } from "../trips/FieldTripDetailModal";
+import { SubmissionFormModal } from "../submissions/SubmissionFormModal";
+import { FieldTripFormModal } from "../trips/FieldTripFormModal";
+import { updateDocumentSubmission, updateFieldTrip } from "../../firebase/dbService";
+import { useAuth } from "../../context/AuthContext";
 import "./monthlyReports.css";
 
 interface Props {
@@ -218,6 +222,7 @@ export function MonthlyReportsView({
   submissions,
   fieldTrips,
 }: Props) {
+  const { currentUser, canEdit } = useAuth();
   const now = new Date();
   const [filters, setFilters] = useState<ReportFilters>({
     year: now.getFullYear(),
@@ -227,6 +232,8 @@ export function MonthlyReportsView({
   });
   const [selected, setSelected] = useState<MonthlyReportRow | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
+  const [submissionToEdit, setSubmissionToEdit] = useState<DocumentSubmission | null>(null);
+  const [tripToEdit, setTripToEdit] = useState<FieldTrip | null>(null);
   const [exportError, setExportError] = useState("");
   const previousFocus = useRef<HTMLElement | null>(null);
   const built = useMemo(
@@ -470,6 +477,10 @@ export function MonthlyReportsView({
               ).map((p) => p.name)}
               onClose={close}
               onPhoto={setPhoto}
+              onEdit={(sub) => {
+                close();
+                setSubmissionToEdit(sub);
+              }}
             />
           )}
           {source.type === "GUIDANCE" && source.record && (
@@ -484,6 +495,10 @@ export function MonthlyReportsView({
               ).map((p) => p.name)}
               onClose={close}
               onPhoto={setPhoto}
+              onEdit={(trip) => {
+                close();
+                setTripToEdit(trip);
+              }}
             />
           )}
           {!source.record && (
@@ -516,6 +531,40 @@ export function MonthlyReportsView({
           />
         </div>
       )}
+
+      {/* Direct Edit Modals preserving all linked relationships */}
+      {submissionToEdit && (
+        <SubmissionFormModal
+          key={submissionToEdit.id}
+          isOpen={!!submissionToEdit}
+          submissionToEdit={submissionToEdit}
+          schools={schools}
+          onClose={() => setSubmissionToEdit(null)}
+          onSave={async (data) => {
+            await updateDocumentSubmission(submissionToEdit.id, data, currentUser);
+            setSubmissionToEdit(null);
+            return submissionToEdit.id;
+          }}
+          onOpenInstantAppointment={() => {}}
+        />
+      )}
+
+      {tripToEdit && (
+        <FieldTripFormModal
+          key={tripToEdit.id}
+          isOpen={!!tripToEdit}
+          tripToEdit={tripToEdit}
+          schools={schools}
+          submissions={submissions}
+          onClose={() => setTripToEdit(null)}
+          onSave={async (tripData) => {
+            await updateFieldTrip(tripToEdit.id, tripData, currentUser);
+            setTripToEdit(null);
+            return tripToEdit.id;
+          }}
+        />
+      )}
+
       {createPortal(
         <article className="monthly-print-document">
           <header>
