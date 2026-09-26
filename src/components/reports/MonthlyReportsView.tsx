@@ -68,11 +68,14 @@ function ReportTable({
             const date = reportDateLabels(row.date);
             const dayNum = days.indexOf(row.date) + 1;
             const isFirstOfDay = index === 0 || data.rows[index - 1].date !== row.date;
+            const prevRow = index > 0 ? data.rows[index - 1] : null;
+            const isSameVehicle = prevRow && prevRow.date === row.date && prevRow.vehicleName === row.vehicleName;
+            const isSamePeople = prevRow && prevRow.date === row.date && names(row).join(",") === names(prevRow).join(",");
             return (
               <tr
                 key={row.key}
                 tabIndex={onOpen ? 0 : undefined}
-                className={isFirstOfDay ? "day-start-row" : ""}
+                className={isFirstOfDay ? "day-start-row" : "day-subsequent-row"}
                 aria-label={
                   onOpen
                     ? `ตรวจสอบ ${row.schoolName} ${row.activityLabel} ${date.date}`
@@ -90,10 +93,32 @@ function ReportTable({
                     : undefined
                 }
               >
-                <td className="text-center font-semibold text-slate-500">{dayNum}</td>
-                <td className="font-medium text-slate-700">{date.weekday}</td>
-                <td className="text-slate-600 whitespace-nowrap">{date.date}</td>
-                <td className="font-semibold text-slate-900">{row.schoolName}</td>
+                <td className="text-center">
+                  {isFirstOfDay ? (
+                    <span className="font-bold text-slate-700">{dayNum}</span>
+                  ) : (
+                    <span className="text-slate-300 font-serif select-none" title={`วันที่ ${dayNum}`}>”</span>
+                  )}
+                </td>
+                <td>
+                  {isFirstOfDay ? (
+                    <span className="font-medium text-slate-700">{date.weekday}</span>
+                  ) : (
+                    <span className="text-slate-300 font-serif select-none" title={date.weekday}>”</span>
+                  )}
+                </td>
+                <td className="whitespace-nowrap">
+                  {isFirstOfDay ? (
+                    <span className="text-slate-600 font-medium">{date.date}</span>
+                  ) : (
+                    <span className="text-slate-300 font-serif select-none" title={date.date}>”</span>
+                  )}
+                </td>
+                <td>
+                  <span className="font-semibold text-slate-900 hover:text-[#087cc1] transition-colors">
+                    {row.schoolName}
+                  </span>
+                </td>
                 <td>
                   <span
                     className={`inline-block px-2 py-0.5 rounded-sm text-xs font-semibold ${
@@ -107,7 +132,13 @@ function ReportTable({
                     {reportTeamLabel(row.team)}
                   </span>
                 </td>
-                <td className="text-slate-700">{row.vehicleName}</td>
+                <td>
+                  {isSameVehicle ? (
+                    <span className="text-slate-300 font-serif select-none" title={row.vehicleName}>”</span>
+                  ) : (
+                    <span className="text-slate-700">{row.vehicleName}</span>
+                  )}
+                </td>
                 <td>
                   <span
                     className={`inline-block px-2 py-0.5 rounded-sm text-xs font-semibold ${
@@ -121,10 +152,14 @@ function ReportTable({
                     {row.activityLabel}
                   </span>
                 </td>
-                <td className="text-slate-700">
-                  {names(row).length
-                    ? names(row).map((name, i) => <div key={i}>{name}</div>)
-                    : "ไม่ระบุ"}
+                <td>
+                  {isSamePeople ? (
+                    <span className="text-slate-300 font-serif select-none" title={names(row).join(", ")}>”</span>
+                  ) : names(row).length ? (
+                    names(row).map((name, i) => <div key={i} className="text-slate-700">{name}</div>)
+                  ) : (
+                    <span className="text-slate-400">ไม่ระบุ</span>
+                  )}
                 </td>
               </tr>
             );

@@ -133,7 +133,10 @@
   vertical-align: middle;
 }
 .monthly-table tr.day-start-row td {
-  border-top: 2px solid #e2e8f0;
+  border-top: 2px solid #cbd5e1;
+}
+.monthly-table tr.day-subsequent-row td {
+  border-top: 1px dashed #f1f5f9;
 }
 .monthly-table tr[tabindex] {
   cursor: pointer;
