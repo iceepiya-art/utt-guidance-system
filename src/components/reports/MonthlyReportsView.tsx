@@ -1,430 +1,466 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Download, Printer, FileSpreadsheet } from "lucide-react";
+import type { DocumentSubmission, FieldTrip, School } from "../../types";
+import { THAI_MONTHS } from "../../utils/dateUtils";
 import {
-  FileSpreadsheet,
-  Download,
-  Printer,
-  Calendar,
-  Filter,
-  CheckCircle2,
-  Users,
-  Compass,
-  FileCheck,
-  TrendingUp,
-} from 'lucide-react';
-import { School, DocumentSubmission, Appointment, FieldTrip, TeamId } from '../../types';
+  buildMonthlyReportRows,
+  buildMonthlyReportDataset,
+  findMonthlyReportSource,
+  reportDateLabels,
+  reportPeople,
+  reportTeamLabel,
+  reportWorkLabel,
+} from "../../utils/monthlyReport";
+import type {
+  MonthlyReportDataset,
+  MonthlyReportRow,
+  ReportFilters,
+} from "../../utils/monthlyReport";
 import {
-  THAI_MONTHS,
-  getBuddhistYear,
-  formatThaiMonthYear,
-  formatThaiShortDate,
-} from '../../utils/dateUtils';
-import { exportMonthlyReportToExcel, exportSchoolsToExcel } from '../../utils/excelExport';
-import { formatSchoolDisplayName } from '../../utils/schoolStatus';
+  downloadMonthlyReport,
+  monthlyReportTitle,
+} from "../../utils/monthlyReportExport";
+import { SubmissionDetailModal } from "../submissions/SubmissionDetailModal";
+import { FieldTripDetailModal } from "../trips/FieldTripDetailModal";
+import "./monthlyReports.css";
 
-interface MonthlyReportsViewProps {
+interface Props {
   schools: School[];
   submissions: DocumentSubmission[];
-  appointments: Appointment[];
   fieldTrips: FieldTrip[];
 }
+const names = (row: MonthlyReportRow) =>
+  row.responsiblePeople.map((p) => p.name);
 
-export const MonthlyReportsView: React.FC<MonthlyReportsViewProps> = ({
-  schools,
-  submissions,
-  appointments,
-  fieldTrips,
-}) => {
-  const today = new Date();
-  const [selectedYear, setSelectedYear] = useState<number>(today.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth()); // 0-11
-  const [teamFilter, setTeamFilter] = useState<'all' | TeamId>('all');
-
-  // Filter items matching the selected month and year
-  const monthString = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
-
-  const monthlySubmissions = useMemo(() => {
-    return submissions.filter((s) => {
-      const matchMonth = s.submissionDate.startsWith(monthString);
-      const matchTeam = teamFilter === 'all' || s.teamId === teamFilter;
-      return matchMonth && matchTeam;
-    });
-  }, [submissions, monthString, teamFilter]);
-
-  const monthlyAppointments = useMemo(() => {
-    return appointments.filter((a) => {
-      const matchMonth = a.date.startsWith(monthString);
-      const matchTeam = teamFilter === 'all' || a.teamId === teamFilter;
-      return matchMonth && matchTeam;
-    });
-  }, [appointments, monthString, teamFilter]);
-
-  const monthlyTrips = useMemo(() => {
-    return fieldTrips.filter((t) => {
-      const matchMonth = t.date.startsWith(monthString);
-      const matchTeam = teamFilter === 'all' || t.teamId === teamFilter;
-      return matchMonth && matchTeam;
-    });
-  }, [fieldTrips, monthString, teamFilter]);
-
-  // Total Students reached this month
-  const totalStudentsReached = useMemo(() => {
-    let count = 0;
-    monthlyTrips.forEach((trip) => {
-      trip.schools?.forEach((s) => {
-        count += s.studentCount || 0;
-      });
-    });
-    return count;
-  }, [monthlyTrips]);
-
-  // Unique schools visited this month
-  const uniqueVisitedSchools = useMemo(() => {
-    const set = new Set<string>();
-    monthlyTrips.forEach((t) => {
-      t.schools?.forEach((s) => set.add(s.schoolName));
-    });
-    return Array.from(set);
-  }, [monthlyTrips]);
-
-  // Team 1 vs Team 2 comparison stats
-  const team1Trips = fieldTrips.filter(
-    (t) => t.teamId === 'team1' && t.date.startsWith(monthString)
-  );
-  const team2Trips = fieldTrips.filter(
-    (t) => t.teamId === 'team2' && t.date.startsWith(monthString)
-  );
-
-  let team1Students = 0;
-  team1Trips.forEach((t) => t.schools?.forEach((s) => (team1Students += s.studentCount || 0)));
-
-  let team2Students = 0;
-  team2Trips.forEach((t) => t.schools?.forEach((s) => (team2Students += s.studentCount || 0)));
-
-  const handleExportExcel = () => {
-    const monthName = `${THAI_MONTHS[selectedMonth]} ${getBuddhistYear(selectedYear)}`;
-    exportMonthlyReportToExcel(schools, monthlyTrips, monthlySubmissions, monthName);
-  };
-
-  const handleExportAllSchools = () => {
-    exportSchoolsToExcel(schools);
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
+function ReportTable({
+  data,
+  onOpen,
+}: {
+  data: MonthlyReportDataset;
+  onOpen?: (row: MonthlyReportRow) => void;
+}) {
+  const days = [...new Set(data.rows.map(row => row.date))];
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <FileSpreadsheet className="w-6 h-6 text-[#087CC1]" />
-            <span>รายงานสรุปผลการแนะแนวประจำเดือน</span>
-          </h1>
-          <p className="text-[13px] sm:text-sm text-slate-500 mt-1">
-            วิทยาลัยเทคโนโลยีอุตรดิตถ์ • สรุปยอดการยื่นหนังสือ การลงพื้นที่ และจำนวนนักเรียน
+    <table className="monthly-table">
+      <caption className="text-left p-3">รวมออกปฏิบัติงาน {days.length} วัน ตามตัวกรองที่เลือก</caption>
+      <thead>
+        <tr>
+          {[
+            "ลำดับวัน",
+            "วัน",
+            "วัน/เดือน/ปี",
+            "ชื่อโรงเรียน",
+            "รถที่ใช้",
+            "งานที่ปฏิบัติ",
+            "อาจารย์แนะแนว",
+          ].map((h) => (
+            <th key={h} scope="col">
+              {h}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {data.rows.map((row, index) => {
+          const date = reportDateLabels(row.date);
+          const firstOfDay = index === 0 || data.rows[index - 1].date !== row.date;
+          const dayRows = data.rows.filter(r => r.date === row.date).length;
+          return (
+            <tr
+              key={row.key}
+              tabIndex={onOpen ? 0 : undefined}
+              aria-label={
+                onOpen
+                  ? `ตรวจสอบ ${row.schoolName} ${row.activityLabel} ${date.date}`
+                  : undefined
+              }
+              onClick={onOpen ? () => onOpen(row) : undefined}
+              onKeyDown={
+                onOpen
+                  ? (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onOpen(row);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              {firstOfDay && <td rowSpan={dayRows}>{days.indexOf(row.date) + 1}</td>}
+              {firstOfDay && <td rowSpan={dayRows}>{date.weekday}</td>}
+              {firstOfDay && <td rowSpan={dayRows}>{date.date}</td>}
+              <td>{row.schoolName}</td>
+              <td>{row.vehicleName}</td>
+              <td>{row.activityLabel}</td>
+              <td>
+                {names(row).length
+                  ? names(row).map((name, i) => <div key={i}>{name}</div>)
+                  : "ไม่ระบุ"}
+              </td>
+            </tr>
+          );
+        })}
+        {!data.rows.length && (
+          <tr>
+            <td colSpan={7} className="monthly-empty">
+              ไม่มีรายการปฏิบัติงานตามตัวกรองที่เลือก
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  );
+}
+function ReportSummary({ data }: { data: MonthlyReportDataset }) {
+  const entries = [
+    ...data.teams.map((t) => ({
+      label: reportTeamLabel(t.team),
+      summary: t.summary,
+    })),
+    { label: "รวมตามตัวกรอง", summary: data.summary },
+  ];
+  return (
+    <section className="monthly-summary">
+      <h2>สรุปผลการปฏิบัติงานตามตัวกรอง</h2>
+      {entries.map(({ label, summary: s }) => (
+        <div className="monthly-team-summary" key={label}>
+          <h3>{label}</h3>
+          <p>
+            ยื่นหนังสือ <b>{s.submissions}</b> รายการ · ออกแนะแนว{" "}
+            <b>{s.trips}</b> ทริป · โรงเรียนออกแนะแนว <b>{s.guidanceSchools}</b>{" "}
+            โรงเรียน · โรงเรียนไม่ซ้ำรวม <b>{s.uniqueSchools}</b> โรงเรียน
+          </p>
+          <p>
+            ผู้รับผิดชอบ: {s.people.map((p) => p.name).join(", ") || "ไม่ระบุ"}
           </p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
+      ))}
+      <p className="monthly-count-note">
+        จำนวนโรงเรียนนับเฉพาะความเชื่อมโยงที่ยืนยันได้
+        ไม่นับซ้ำระหว่างยื่นหนังสือกับออกแนะแนว
+      </p>
+      {!!data.summary.unresolvedSchools && (
+        <p role="status">
+          ยังยืนยันโรงเรียนไม่ได้ {data.summary.unresolvedSchools} รายการ —
+          แสดงรายการงานไว้ แต่ไม่นำมาคำนวณจำนวนโรงเรียนไม่ซ้ำ
+        </p>
+      )}
+    </section>
+  );
+}
+export function MonthlyReportsView({
+  schools,
+  submissions,
+  fieldTrips,
+}: Props) {
+  const now = new Date();
+  const [filters, setFilters] = useState<ReportFilters>({
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+    team: "all",
+    work: "all",
+  });
+  const [selected, setSelected] = useState<MonthlyReportRow | null>(null);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [exportError, setExportError] = useState("");
+  const previousFocus = useRef<HTMLElement | null>(null);
+  const built = useMemo(
+    () => buildMonthlyReportRows(submissions, fieldTrips, schools),
+    [submissions, fieldTrips, schools],
+  );
+  const data = useMemo(
+    () => buildMonthlyReportDataset(built.rows, filters),
+    [built.rows, filters],
+  );
+  const source = selected
+    ? findMonthlyReportSource(selected, submissions, fieldTrips)
+    : null;
+  const years = [
+    ...new Set([
+      now.getFullYear(),
+      filters.year,
+      ...built.rows.map((r) => Number(r.date.slice(0, 4))),
+    ]),
+  ].sort((a, b) => b - a);
+  const excluded = built.issues.filter(
+    (i) =>
+      (filters.team === "all" || i.team === filters.team) &&
+      (filters.work === "all" || i.sourceType === filters.work),
+  );
+  const open = (row: MonthlyReportRow) => {
+    previousFocus.current = document.activeElement as HTMLElement;
+    setSelected(row);
+  };
+  const close = () => {
+    setPhoto(null);
+    setSelected(null);
+    previousFocus.current?.focus();
+  };
+  useEffect(() => {
+    if (!selected) return;
+    const dialog = document.querySelector<HTMLElement>(
+      photo ? ".monthly-lightbox" : '.monthly-source-detail [role="dialog"]',
+    );
+    const first = dialog?.querySelector<HTMLElement>("button");
+    first?.focus();
+    const listener = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (photo) setPhoto(null);
+        else close();
+      }
+      if (e.key === "Tab") {
+        const activeDialog = document.querySelector<HTMLElement>(
+          photo
+            ? ".monthly-lightbox"
+            : '.monthly-source-detail [role="dialog"]',
+        );
+        const controls = activeDialog?.querySelectorAll<HTMLElement>(
+          'button, a[href], [tabindex="0"]',
+        );
+        if (!controls?.length) return;
+        const first = controls[0],
+          last = controls[controls.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", listener);
+    return () => document.removeEventListener("keydown", listener);
+  }, [selected, photo]);
+  const summary = data.summary;
+  return (
+    <div className="monthly-report space-y-5">
+      <header className="monthly-header">
+        <div>
+          <h1>
+            <FileSpreadsheet size={25} /> รายงานประจำเดือน
+          </h1>
+          <p>ยื่นหนังสือและออกแนะแนว · วิทยาลัยเทคโนโลยีอุตรดิตถ์</p>
+        </div>
+        <div className="monthly-actions">
           <button
             type="button"
-            onClick={handleExportExcel}
-            id="btn-export-monthly-excel"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-colors"
+            onClick={() => {
+              try {
+                downloadMonthlyReport(data);
+                setExportError("");
+              } catch {
+                setExportError("ส่งออกไม่สำเร็จ กรุณาลองอีกครั้ง");
+              }
+            }}
           >
-            <Download className="w-4 h-4" />
-            <span>ส่งออก Excel (.xlsx)</span>
+            <Download size={17} /> Excel
           </button>
-          <button
-            type="button"
-            onClick={handleExportAllSchools}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-semibold rounded-xl shadow-xs transition-colors"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            <span>ส่งออกรายชื่อโรงเรียน</span>
-          </button>
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-semibold rounded-xl shadow-xs transition-colors"
-          >
-            <Printer className="w-4 h-4" />
-            <span>พิมพ์รายงาน</span>
+          <button type="button" onClick={() => window.print()}>
+            <Printer size={17} /> พิมพ์ / PDF
           </button>
         </div>
-      </div>
-
-      {/* Filter Bar: Month, Year, Team */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-semibold text-slate-600">ประจำเดือน:</label>
+      </header>
+      <div className="monthly-filters">
+        <label>
+          เดือน
           <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-[#087CC1]"
+            aria-label="เดือน"
+            value={filters.month}
+            onChange={(e) =>
+              setFilters({ ...filters, month: Number(e.target.value) })
+            }
           >
-            {THAI_MONTHS.map((m, idx) => (
-              <option key={m} value={idx}>
+            {THAI_MONTHS.map((m, i) => (
+              <option key={m} value={i + 1}>
                 {m}
               </option>
             ))}
           </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-semibold text-slate-600">ปี พ.ศ.:</label>
+        </label>
+        <label>
+          ปี พ.ศ.
           <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-[#087CC1]"
+            aria-label="ปี พ.ศ."
+            value={filters.year}
+            onChange={(e) =>
+              setFilters({ ...filters, year: Number(e.target.value) })
+            }
           >
-            {[selectedYear - 1, selectedYear, selectedYear + 1].map((y) => (
+            {years.map((y) => (
               <option key={y} value={y}>
-                {getBuddhistYear(y)}
+                {y + 543}
               </option>
             ))}
           </select>
-        </div>
-
-        {/* Team Filter */}
-        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 ml-auto">
-          <button
-            onClick={() => setTeamFilter('all')}
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
-              teamFilter === 'all' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'
-            }`}
+        </label>
+        <label>
+          สายงาน
+          <select
+            aria-label="สายงาน"
+            value={filters.team}
+            onChange={(e) =>
+              setFilters({
+                ...filters,
+                team: e.target.value as ReportFilters["team"],
+              })
+            }
           >
-            รวมทุกสาย
-          </button>
-          <button
-            onClick={() => setTeamFilter('team1')}
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
-              teamFilter === 'team1' ? 'bg-[#1976D2] text-white shadow-2xs' : 'text-[#1976D2]'
-            }`}
+            {(["all", "team1", "team2", "unknown"] as const).map((t) => (
+              <option key={t} value={t}>
+                {reportTeamLabel(t)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          ประเภทงาน
+          <select
+            aria-label="ประเภทงาน"
+            value={filters.work}
+            onChange={(e) =>
+              setFilters({
+                ...filters,
+                work: e.target.value as ReportFilters["work"],
+              })
+            }
           >
-            อุตรดิตถ์
-          </button>
-          <button
-            onClick={() => setTeamFilter('team2')}
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
-              teamFilter === 'team2' ? 'bg-[#F59E0B] text-white shadow-2xs' : 'text-[#F59E0B]'
-            }`}
-          >
-            สุโขทัย
-          </button>
-        </div>
+            {(["all", "SUBMISSION", "GUIDANCE"] as const).map((t) => (
+              <option key={t} value={t}>
+                {reportWorkLabel(t)}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
-
-      {/* KPI Highlight Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">ยื่นหนังสือเดือนนี้</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <FileCheck className="w-4 h-4" />
-            </div>
+      {exportError && <p role="alert">{exportError}</p>}
+      {!!excluded.length && (
+        <p className="monthly-warning" role="status">
+          มีข้อมูลต้นทาง {excluded.length}{" "}
+          รายการที่วันที่/โรงเรียน/ข้อมูลอ้างอิงไม่ครบ จึงไม่นำเข้าตาราง
+          (ตรวจจากข้อมูลทุกเดือนของสายและประเภทที่เลือก ไม่เดาวันที่)
+        </p>
+      )}
+      <div className="monthly-counters">
+        {[
+          [summary.submissions, "ยื่นหนังสือ", "รายการ"],
+          [summary.trips, "ออกแนะแนว", "ทริป"],
+          [summary.guidanceSchools, "โรงเรียนออกแนะแนว", "โรงเรียน"],
+          [summary.uniqueSchools, "โรงเรียนไม่ซ้ำรวม", "โรงเรียน"],
+        ].map(([count, title, unit]) => (
+          <div key={title}>
+            <span>{title}</span>
+            <p>
+              <strong>{count}</strong> {unit}
+            </p>
           </div>
-          <div className="mt-2 text-2xl sm:text-3xl font-bold text-slate-800">
-            {monthlySubmissions.length}
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">ฉบับประสานงานโรงเรียน</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">ออกแนะแนวแล้ว</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Compass className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 text-2xl sm:text-3xl font-bold text-slate-800">
-            {monthlyTrips.length}
-          </div>
-          <p className="text-[11px] text-emerald-600 font-medium mt-1">
-            {uniqueVisitedSchools.length} โรงเรียนเป้าหมาย
-          </p>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">นักเรียนที่เข้าร่วม</span>
-            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 text-2xl sm:text-3xl font-bold text-slate-800">
-            {totalStudentsReached.toLocaleString()}
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">คน (ม.3 และ ม.6)</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">นัดหมายในเดือน</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Calendar className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 text-2xl sm:text-3xl font-bold text-slate-800">
-            {monthlyAppointments.length}
-          </div>
-          <p className="text-[11px] text-amber-600 font-medium mt-1">รายการกำหนดการ</p>
-        </div>
+        ))}
       </div>
-
-      {/* Team Comparison Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#1976D2]" />
-              <h3 className="font-bold text-slate-800">อุตรดิตถ์</h3>
-            </div>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-sm bg-[#E3F2FD] text-[#1976D2]">
-              {team1Trips.length} ทริป
-            </span>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-center">
-            <div className="p-3 bg-slate-50 rounded-xl">
-              <div className="text-xs text-slate-500">ออกแนะแนว</div>
-              <div className="text-xl font-bold text-[#1976D2]">{team1Trips.length} ครั้ง</div>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-xl">
-              <div className="text-xs text-slate-500">นักเรียนเข้าร่วม</div>
-              <div className="text-xl font-bold text-slate-800">{team1Students.toLocaleString()} คน</div>
-            </div>
-          </div>
+      <section className="monthly-list">
+        <div className="monthly-list-title">
+          <h2>{monthlyReportTitle(data)}</h2>
+          <p>คลิกหรือแตะรายการเพื่อดูข้อมูลต้นทางและรูปหลักฐาน</p>
         </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#F59E0B]" />
-              <h3 className="font-bold text-slate-800">สุโขทัย</h3>
-            </div>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-sm bg-[#FFF7E0] text-[#F59E0B]">
-              {team2Trips.length} ทริป
-            </span>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-center">
-            <div className="p-3 bg-slate-50 rounded-xl">
-              <div className="text-xs text-slate-500">ออกแนะแนว</div>
-              <div className="text-xl font-bold text-[#F59E0B]">{team2Trips.length} ครั้ง</div>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-xl">
-              <div className="text-xs text-slate-500">นักเรียนเข้าร่วม</div>
-              <div className="text-xl font-bold text-slate-800">{team2Students.toLocaleString()} คน</div>
-            </div>
-          </div>
+        <div className="monthly-desktop">
+          <ReportTable data={data} onOpen={open} />
         </div>
-      </div>
-
-      <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <h3 className="p-4 font-bold text-slate-800 text-base sm:text-lg">สรุปการยื่นหนังสือ ({monthlySubmissions.length} รายการ)</h3>
-        <div className="overflow-x-auto"><table className="w-full text-sm text-left">
-          <thead className="bg-slate-50 text-slate-600 font-semibold text-sm"><tr><th className="p-3.5 whitespace-nowrap min-w-[120px]">วันที่ยื่น</th><th className="p-3.5 min-w-[200px]">โรงเรียน</th><th className="p-3.5 min-w-[200px]">อาจารย์ผู้ยื่น</th></tr></thead>
-          <tbody>{monthlySubmissions.map(s => <tr key={s.id} className="border-t border-slate-100"><td className="p-3.5 whitespace-nowrap text-slate-800 font-medium">{s.submissionDate}</td><td className="p-3.5 font-semibold text-slate-800">{s.schoolName}{s.sameDayGuidance && <span className="inline-block mt-0.5 text-xs text-sky-700 bg-sky-50 px-2 py-0.5 rounded-sm">ยื่นหนังสือ + แนะแนว</span>}</td><td className="p-3.5 text-slate-700">{s.submittedByNames?.length ? s.submittedByNames.join(', ') : s.submittedByName}</td></tr>)}
-          {!monthlySubmissions.length && <tr><td colSpan={3} className="p-4 text-center text-slate-500">ไม่มีการยื่นหนังสือในเดือนและสายที่เลือก</td></tr>}</tbody>
-        </table></div>
+        <div className="monthly-mobile">
+          {data.rows.map((row) => (
+            <button
+              type="button"
+              key={row.key}
+              onClick={() => open(row)}
+              className="monthly-card"
+            >
+              <span>
+                {reportDateLabels(row.date).weekday}{" "}
+                {reportDateLabels(row.date).date}
+              </span>
+              <strong>{row.schoolName}</strong>
+              <span>
+                {row.activityLabel} · {reportTeamLabel(row.team)}
+              </span>
+              <span>รถ: {row.vehicleName}</span>
+              <span>อาจารย์แนะแนว: {names(row).join(", ") || "ไม่ระบุ"}</span>
+            </button>
+          ))}
+          {!data.rows.length && (
+            <p className="monthly-empty">
+              ไม่มีรายการปฏิบัติงานตามตัวกรองที่เลือก
+            </p>
+          )}
+        </div>
       </section>
-      {/* Monthly Trips Detail Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-bold text-slate-800 text-base sm:text-lg">
-            รายการออกแนะแนวประจำเดือน {THAI_MONTHS[selectedMonth]} {getBuddhistYear(selectedYear)}
-          </h2>
-          <span className="text-xs text-slate-400 font-medium">
-            รวม {monthlyTrips.length} รายการ
-          </span>
+      <ReportSummary data={data} />
+      {source && (
+        <div className="monthly-source-detail">
+          {source.type === "SUBMISSION" && source.record && (
+            <SubmissionDetailModal
+              detail={source.record}
+              submitterNames={reportPeople(
+                source.record.submittedByNames?.length
+                  ? source.record.submittedByNames
+                  : [source.record.submittedByName],
+              ).map((p) => p.name)}
+              onClose={close}
+              onPhoto={setPhoto}
+            />
+          )}
+          {source.type === "GUIDANCE" && source.record && (
+            <FieldTripDetailModal
+              selectedTrip={source.record}
+              responsibleNames={reportPeople(
+                [
+                  source.record.counselorName,
+                  source.record.teamMemberNames || "",
+                ],
+                source.record.counselorId,
+              ).map((p) => p.name)}
+              onClose={close}
+              onPhoto={setPhoto}
+            />
+          )}
+          {!source.record && (
+            <div
+              role="dialog"
+              aria-label="ไม่พบรายการต้นทาง"
+              className="monthly-missing-source"
+            >
+              <p>ไม่พบรายการต้นทาง ข้อมูลอาจเปลี่ยนแปลงแล้ว</p>
+              <button onClick={close}>ปิด</button>
+            </div>
+          )}
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[1050px]">
-            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold text-sm">
-              <tr>
-                <th className="py-3.5 px-4 whitespace-nowrap min-w-[110px]">วันที่</th>
-                <th className="py-3.5 px-4 whitespace-nowrap min-w-[90px]">สาย</th>
-                <th className="py-3.5 px-4 min-w-[200px]">โรงเรียนที่จัดกิจกรรม</th>
-                <th className="py-3.5 px-4 min-w-[170px]">อาจารย์ผู้รับผิดชอบ</th>
-                <th className="py-3.5 px-4 text-center whitespace-nowrap min-w-[120px]">จำนวนนักเรียน</th>
-                <th className="py-3.5 px-4 min-w-[180px]">รายละเอียดกิจกรรม</th>
-                <th className="py-3.5 px-4 text-center whitespace-nowrap min-w-[110px]">รูปกิจกรรม</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {monthlyTrips.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400">
-                    ไม่มีรายการออกแนะแนวในเดือนที่เลือก
-                  </td>
-                </tr>
-              ) : (
-                monthlyTrips.map((trip) => {
-                  const isTeam1 = trip.teamId === 'team1';
-                  const students = trip.schools?.reduce((acc, s) => acc + (s.studentCount || 0), 0) || 0;
-                  return (
-                    <tr key={trip.id} className="hover:bg-slate-50">
-                      <td className="py-3.5 px-4 font-semibold text-slate-800 text-sm whitespace-nowrap">
-                        {formatThaiShortDate(trip.date)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-block px-2.5 py-1 rounded-md font-semibold text-xs whitespace-nowrap ${
-                            isTeam1 ? 'bg-[#E3F2FD] text-[#1976D2]' : 'bg-[#FFF7E0] text-[#F59E0B]'
-                          }`}
-                        >
-                          {isTeam1 ? 'อุตรดิตถ์' : 'สุโขทัย'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        {trip.schools?.map((s, idx) => (
-                          <div key={idx} className="font-semibold text-slate-800 mb-1">
-                            <div>{formatSchoolDisplayName(s.schoolName)}</div>
-                            <div className="text-xs font-normal text-slate-500 mt-0.5">
-                              {s.timeSlot || 'ไม่ระบุเวลา'}{s.notes ? ` · ${s.notes}` : ''}
-                            </div>
-                          </div>
-                        ))}
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-700 text-sm font-medium">
-                        {trip.counselorName}
-                      </td>
-                      <td className="py-3.5 px-4 text-center font-bold text-emerald-700 text-sm whitespace-nowrap">
-                        {students} คน
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-600 text-sm">
-                        <div className="font-semibold text-slate-700">{trip.workType}</div>
-                        <div className="text-xs text-slate-500 line-clamp-2 mt-0.5" title={trip.summary || trip.issues || ''}>
-                          {trip.summary || trip.issues || '-'}
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                        {trip.photos?.length ? (
-                          <div className="flex items-center justify-center gap-1">
-                            {trip.photos.slice(0, 3).map((photo, index) => (
-                              <img
-                                key={photo.id || index}
-                                src={photo.url}
-                                alt={photo.fileName || 'รูปกิจกรรม'}
-                                className="w-8 h-8 rounded-md object-cover border border-slate-200"
-                              />
-                            ))}
-                            <span className="text-[11px] font-semibold text-slate-600">{trip.photos.length} รูป</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-300">-</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+      )}
+      {photo && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="รูปหลักฐานต้นทาง"
+          className="monthly-lightbox"
+          onClick={() => setPhoto(null)}
+        >
+          <button autoFocus type="button" onClick={() => setPhoto(null)}>
+            ปิดรูป
+          </button>
+          <img
+            src={photo}
+            alt="รูปหลักฐานต้นทาง"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
-      </div>
+      )}
+      {createPortal(
+        <article className="monthly-print-document">
+          <header>
+            <h1>{monthlyReportTitle(data)}</h1>
+          </header>
+          <ReportTable data={data} />
+        </article>,
+        document.body,
+      )}
     </div>
   );
-};
+}

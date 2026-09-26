@@ -8,7 +8,7 @@ import { checkAppointmentConflict } from '../../firebase/dbService';
 import { getSelectablePersonnel, isEligiblePersonnel, resolveResponsibleCounselor } from '../../utils/personnelSelector';
 import { getDefaultVehicleForPersonnel } from '../../utils/vehicleMapping';
 import { isValidTimeRange, isTimeRangeValid } from '../../utils/appointmentUtils';
-import { formatSchoolDisplayName } from '../../utils/schoolStatus';
+import { resolveSchoolRelation, formatSchoolDisplayName } from '../../utils/schoolStatus';
 
 interface AppointmentFormModalProps {
   isOpen: boolean;
@@ -106,9 +106,9 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
 
     if (appointmentToEdit) {
       setSubmissionId(appointmentToEdit.submissionId || '');
-      setSelectedSchoolId(appointmentToEdit.schoolId);
+      setSelectedSchoolId(resolveSchoolRelation(appointmentToEdit.schoolId, schools)?.id || appointmentToEdit.schoolId);
       setDate(appointmentToEdit.date);
-      setStartTime(appointmentToEdit.startTime || '09:00');
+      setStartTime(appointmentToEdit.startTime || '');
       setEndTime(appointmentToEdit.endTime || '');
       setTeamId(appointmentToEdit.teamId);
       const resolved = resolveResponsibleCounselor(
@@ -119,12 +119,9 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
       setCounselorName(resolved.name);
       setCounselorId(resolved.id);
       setTeamMemberNames(appointmentToEdit.teamMemberNames || '');
-      // Priority: 1. Stored vehicle of record, 2. Counselor default vehicle, 3. Empty
-      const resolvedVeh = appointmentToEdit.vehicleId
-        ? { id: appointmentToEdit.vehicleId, name: appointmentToEdit.vehicleName || '' }
-        : getDefaultVehicleForPersonnel(resolved.id, resolved.name);
-      setVehicleId(resolvedVeh?.id || '');
-      setVehicleName(resolvedVeh?.name || '');
+      // Historical edits preserve only the vehicle actually stored.
+      setVehicleId(appointmentToEdit.vehicleId || '');
+      setVehicleName(appointmentToEdit.vehicleName || '');
       setTeacherName(appointmentToEdit.teacherName || '');
       setTeacherPhone(appointmentToEdit.teacherPhone || '');
       setStatus(appointmentToEdit.status);
@@ -139,7 +136,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
         if (submission) applySubmission(submission);
         else setSubmissionId(prefilledData.submissionId);
       }
-      if (prefilledData.schoolId) setSelectedSchoolId(prefilledData.schoolId);
+      if (prefilledData.schoolId) setSelectedSchoolId(resolveSchoolRelation(prefilledData.schoolId, schools)?.id || prefilledData.schoolId);
       if (prefilledData.teamId) setTeamId(prefilledData.teamId);
       if (prefilledData.teacherName) setTeacherName(prefilledData.teacherName);
       if (prefilledData.teacherPhone) setTeacherPhone(prefilledData.teacherPhone);
@@ -198,7 +195,7 @@ export const AppointmentFormModal: React.FC<AppointmentFormModalProps> = ({
 
   const applySubmission = (submission: DocumentSubmission) => {
     setSubmissionId(submission.id);
-    setSelectedSchoolId(submission.schoolId);
+    setSelectedSchoolId(resolveSchoolRelation(submission.schoolId, schools)?.id || submission.schoolId);
     setTeamId(submission.teamId);
 
     // Auto-match counselor from submitter if possible

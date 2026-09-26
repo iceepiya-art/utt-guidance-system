@@ -1,0 +1,297 @@
+{
+  "provenance": "user-confirmed-table",
+  "team": "team2",
+  "month": "2026-09",
+  "rows": [
+    {
+      "date": "2026-09-01",
+      "schoolName": "บ้านหนองแหน",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-01",
+      "schoolName": "บ้านขอนซุง",
+      "activity": "แนะแนว",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-02",
+      "schoolName": "บ้านนายาง",
+      "activity": "แนะแนว",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-03",
+      "schoolName": "บ้านเมืองเก่า ศรีอินทราทิตย์",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-03",
+      "schoolName": "บ้านเมืองเก่า ศรีอินทราทิตย์",
+      "activity": "แนะแนว",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-04",
+      "schoolName": "ศรีสำโรงชนูปถัมภ์",
+      "activity": "แนะแนว",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6739",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-07",
+      "schoolName": "บ้านหนองบัว",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-07",
+      "schoolName": "เทวัญอำนวยวิทย์",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-08",
+      "schoolName": "บ้านสวนวิทยาคม",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-08",
+      "schoolName": "ลิไทพิทยาคม",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-09",
+      "schoolName": "บ้านเตว็ดนอก(สร้อยสนประชาสรรค์)",
+      "activity": "แนะแนว",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-10",
+      "schoolName": "บ้านสารจิตร",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-10",
+      "schoolName": "บ้านแก่งวิทยา",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-14",
+      "schoolName": "เทวัญอำนวยวิทย์",
+      "activity": "แนะแนว",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-14",
+      "schoolName": "วัดปากน้ำ",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-15",
+      "schoolName": "บ้านหนองบัว",
+      "activity": "แนะแนว",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-15",
+      "schoolName": "บ้านบึงท่ายวน",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-16",
+      "schoolName": "หนองกลับวิทยาคม",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-16",
+      "schoolName": "บ้านหนองแหน",
+      "activity": "แนะแนว",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-17",
+      "schoolName": "บ้านป่าเลา",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-17",
+      "schoolName": "วัดปากน้ำ",
+      "activity": "แนะแนว",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-21",
+      "schoolName": "บ้านป่าเลา",
+      "activity": "แนะแนว",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-22",
+      "schoolName": "บ้านท่าโพธิ์",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-22",
+      "schoolName": "บ้านสันหีบ",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-22",
+      "schoolName": "บ้านผาเวียง",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-23",
+      "schoolName": "บ้านห้วยโป้",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-23",
+      "schoolName": "บ้านสุเม่น",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-24",
+      "schoolName": "บ้านแม่เทิน",
+      "activity": "ยื่นหนังสือ",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-09-24",
+      "schoolName": "บ้านสุเม่น",
+      "activity": "แนะแนว",
+      "teamId": "team2",
+      "vehicleName": "MITSU บน 6738",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    }
+  ]
+}

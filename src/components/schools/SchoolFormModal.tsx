@@ -48,7 +48,7 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
       setFormData({
         schoolId: schoolToEdit.schoolId || '',
         schoolName: schoolToEdit.schoolName || '',
-        educationLevels: schoolToEdit.educationLevels || 'ม.1 - ม.6',
+        educationLevels: schoolToEdit.educationLevels || '',
         studentM3: schoolToEdit.studentM3 || 0,
         studentM6: schoolToEdit.studentM6 || 0,
         schoolPhone: schoolToEdit.schoolPhone || '',
@@ -57,8 +57,8 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
         teacherPhone: schoolToEdit.teacherPhone || '',
         teacherLine: schoolToEdit.teacherLine || '',
         preferredContactTime: schoolToEdit.preferredContactTime || '',
-        district: schoolToEdit.district || 'เมืองอุตรดิตถ์',
-        province: schoolToEdit.province || 'อุตรดิตถ์',
+        district: schoolToEdit.district || '',
+        province: schoolToEdit.province || '',
         teamId: schoolToEdit.teamId || 'team1',
         currentStatus: schoolToEdit.currentStatus || 'NOT_STARTED',
         note: schoolToEdit.note || '',
@@ -222,6 +222,7 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
                 required
               >
+                <option value="" disabled>เลือกจังหวัด</option>
                 <optgroup label="จังหวัดเป้าหมายหลัก">
                   <option value="อุตรดิตถ์">อุตรดิตถ์</option>
                   <option value="สุโขทัย">สุโขทัย</option>
@@ -272,6 +273,7 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-[#087CC1] focus:bg-white"
                 required
               >
+                <option value="" disabled>เลือกอำเภอ</option>
                 {currentDistricts.map((dist) => (
                   <option key={dist} value={dist}>
                     {dist}
@@ -449,7 +451,7 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm"
               >
                 <option value="NOT_STARTED">ยังไม่ดำเนินการ</option>
-                <option value="DOCUMENT_SUBMITTED">ยื่นหนังสือแล้ว / รอนัดหมาย</option>
+                <option value="DOCUMENT_SUBMITTED">ยื่นหนังสือแล้ว</option>
                 <option value="WAITING_CONTACT">รอติดต่อกลับ</option>
                 <option value="WAITING_APPOINTMENT">รอนัดหมาย</option>
                 <option value="APPOINTED">นัดหมายแล้ว</option>

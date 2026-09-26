@@ -1,3 +1,4 @@
+import { resolveSchoolRelation } from '../../utils/schoolStatus';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
@@ -26,6 +27,7 @@ interface SubmissionImportModalProps {
 
 interface RawImportItem {
   idGuide: string;
+  schoolId?: string;
   schoolName: string;
   documentNumber: string;
   submissionDate: string;
@@ -100,10 +102,7 @@ export const SubmissionImportModal: React.FC<SubmissionImportModalProps> = ({
       });
 
       // Find matching school in DB
-      const matchedSchool = schools.find((s) => {
-        const sClean = cleanSchool(s.schoolName);
-        return sClean === itemClean || s.schoolName === item.schoolName;
-      });
+      const matchedSchool = resolveSchoolRelation(item.schoolId, schools);
 
       return {
         ...item,
@@ -115,7 +114,7 @@ export const SubmissionImportModal: React.FC<SubmissionImportModalProps> = ({
   }, [items, existingSubmissions, schools]);
 
   const newItemsCount = useMemo(() => {
-    return itemsWithStatus.filter((i) => !i.isDuplicate).length;
+    return itemsWithStatus.filter((i) => !i.isDuplicate && !!i.schoolId).length;
   }, [itemsWithStatus]);
 
   const totalPhotosCount = useMemo(() => {
@@ -153,11 +152,15 @@ export const SubmissionImportModal: React.FC<SubmissionImportModalProps> = ({
 
   const handleStartImport = async () => {
     if (!currentUser || !canEdit || importing) return;
+    if (itemsWithStatus.some(i => !i.isDuplicate && !i.schoolId)) {
+      setError('ข้อมูลเดิมยังไม่มีรหัสโรงเรียนที่เชื่อมโยงได้ กรุณาตรวจสอบการจับคู่ก่อนนำเข้า');
+      return;
+    }
     setImporting(true);
     setError(null);
     setProgress(0);
 
-    const candidates = itemsWithStatus.filter((i) => !i.isDuplicate);
+    const candidates = itemsWithStatus.filter((i) => !i.isDuplicate && !!i.schoolId);
     let imported = 0;
     let failed = 0;
     const skipped = itemsWithStatus.length - candidates.length;
@@ -171,15 +174,15 @@ export const SubmissionImportModal: React.FC<SubmissionImportModalProps> = ({
             schoolName: item.schoolName,
             documentNumber: item.documentNumber || '-',
             submissionDate: item.submissionDate,
-            submissionTime: item.submissionTime || '09:00',
+            submissionTime: item.submissionTime || '',
             teamId: item.teamId,
             teacherName: '',
             teacherPhone: '',
             status: item.status || 'WAITING_APPOINTMENT',
             note: item.note || '',
             photos: item.photos || [],
-            submittedByName: item.submittedByName || 'อ.ประชา',
-            submittedByNames: item.submittedByNames || ['อ.ประชา'],
+            submittedByName: item.submittedByName || '',
+            submittedByNames: item.submittedByNames || [],
             otherActivityDetails: item.otherActivityDetails,
             academicYear: '2569',
           } as any,

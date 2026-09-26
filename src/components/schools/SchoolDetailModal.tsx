@@ -1,3 +1,9 @@
+import { SchoolTimelineStep } from './SchoolTimelineStep';
+import { hasActualGuidance } from '../../utils/actualGuidance';
+import { getSchoolActivityHistory, submissionPeople, activityPeople, type SchoolHistoryTarget } from '../../utils/schoolActivityHistory';
+import { SubmissionDetailModal } from '../submissions/SubmissionDetailModal';
+import { FieldTripDetailModal } from '../trips/FieldTripDetailModal';
+import { getSchoolContactSuggestion } from '../../utils/dataCompleteness';
 import React from 'react';
 import {
   X,
@@ -18,13 +24,17 @@ import {
 import { School, DocumentSubmission, Appointment, FieldTrip } from '../../types';
 import { formatThaiShortDate, formatThaiFullDate } from '../../utils/dateUtils';
 import { formatAppointmentTime } from '../../utils/appointmentUtils';
-import { formatSchoolDisplayName, getCleanSchoolCode } from '../../utils/schoolStatus';
+import { formatSchoolDisplayName, getCleanSchoolCode, getSchoolWorkflow, SCHOOL_STATUS_LABELS } from '../../utils/schoolStatus';
 
 interface SchoolDetailModalProps {
   school: School | null;
+  schools?: School[];
   submissions: DocumentSubmission[];
   appointments: Appointment[];
   fieldTrips: FieldTrip[];
+  canEdit?: boolean;
+  onRecordTrip?: (appointment: Appointment) => void;
+  onOpenAppointment?: (appointment: Appointment) => void;
   onClose: () => void;
   onEdit: (school: School) => void;
   onNewSubmissionForSchool: (school: School) => void;
@@ -33,27 +43,45 @@ interface SchoolDetailModalProps {
 
 export const SchoolDetailModal: React.FC<SchoolDetailModalProps> = ({
   school,
+  schools,
   submissions,
   appointments,
   fieldTrips,
+  canEdit = true,
+  onOpenAppointment,
+  onRecordTrip,
   onClose,
   onEdit,
   onNewSubmissionForSchool,
   onNewAppointmentForSchool,
 }) => {
-  if (!school) return null;
-
+  const [selectedSource, setSelectedSource] = React.useState<SchoolHistoryTarget | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = React.useState<string | null>(null);
+  const opener = React.useRef<HTMLElement | null>(null);
+  const workflow = React.useMemo(() => school ? getSchoolWorkflow(school, submissions, appointments, fieldTrips, schools) : null, [school, schools, submissions, appointments, fieldTrips]);
+  const history = React.useMemo(() => school ? getSchoolActivityHistory(school, schools || [school], submissions, appointments, fieldTrips) : [], [school, schools, submissions, appointments, fieldTrips]);
+  if (!school || !workflow) return null;
+  const contactSuggestion = canEdit && (!school.teacherName || !school.teacherPhone) ? getSchoolContactSuggestion(school, schools || [school], submissions) : undefined;
   const isTeam1 = school.teamId === 'team1';
-
-  // Filter school's specific history
-  const schoolSubmissions = submissions.filter((s) => s.schoolId === school.id);
-  const schoolAppointments = appointments.filter((a) => a.schoolId === school.id);
-  const schoolTrips = fieldTrips.filter((t) =>
-    t.schools?.some((s) => s.schoolId === school.id || s.schoolName === school.schoolName)
-  );
+  const schoolSubmissions = workflow.current.submissions.slice(0,1);
+  const schoolTrips = workflow.current.trips.slice(0,1);
+  const pendingAppointments = workflow.schoolAppointments.filter(a=>a.status !== 'CANCELLED' && !hasActualGuidance(a, workflow.schoolTrips));
+  const pendingAppointmentIds = new Set(pendingAppointments.map(a=>a.id));
+  const activeAppointment = workflow.current.appointments.find(a=>pendingAppointmentIds.has(a.id));
+  const latestAppointment = workflow.schoolAppointments[0];
+  const selectedResult = selectedSource?.sourceType === 'GUIDANCE' ? fieldTrips.find(t=>t.id===selectedSource.sourceId) : undefined;
+  const selectedSubmission = selectedSource?.sourceType === 'SUBMISSION' ? submissions.find(t=>t.id===selectedSource.sourceId) : undefined;
+  const openSource = (target:SchoolHistoryTarget) => {
+    opener.current = document.activeElement as HTMLElement;
+    if(target.sourceType === 'APPOINTMENT') {
+      const appointment=appointments.find(a=>a.id===target.sourceId);
+      if(appointment) onOpenAppointment?.(appointment);
+    } else setSelectedSource(target);
+  };
+  const closeSource=()=>{setSelectedSource(null);opener.current?.focus();};
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div role="dialog" aria-modal="true" aria-label="รายละเอียดโรงเรียน" className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="p-5 border-b border-slate-100 flex items-start justify-between bg-slate-50/70 rounded-t-2xl">
@@ -81,6 +109,7 @@ export const SchoolDetailModal: React.FC<SchoolDetailModalProps> = ({
             </div>
           </div>
           <button
+            aria-label="ปิดรายละเอียดโรงเรียน"
             onClick={onClose}
             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg"
           >
@@ -90,6 +119,10 @@ export const SchoolDetailModal: React.FC<SchoolDetailModalProps> = ({
 
         {/* Scrollable Content */}
         <div className="p-5 overflow-y-auto space-y-5">
+          {contactSuggestion && <div className="p-3 rounded-xl border border-amber-200 bg-amber-50 text-sm">
+            <p>พบข้อมูลติดต่อจากรายการยื่นหนังสือวันที่ {formatThaiShortDate(contactSuggestion.submissionDate)}: {contactSuggestion.teacherName} · {contactSuggestion.teacherPhone}</p>
+            <button type="button" className="mt-2 text-sky-800 underline" onClick={() => onEdit({ ...school, teacherName: contactSuggestion.teacherName, teacherPhone: contactSuggestion.teacherPhone })}>ใช้ข้อมูลติดต่อนี้ในแบบแก้ไขโรงเรียน</button>
+          </div>}
           {/* Quick Contact & Dial Guidance Teacher */}
           <div className="bg-gradient-to-r from-[#EAF6FD] to-white p-4 rounded-xl border border-[#087CC1]/20">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -160,111 +193,44 @@ export const SchoolDetailModal: React.FC<SchoolDetailModalProps> = ({
           </div>
 
           {/* Note */}
-          {school.note && (
+          {school.note && (workflow.status === 'GUIDANCE_COMPLETED' ? (
+            <details className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
+              <summary className="cursor-pointer font-semibold">หมายเหตุเดิมก่อนจบงาน (ดูประวัติ)</summary>
+              <p className="mt-2">{school.note}</p>
+            </details>
+          ) : (
             <div className="p-3 bg-amber-50/60 border border-amber-200/70 rounded-xl text-xs text-amber-900">
               <span className="font-bold">หมายเหตุ: </span>
               {school.note}
             </div>
-          )}
+          ))}
 
-          {/* Activity Timeline Workflow */}
-          <div>
-            <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-[#087CC1]" />
-              <span>ลำดับขั้นตอนการดำเนินงาน (Activity Timeline)</span>
-            </h3>
-
+          <section aria-label="ลำดับขั้นตอนการดำเนินงาน">
+            <h3 className="text-sm font-bold text-slate-800 mb-3">ลำดับขั้นตอนการดำเนินงาน (Activity Timeline)</h3>
+            <p role="status" className="mb-4 rounded-xl bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800">สถานะ: {SCHOOL_STATUS_LABELS[workflow.status]}</p>
             <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-              {/* Step 1: School Profile */}
               <div className="relative">
                 <div className="absolute -left-6 top-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white" />
-                <div className="text-xs font-bold text-slate-800">1. บันทึกข้อมูลโรงเรียน</div>
-                <div className="text-[11px] text-slate-500">
-                  เพิ่มเข้าระบบเมื่อ {formatThaiShortDate(school.createdAt)}
-                </div>
+                <div className="text-sm font-bold text-slate-800">1. บันทึกข้อมูลโรงเรียน</div>
+                <p className="text-xs text-slate-500">{school.createdAt ? `เพิ่มเข้าระบบเมื่อ ${formatThaiShortDate(school.createdAt)}` : 'ไม่ระบุวันที่เพิ่มเข้าระบบ'}</p>
               </div>
-
-              {/* Step 2: Document Submission */}
-              <div className="relative">
-                <div
-                  className={`absolute -left-6 top-0.5 w-4 h-4 rounded-full border-2 border-white ${
-                    schoolSubmissions.length > 0 ? 'bg-emerald-500' : 'bg-slate-300'
-                  }`}
-                />
-                <div className="text-xs font-bold text-slate-800">2. ยื่นหนังสือประสานงาน</div>
-                {schoolSubmissions.length > 0 ? (
-                  <div className="text-[11px] text-slate-600 mt-1 space-y-1">
-                    {schoolSubmissions.map((sub) => (
-                      <div key={sub.id} className="p-2 bg-slate-50 rounded-lg border border-slate-200">
-                        <div>เลขที่: {sub.documentNumber} • วันที่: {formatThaiShortDate(sub.submissionDate)}</div>
-                        <div className="text-slate-500">ผู้ยื่น: {sub.submittedByName}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-[11px] text-slate-400">ยังไม่มีประวัติยื่นหนังสือ</div>
-                )}
-              </div>
-
-              {/* Step 3: Appointment */}
-              <div className="relative">
-                <div
-                  className={`absolute -left-6 top-0.5 w-4 h-4 rounded-full border-2 border-white ${
-                    schoolAppointments.length > 0 ? 'bg-emerald-500' : 'bg-slate-300'
-                  }`}
-                />
-                <div className="text-xs font-bold text-slate-800">3. นัดหมายแนะแนว</div>
-                {schoolAppointments.length > 0 ? (
-                  <div className="text-[11px] text-slate-600 mt-1 space-y-1">
-                    {schoolAppointments.map((appt) => (
-                      <div key={appt.id} className="p-2 bg-slate-50 rounded-lg border border-slate-200">
-                        <div className="font-medium text-slate-800">
-                          วันที่ {formatThaiFullDate(appt.date)} เวลา {formatAppointmentTime(appt.startTime, appt.endTime)}
-                        </div>
-                        <div className="text-slate-500">
-                          อาจารย์: {appt.counselorName} • สถานะ: {appt.status}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-[11px] text-slate-400">ยังไม่มีนัดหมาย</div>
-                )}
-              </div>
-
-              {/* Step 4: Guidance Field Trip */}
-              <div className="relative">
-                <div
-                  className={`absolute -left-6 top-0.5 w-4 h-4 rounded-full border-2 border-white ${
-                    schoolTrips.length > 0 ? 'bg-emerald-500' : 'bg-slate-300'
-                  }`}
-                />
-                <div className="text-xs font-bold text-slate-800">4. ออกปฏิบัติงานแนะแนว</div>
-                {schoolTrips.length > 0 ? (
-                  <div className="text-[11px] text-slate-600 mt-1 space-y-1">
-                    {schoolTrips.map((trip) => (
-                      <div key={trip.id} className="p-2 bg-emerald-50/60 rounded-lg border border-emerald-200">
-                        <div className="font-semibold text-emerald-900">
-                          วันที่ {formatThaiShortDate(trip.date)} • {trip.workType}
-                        </div>
-                        <div className="text-slate-600">
-                          รถ: {trip.vehicleName} • อาจารย์: {trip.counselorName}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-[11px] text-slate-400">ยังไม่ได้ออกปฏิบัติงาน</div>
-                )}
-              </div>
+              <SchoolTimelineStep title="2. ยื่นหนังสือประสานงาน" items={history.filter(i=>i.sourceType==='SUBMISSION')}
+                empty="ยังไม่มีประวัติยื่นหนังสือ" onOpen={openSource} />
+              <SchoolTimelineStep title="3. นัดหมายแนะแนว" items={history.filter(i=>i.sourceType==='APPOINTMENT')}
+                summary={latestAppointment ? `ล่าสุด ${formatThaiShortDate(latestAppointment.date)} เวลา ${formatAppointmentTime(latestAppointment.startTime, latestAppointment.endTime)}${hasActualGuidance(latestAppointment, workflow.schoolTrips) ? ' · ออกแนะแนวแล้ว' : latestAppointment.status === 'CANCELLED' ? ' · ยกเลิกนัดหมาย' : ''}` : undefined}
+                empty="ยังไม่มีประวัตินัดหมาย" onOpen={openSource} />
+              <SchoolTimelineStep title="4. ออกปฏิบัติงานแนะแนว" items={history.filter(i=>i.sourceType==='GUIDANCE')}
+                empty="ยังไม่มีบันทึกผลออกแนะแนวที่เชื่อมกับโรงเรียนนี้" onOpen={openSource} />
+              {!schoolTrips.length && activeAppointment && <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900"><p>มีนัดหมายเดิม แต่ยังไม่พบรายการบันทึกผลที่เชื่อมโยง หากดำเนินการแล้ว สามารถบันทึกผลจากนัดหมายนี้ได้</p>{canEdit && onRecordTrip && <button type="button" onClick={() => onRecordTrip(activeAppointment)} className="mt-2 rounded-lg bg-[#087CC1] px-4 py-2 text-white">บันทึกผลแนะแนวจากนัดหมายเดิม</button>}</div>}
             </div>
-          </div>
+          </section>
         </div>
 
         {/* Footer Actions */}
         <div className="p-4 border-t border-slate-100 bg-slate-50/80 rounded-b-2xl flex flex-wrap items-center justify-between gap-2">
           <button
             type="button"
+            disabled={!canEdit}
             onClick={() => onEdit(school)}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold rounded-xl transition-colors"
           >
@@ -275,23 +241,28 @@ export const SchoolDetailModal: React.FC<SchoolDetailModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               type="button"
+              disabled={!canEdit}
               onClick={() => onNewSubmissionForSchool(school)}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-blue-50 text-[#087CC1] border border-[#087CC1]/30 text-xs font-semibold rounded-xl transition-colors"
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>ยื่นหนังสือ</span>
+              <span>{history.length ? 'ยื่นหนังสือรอบใหม่' : 'ยื่นหนังสือ'}</span>
             </button>
             <button
               type="button"
-              onClick={() => onNewAppointmentForSchool(school)}
+              disabled={!activeAppointment && !schoolTrips.length && (!canEdit || !schoolSubmissions.length)}
+              onClick={() => activeAppointment ? openSource({sourceType:'APPOINTMENT',sourceId:activeAppointment.id}) : schoolTrips[0] ? openSource({sourceType:'GUIDANCE',sourceId:schoolTrips[0].id}) : onNewAppointmentForSchool(school)}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
             >
               <Calendar className="w-3.5 h-3.5" />
-              <span>สร้างนัดหมาย</span>
+              <span>{activeAppointment ? 'ดูนัดหมายที่มีอยู่' : schoolTrips.length ? 'ดูผลแนะแนว' : 'สร้างนัดหมาย'}</span>
             </button>
           </div>
         </div>
       </div>
+      {selectedSubmission && <SubmissionDetailModal detail={selectedSubmission} submitterNames={submissionPeople(selectedSubmission).map(p=>p.name)} onClose={closeSource} onPhoto={setSelectedPhoto} />}
+      {selectedResult && <FieldTripDetailModal selectedTrip={selectedResult} responsibleNames={activityPeople(selectedResult).map(p=>p.name)} onClose={closeSource} onPhoto={setSelectedPhoto} />}
+      {selectedPhoto && <div role="dialog" aria-label="รูปกิจกรรมขนาดเต็ม" className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4" onClick={() => setSelectedPhoto(null)}><button type="button" aria-label="ปิดรูปกิจกรรม" className="absolute top-4 right-4 text-white p-3" onClick={() => setSelectedPhoto(null)}>✕</button><img src={selectedPhoto} alt="หลักฐานกิจกรรมแนะแนว" className="max-w-full max-h-[90vh] object-contain" /></div>}
     </div>
   );
 };

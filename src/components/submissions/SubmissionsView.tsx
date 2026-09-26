@@ -1,3 +1,9 @@
+import { submissionPeople, activityPeople } from '../../utils/schoolActivityHistory';
+import { getSubmissionWorkflow, getSubmissionWorkflowNote } from '../../utils/submissionWorkflow';
+import { getGuidanceResults } from '../../utils/guidanceResults';
+import { FieldTripDetailModal } from '../trips/FieldTripDetailModal';
+import { formatAppointmentTime } from '../../utils/appointmentUtils';
+import { SubmissionDetailModal } from './SubmissionDetailModal';
 import { Pencil, Trash2, X } from 'lucide-react';
 import { deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
@@ -16,7 +22,7 @@ import {
   Filter,
   Download,
 } from 'lucide-react';
-import { DocumentSubmission, School, TeamId, Appointment } from '../../types';
+import { DocumentSubmission, School, TeamId, Appointment, FieldTrip } from '../../types';
 import { formatThaiShortDate, THAI_MONTHS, getBuddhistYear } from '../../utils/dateUtils';
 import { SubmissionFormModal } from './SubmissionFormModal';
 import { SubmissionImportModal } from './SubmissionImportModal';
@@ -24,12 +30,13 @@ import { createDocumentSubmission, updateDocumentSubmission } from '../../fireba
 import { useAuth } from '../../context/AuthContext';
 import { getSelectablePersonnel, resolvePersonnelDisplayName } from '../../utils/personnelSelector';
 import { getSubmissionDisplayStatus, isNormalGuidanceActivity } from '../../utils/submissionUtils';
-import { formatSchoolDisplayName, getCleanSchoolCode } from '../../utils/schoolStatus';
+import { resolveSchoolRelation, formatSchoolDisplayName, getCleanSchoolCode } from '../../utils/schoolStatus';
 
 interface SubmissionsViewProps {
   submissions: DocumentSubmission[];
   schools: School[];
   appointments?: Appointment[];
+  fieldTrips?: FieldTrip[];
   onOpenInstantAppointment: (submissionData: {
     submissionId?: string;
     schoolId: string;
@@ -48,38 +55,24 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
   submissions,
   schools,
   appointments = [],
+  fieldTrips = [],
   onOpenInstantAppointment,
   onSelectAppointment,
 }) => {
   const { currentUser, canEdit, isAdmin, users } = useAuth();
   const selectablePersonnel = useMemo(() => getSelectablePersonnel(users), [users]);
+  const results = useMemo(() => getGuidanceResults(fieldTrips, appointments, submissions, schools), [fieldTrips, appointments, submissions, schools]);
+  const [resultDetail, setResultDetail] = useState<FieldTrip | null>(null);
   const [detail, setDetail] = useState<DocumentSubmission | null>(null);
   const [deleting, setDeleting] = useState<DocumentSubmission | null>(null);
   const [busy, setBusy] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
   const getLinkedAppointment = (sub: DocumentSubmission): Appointment | null => {
-    if (!appointments || appointments.length === 0) return null;
-    return (
-      appointments.find((a) => a.submissionId === sub.id && a.status !== 'CANCELLED') ||
-      (sub.appointmentId ? appointments.find((a) => a.id === sub.appointmentId && a.status !== 'CANCELLED') : null) ||
-      null
-    );
+    return getSubmissionWorkflow(sub, appointments, results).appointment || null;
   };
 
-  const getDisplaySubmitters = (sub: DocumentSubmission): string[] => {
-    const rawList =
-      sub.submittedByNames && sub.submittedByNames.length > 0
-        ? sub.submittedByNames
-        : sub.submittedByName
-        ? sub.submittedByName.split(/[,+]/).map(s => s.trim()).filter(Boolean)
-        : [];
-    if (rawList.length === 0) return ['-'];
-    return rawList.map((name) => {
-      const resolved = resolvePersonnelDisplayName(name, selectablePersonnel).displayName || name;
-      return resolved.replace(/\s*\(.*?\)/g, '').trim();
-    });
-  };
+  const getDisplaySubmitters = (sub: DocumentSubmission): string[] => submissionPeople(sub).map(p => p.name);
 
   const actions = (sub: DocumentSubmission) => {
     const linked = getLinkedAppointment(sub);
@@ -242,12 +235,13 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
   const team2Count = useMemo(() => submissions.filter((s) => s.teamId === 'team2').length, [submissions]);
 
   const getStatusBadge = (sub: DocumentSubmission) => {
-    const c = getSubmissionDisplayStatus(sub);
-    return (
-      <span className={`inline-block px-3 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap border border-transparent ${c.bg} ${c.text}`}>
-        {c.label}
-      </span>
-    );
+    const workflow = getSubmissionWorkflow(sub, appointments, results);
+    const c = workflow.display;
+    return <div className="space-y-1">
+      <span className={`inline-block px-3 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap ${c.bg} ${c.text}`}>{c.label}</span>
+      {workflow.appointment && !workflow.result && <div className="text-xs text-slate-500">{formatThaiShortDate(workflow.appointment.date)}<br />{formatAppointmentTime(workflow.appointment.startTime, workflow.appointment.endTime)}</div>}
+      {workflow.result && <button type="button" className="block text-xs text-sky-700 underline" onClick={e => {e.stopPropagation();setResultDetail(workflow.result!);}}>ดูผลและรูปกิจกรรม</button>}
+    </div>;
   };
 
   return (
@@ -438,7 +432,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
                   const displaySubmitters = getDisplaySubmitters(sub);
                   const displayStatus = getSubmissionDisplayStatus(sub);
 
-                  const matchedSchool = schools.find((s) => s.id === sub.schoolId);
+                  const matchedSchool = resolveSchoolRelation(sub.schoolId, schools);
                   const cleanSchoolCode = getCleanSchoolCode(matchedSchool?.schoolId) || getCleanSchoolCode(sub.schoolId);
 
                   return (
@@ -543,8 +537,8 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
                       <td className="py-2.5 px-2 text-center">
                         {getStatusBadge(sub)}
                       </td>
-                      <td className="py-2.5 px-2 text-slate-600 text-sm max-w-[160px] truncate hidden 2xl:table-cell" title={sub.note}>
-                        {sub.note || '-'}
+                      <td className="py-2.5 px-2 text-slate-600 text-sm max-w-[160px] truncate hidden 2xl:table-cell" title={getSubmissionWorkflowNote(sub, appointments, results)}>
+                        {getSubmissionWorkflowNote(sub, appointments, results) || '-'}
                       </td>
                       <td className="py-2.5 px-2 text-center" onClick={(e) => e.stopPropagation()}>
                         {actions(sub)}
@@ -570,7 +564,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
             const displaySubmitters = getDisplaySubmitters(sub);
             const displayStatus = getSubmissionDisplayStatus(sub);
 
-            const matchedSchool = schools.find((s) => s.id === sub.schoolId);
+            const matchedSchool = resolveSchoolRelation(sub.schoolId, schools);
             const cleanSchoolCode = getCleanSchoolCode(matchedSchool?.schoolId) || getCleanSchoolCode(sub.schoolId);
 
             return (
@@ -626,6 +620,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
                   {actions(sub)}
                 </div>
 
+                <p className="text-xs text-slate-600">หมายเหตุเพิ่มเติม: {getSubmissionWorkflowNote(sub, appointments, results) || '-'}</p>
                 {/* Teacher contact */}
                 <div className="p-2.5 bg-slate-50 rounded-xl text-xs space-y-1">
                   <div className="flex justify-between">
@@ -692,125 +687,8 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({
         </div>
       )}
 
-      {detail && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
-          onClick={() => setDetail(null)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="รายละเอียดการยื่นหนังสือ"
-            className="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl my-auto overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex justify-between items-center px-5 py-4 border-b border-slate-100 shrink-0 bg-white">
-              <div>
-                <h2 className="text-base font-bold text-slate-800">รายละเอียดการยื่นหนังสือ</h2>
-                <p className="text-xs font-semibold text-sky-800 mt-0.5">{formatSchoolDisplayName(detail.schoolName)}</p>
-              </div>
-              <button
-                type="button"
-                aria-label="ปิดรายละเอียด"
-                onClick={() => setDetail(null)}
-                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-5 overflow-y-auto space-y-4 text-sm flex-1">
-              <dl className="space-y-2.5">
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <dt className="text-slate-500">เลขที่หนังสือ</dt>
-                  <dd className="font-medium text-slate-800">{detail.documentNumber || '-'}</dd>
-                </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <dt className="text-slate-500">วันที่และเวลายื่น</dt>
-                  <dd className="font-medium text-slate-800">
-                    {formatThaiShortDate(detail.submissionDate)} {detail.submissionTime ? `${detail.submissionTime} น.` : ''}
-                  </dd>
-                </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <dt className="text-slate-500">สายการปฏิบัติงาน</dt>
-                  <dd className="font-medium text-slate-800">
-                    {detail.teamId === 'team1' ? 'อุตรดิตถ์ (สาย 1)' : 'สุโขทัย (สาย 2)'}
-                  </dd>
-                </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <dt className="text-slate-500">ยานพาหนะ</dt>
-                  <dd className="font-medium text-slate-800">{detail.vehicleName || 'ไม่ระบุ'}</dd>
-                </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <dt className="text-slate-500">อาจารย์ผู้ยื่น</dt>
-                  <dd className="font-medium text-slate-800 text-right">
-                    {getDisplaySubmitters(detail).join(', ')}
-                  </dd>
-                </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <dt className="text-slate-500">ครูแนะแนว / เบอร์โทร</dt>
-                  <dd className="font-medium text-slate-800">
-                    {detail.teacherName || '-'} {detail.teacherPhone && `(${detail.teacherPhone})`}
-                  </dd>
-                </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <dt className="text-slate-500">สถานะ</dt>
-                  <dd>{getStatusBadge(detail)}</dd>
-                </div>
-                {getSubmissionDisplayStatus(detail).isOtherActivity && detail.otherActivityDetails && (
-                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-                    <dt className="text-xs font-semibold text-emerald-800">กิจกรรมอื่นๆ ที่ดำเนินการ:</dt>
-                    <dd className="font-medium text-emerald-900 mt-1">{detail.otherActivityDetails}</dd>
-                  </div>
-                )}
-                <div>
-                  <dt className="text-slate-500 mb-1">หมายเหตุ</dt>
-                  <dd className="whitespace-pre-wrap p-3 bg-slate-50 rounded-xl text-slate-700 border border-slate-100">
-                    {detail.note || '-'}
-                  </dd>
-                </div>
-              </dl>
-
-              {detail.photos && detail.photos.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-semibold text-slate-600 mb-2">
-                    รูปถ่ายหลักฐาน ({detail.photos.length} รูป)
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {detail.photos.map((photo, i) => (
-                      <button
-                        key={photo.id || i}
-                        type="button"
-                        onClick={() => setSelectedPhotoModal(photo.url)}
-                        className="cursor-pointer overflow-hidden rounded-xl border border-slate-200 hover:opacity-90 hover:shadow-md transition-all text-left"
-                      >
-                        <img
-                          src={photo.url}
-                          alt={`หลักฐาน ${i + 1}`}
-                          className="w-full aspect-square object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer with Clear Close Button */}
-            <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-end bg-slate-50 shrink-0">
-              <button
-                type="button"
-                onClick={() => setDetail(null)}
-                className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer shadow-xs"
-              >
-                ปิดหน้าต่าง
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {resultDetail && <FieldTripDetailModal selectedTrip={resultDetail} responsibleNames={activityPeople(resultDetail).map(p => p.name)} onClose={() => setResultDetail(null)} onPhoto={setSelectedPhotoModal} />}
+      {detail && <SubmissionDetailModal statusOverride={getSubmissionWorkflow(detail, appointments, results).display} noteOverride={getSubmissionWorkflowNote(detail, appointments, results)} detail={detail} submitterNames={getDisplaySubmitters(detail)} onClose={() => setDetail(null)} onPhoto={setSelectedPhotoModal} />}
       {deleting && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"><div role="alertdialog" aria-modal="true" aria-label="ยืนยันลบการยื่นหนังสือ" className="bg-white rounded-2xl p-5 max-w-md w-full space-y-4">
         <h2 className="font-bold">ลบรายการยื่นหนังสือ?</h2><p className="text-sm">{deleting.schoolName} — {deleting.documentNumber}</p>
         {deleting.appointmentId || deleting.fieldTripId ? <p className="text-sm text-amber-700">รายการนี้เชื่อมกับนัดหมายหรือผลแนะแนว กรุณาจัดการรายการที่เชื่อมก่อน จึงจะลบได้</p> : <p className="text-sm text-slate-600">จะลบเฉพาะประวัติการยื่นหนังสือนี้ ข้อมูลโรงเรียนและนัดหมายอื่นจะยังอยู่</p>}

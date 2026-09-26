@@ -1,3 +1,5 @@
+import { DataReviewPanel } from './DataReviewPanel';
+import { auditDataCompleteness, type DataReviewTarget } from '../../utils/dataCompleteness';
 import { SchoolImportModal } from './SchoolImportModal';
 import React, { useState, useMemo } from 'react';
 import {
@@ -19,6 +21,10 @@ import { useAuth } from '../../context/AuthContext';
 import { formatSchoolDisplayName, getCleanSchoolCode } from '../../utils/schoolStatus';
 
 interface SchoolsViewProps {
+  onRecordTrip?: (appointment: Appointment) => void;
+  onOpenAppointment?: (appointment: Appointment) => void;
+  dataReady?: boolean;
+  onReviewRecord?: (target: DataReviewTarget) => void;
   schools: School[];
   submissions: DocumentSubmission[];
   appointments: Appointment[];
@@ -29,6 +35,10 @@ interface SchoolsViewProps {
 
 export const SchoolsView: React.FC<SchoolsViewProps> = ({
   schools,
+  dataReady = true,
+  onOpenAppointment,
+  onRecordTrip,
+  onReviewRecord,
   submissions,
   appointments,
   fieldTrips,
@@ -45,6 +55,14 @@ export const SchoolsView: React.FC<SchoolsViewProps> = ({
   const [schoolToEdit, setSchoolToEdit] = useState<School | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  const reviewItems = useMemo(() => auditDataCompleteness(schools, submissions, appointments, fieldTrips), [schools, submissions, appointments, fieldTrips]);
+  const openReview = (target: DataReviewTarget) => {
+    if (target.type === 'SCHOOL') {
+      const school = schools.find(s => s.id === target.id);
+      if (school) setSelectedSchool(school);
+    } else onReviewRecord?.(target);
+  };
 
   // Unique districts for filter
   const districts = useMemo(() => {
@@ -86,6 +104,7 @@ export const SchoolsView: React.FC<SchoolsViewProps> = ({
 
   return (
     <div className="space-y-5">
+      <DataReviewPanel items={reviewItems} ready={dataReady} onOpen={canEdit ? openReview : undefined} />
       {/* Top Title & Add Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div>
@@ -382,7 +401,11 @@ export const SchoolsView: React.FC<SchoolsViewProps> = ({
       {/* Detail Modal */}
       {selectedSchool && (
         <SchoolDetailModal
-          school={selectedSchool}
+          canEdit={canEdit}
+          onOpenAppointment={onOpenAppointment}
+          onRecordTrip={onRecordTrip ? appt => { setSelectedSchool(null); onRecordTrip(appt); } : undefined}
+          schools={schools}
+          school={schools.find(s => s.id === selectedSchool.id) || selectedSchool}
           submissions={submissions}
           appointments={appointments}
           fieldTrips={fieldTrips}

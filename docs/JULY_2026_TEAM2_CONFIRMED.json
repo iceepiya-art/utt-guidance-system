@@ -1,0 +1,111 @@
+{
+  "provenance": "user-confirmed-review",
+  "team": "team2",
+  "month": "2026-07",
+  "productionApplied": false,
+  "rows": [
+    {
+      "date": "2026-07-20",
+      "weekday": "จันทร์",
+      "schoolName": "เทศบาลสวรรคโลกประชาสรรค์",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือเทคโนคัพ",
+      "responsiblePeople": [
+        "อ.ปิยะ",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-07-20",
+      "weekday": "จันทร์",
+      "schoolName": "มัธยมศึกษาเทศบาลเมืองสวรรคโลก",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือเทคโนคัพ",
+      "responsiblePeople": [
+        "อ.ปิยะ",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-07-20",
+      "weekday": "จันทร์",
+      "schoolName": "สวรรค์อนันต์วิทยา",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือเทคโนคัพ",
+      "responsiblePeople": [
+        "อ.ปิยะ",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-07-21",
+      "weekday": "อังคาร",
+      "schoolName": "ศรีนคร",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือเทคโนคัพ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-07-21",
+      "weekday": "อังคาร",
+      "schoolName": "บ้านหนองแหน",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือเทคโนคัพ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-07-21",
+      "weekday": "อังคาร",
+      "schoolName": "เมืองเชลียง",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือเทคโนคัพ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "weekday": "พฤหัสบดี",
+      "schoolName": "เทศบาลหัวดง (ป.ฟักอังกูร)",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "weekday": "ศุกร์",
+      "schoolName": "พิชัย",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "weekday": "ศุกร์",
+      "schoolName": "ดาราพิทยาคม",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "weekday": "ศุกร์",
+      "schoolName": "บ้านโคนวิทยา",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    }
+  ]
+}

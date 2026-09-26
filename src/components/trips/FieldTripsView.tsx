@@ -1,3 +1,6 @@
+import { activityPeople } from '../../utils/schoolActivityHistory';
+import { getGuidanceResults } from '../../utils/guidanceResults';
+import { FieldTripDetailModal } from './FieldTripDetailModal';
 import React, { useState, useMemo } from 'react';
 import {
   Compass,
@@ -44,82 +47,7 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
-  // Merge fieldTrips with completed appointments from the appointment system
-  const combinedTrips = useMemo(() => {
-    const list: FieldTrip[] = fieldTrips.filter((ft) => !ft.workType || ft.workType.includes('แนะแนว'));
-
-    const cleanSchool = (s: string) =>
-      (s || '')
-        .replace(/^(โรงเรียน|รร\.)\s*/, '')
-        .replace(/\s+/g, '')
-        .trim()
-        .toLowerCase();
-
-    // Identify only completed guidance appointments
-    const completedAppts = appointments.filter((appt) => appt.status === 'COMPLETED');
-
-    completedAppts.forEach((appt) => {
-      const apptSchoolClean = cleanSchool(appt.schoolName);
-
-      const isAlreadyInTrips = list.some((ft) => {
-        // 1. Match by appointmentId
-        if (ft.appointmentId && ft.appointmentId === appt.id) return true;
-
-        // 2. Match by submissionId if both present
-        if (ft.submissionId && appt.submissionId && ft.submissionId === appt.submissionId) return true;
-
-        // 3. Match by schoolId + date
-        if (ft.date === appt.date && appt.schoolId && ft.schools?.some((s) => s.schoolId && s.schoolId === appt.schoolId)) {
-          return true;
-        }
-
-        // 4. Legacy fallback: normalized schoolName + date
-        if (ft.date === appt.date && apptSchoolClean) {
-          return ft.schools?.some((s) => cleanSchool(s.schoolName) === apptSchoolClean);
-        }
-
-        return false;
-      });
-
-      if (!isAlreadyInTrips) {
-        const matchedSub = submissions.find(
-          (s) => s.id === appt.submissionId || cleanSchool(s.schoolName) === apptSchoolClean
-        );
-        const vehName = appt.vehicleName || matchedSub?.vehicleName || '';
-        const vehId = appt.vehicleId || matchedSub?.vehicleId || '';
-
-        list.push({
-          id: `completed_appt_${appt.id}`,
-          appointmentId: appt.id,
-          submissionId: appt.submissionId,
-          date: appt.date,
-          departureTime: appt.startTime || '08:30',
-          returnTime: isValidTimeRange(appt.startTime, appt.endTime) ? appt.endTime : '',
-          teamId: appt.teamId,
-          vehicleId: vehId,
-          vehicleName: vehName,
-          workType: appt.workType || 'แนะแนวการศึกษา',
-          counselorId: appt.counselorId || '',
-          counselorName: appt.counselorName || 'อ.ประชา กัลปนารถ',
-          teamMemberNames: appt.teamMemberNames || '',
-          schools: [
-            {
-              schoolId: appt.schoolId,
-              schoolName: appt.schoolName,
-              timeSlot: formatAppointmentTime(appt.startTime, appt.endTime),
-              note: appt.note,
-            },
-          ],
-          photos: appt.photos || matchedSub?.photos || [],
-          summary: appt.note || `ออกแนะแนวเรียบร้อยแล้ว ณ ${appt.schoolName}`,
-          createdAt: appt.createdAt || appt.date,
-          updatedAt: appt.updatedAt || appt.date,
-        });
-      }
-    });
-
-    return list.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  }, [fieldTrips, appointments, submissions]);
+  const combinedTrips = useMemo(() => getGuidanceResults(fieldTrips, appointments, submissions, schools), [fieldTrips, appointments, submissions, schools]);
 
   const availableMonths = useMemo(() => {
     const map = new Map<string, number>();
@@ -364,7 +292,7 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
                     </td>
                     <td className="py-2.5 px-2">
                       <div className="font-semibold text-slate-800 text-sm">{trip.counselorName}</div>
-                      <div className="text-xs text-slate-500 line-clamp-2 max-w-[170px] mt-0.5">{trip.teamMemberNames}</div>
+                      <div className="text-xs text-slate-500 break-words max-w-[170px] mt-0.5">{trip.teamMemberNames}</div>
                     </td>
                     <td className="py-2.5 px-2 text-slate-600 text-sm">
                       {trip.vehicleName || '-'}
@@ -495,88 +423,7 @@ export const FieldTripsView: React.FC<FieldTripsViewProps> = ({
       </div>
 
       {/* Trip Details Popup Modal */}
-      {selectedTrip && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
-          onClick={() => setSelectedTrip(null)}
-        >
-          <div
-            className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 shadow-2xl border border-slate-200 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-xs font-bold text-[#087CC1]">สรุปผลการออกแนะแนว</span>
-                <h3 className="text-base font-bold text-slate-800 mt-0.5">
-                  วันที่ {formatThaiShortDate(selectedTrip.date)}
-                </h3>
-              </div>
-              <button
-                onClick={() => setSelectedTrip(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
-                <div className="font-bold text-slate-800">โรงเรียนที่จัดกิจกรรม:</div>
-                {selectedTrip.schools?.map((s, idx) => {
-                  let formattedSlot = 'ช่วงเวลาปกติ';
-                  if (s.timeSlot && s.timeSlot.trim()) {
-                    const clean = s.timeSlot.replace(/\s*น\.\s*$/, '').trim();
-                    if (clean.includes('-')) {
-                      const parts = clean.split('-').map((p) => p.trim());
-                      formattedSlot = formatAppointmentTime(parts[0], parts[1]);
-                    } else {
-                      formattedSlot = s.timeSlot;
-                    }
-                  }
-                  return (
-                    <div key={idx} className="flex justify-between text-slate-700">
-                      <span>• {formatSchoolDisplayName(s.schoolName)} ({formattedSlot})</span>
-                      <span className="font-semibold text-emerald-700">{s.studentCount || 0} คน</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {selectedTrip.summary && (
-                <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
-                  <div className="font-bold text-[#075A9C] mb-1">ผลการปฏิบัติงาน:</div>
-                  <p className="text-slate-700 leading-relaxed">{selectedTrip.summary}</p>
-                </div>
-              )}
-
-              {selectedTrip.issues && (
-                <div className="p-3 bg-amber-50/50 border border-amber-100 rounded-xl">
-                  <div className="font-bold text-amber-900 mb-1">ปัญหา / อุปสรรค:</div>
-                  <p className="text-slate-700 leading-relaxed">{selectedTrip.issues}</p>
-                </div>
-              )}
-
-              {/* Photos inside modal */}
-              {selectedTrip.photos && selectedTrip.photos.length > 0 && (
-                <div>
-                  <div className="font-bold text-slate-800 mb-2">รูปภาพกิจกรรม:</div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {selectedTrip.photos.map((p, idx) => (
-                      <img
-                        key={p.id || idx}
-                        src={p.url}
-                        alt="ภาพกิจกรรม"
-                        onClick={() => setSelectedPhoto(p.url)}
-                        className="w-full aspect-square object-cover rounded-lg border border-slate-200 cursor-pointer hover:opacity-90"
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {selectedTrip && <FieldTripDetailModal selectedTrip={selectedTrip} responsibleNames={activityPeople(selectedTrip).map(p => p.name)} onClose={() => setSelectedTrip(null)} onPhoto={setSelectedPhoto} />}
 
       {/* Lightbox Modal */}
       {selectedPhoto && (

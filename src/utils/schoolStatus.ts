@@ -1,3 +1,5 @@
+import { getSubmissionDisplayStatus } from './submissionUtils';
+import { selectCurrentSchoolCycle } from './schoolWorkflowCycle';
 import { School, DocumentSubmission, Appointment, FieldTrip, SchoolStatus } from '../types';
 
 export const cleanSchoolName = (s: string) =>
@@ -6,89 +8,70 @@ export const cleanSchoolName = (s: string) =>
     .replace(/\s+/g, '')
     .toLowerCase();
 
-/**
- * Dynamically compute the unified, interconnected status of a school
- * by checking linked appointments, field trips, and letter submissions.
- */
+/** Resolve only stable document IDs or exact, unique legacy school codes. */
+export function resolveSchoolRelation(id: string | undefined, schools: School[]): School | undefined {
+  if (!id) return undefined;
+  const direct = schools.find(s => s.id === id);
+  if (direct) return direct;
+  const matches = schools.filter(s => s.schoolId === id);
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+export const SCHOOL_STATUS_LABELS: Record<SchoolStatus, string> = {
+  NOT_STARTED: 'ยังไม่ได้ยื่นหนังสือแนะแนว', DOCUMENT_SUBMITTED: 'ยื่นหนังสือแล้ว',
+  WAITING_APPOINTMENT: 'รอนัดหมาย', WAITING_CONTACT: 'รอติดต่อกลับ',
+  APPOINTED: 'นัดหมายแล้ว', GUIDANCE_COMPLETED: 'แนะแนวเรียบร้อยแล้ว', CANCELLED: 'ยกเลิกนัดหมาย',
+};
+
+/** Shared read-only projection for Dashboard and school timeline. Never writes historical records. */
+export function getSchoolWorkflow(
+  school: School, submissions: DocumentSubmission[] = [], appointments: Appointment[] = [],
+  fieldTrips: FieldTrip[] = [], schools?: School[]
+) {
+  // Without the complete catalog, document IDs remain safe but legacy-code uniqueness is unknown.
+  const matches = (id?: string) => !!id && (schools
+    ? resolveSchoolRelation(id, schools)?.id === school.id
+    : id === school.id);
+  const knownOtherSchool = (id?: string) => !!id && !!schools && !!resolveSchoolRelation(id, schools) && !matches(id);
+  const schoolSubmissions = submissions.filter(s => matches(s.schoolId)).sort((a,b) =>
+    (b.submissionDate || '').localeCompare(a.submissionDate || '') || (b.submissionTime || '').localeCompare(a.submissionTime || '') || b.id.localeCompare(a.id));
+  const submissionIds = new Set(schoolSubmissions.map(s => s.id));
+  const schoolAppointments = appointments.filter(a => matches(a.schoolId) ||
+    (!knownOtherSchool(a.schoolId) && ((!!a.submissionId && submissionIds.has(a.submissionId)) || schoolSubmissions.some(s => s.appointmentId === a.id))))
+    .sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.id.localeCompare(a.id));
+  const appointmentIds = new Set(schoolAppointments.map(a => a.id));
+  const schoolTrips = fieldTrips.filter(t => {
+    if (t.workType && !t.workType.includes('แนะแนว')) return false;
+    if (t.schools?.some(s => matches(s.schoolId))) return true;
+    // A trip's explicit school entries take priority over its parent link.
+    if (t.schools?.some(s => schools ? !!resolveSchoolRelation(s.schoolId, schools) : !!s.schoolId)) return false;
+    if (t.appointmentId) {
+      const appt = appointments.find(a => a.id === t.appointmentId);
+      if (appt) return appointmentIds.has(appt.id);
+    }
+    return (!!t.submissionId && submissionIds.has(t.submissionId)) || schoolSubmissions.some(s => s.fieldTripId === t.id);
+  }).sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.id.localeCompare(a.id));
+  const completedAppointments = schoolAppointments.filter(a => a.status === 'COMPLETED');
+  const activeAppointments = schoolAppointments.filter(a => ['PENDING', 'TENTATIVE', 'CONFIRMED', 'RESCHEDULED'].includes(a.status));
+  const guidanceSubmissions = schoolSubmissions.filter(s => !getSubmissionDisplayStatus(s).isOtherActivity);
+  const current = selectCurrentSchoolCycle(guidanceSubmissions, schoolAppointments, schoolTrips);
+  const currentCompleted = current.appointments.filter(a => a.status === 'COMPLETED');
+  const currentActive = current.appointments.filter(a => ['PENDING','TENTATIVE','CONFIRMED','RESCHEDULED'].includes(a.status));
+  const latest = current.submissions[0];
+  let status: SchoolStatus = 'NOT_STARTED';
+  if (current.trips.length) status = 'GUIDANCE_COMPLETED';
+  else if (currentActive.length || currentCompleted.length) status = 'APPOINTED';
+  else if (current.appointments.some(a => a.status === 'CANCELLED')) status = 'CANCELLED';
+  else if (latest) status = latest.status === 'WAITING_CONTACT' || latest.status === 'CALL_LATER' ? 'WAITING_CONTACT' : 'WAITING_APPOINTMENT';
+  return { status, current, guidanceSubmissions, schoolSubmissions, schoolAppointments, schoolTrips, completedAppointments, activeAppointments,
+    storedCompletionOnly: school.currentStatus === 'GUIDANCE_COMPLETED' && !schoolTrips.length && !completedAppointments.length };
+}
+
 export function getSchoolEffectiveStatus(
-  school: School,
-  submissions: DocumentSubmission[] = [],
-  appointments: Appointment[] = [],
-  fieldTrips: FieldTrip[] = []
+  school: School, submissions: DocumentSubmission[] = [], appointments: Appointment[] = [],
+  fieldTrips: FieldTrip[] = [], schools?: School[]
 ): SchoolStatus {
-  const schoolClean = cleanSchoolName(school.schoolName);
-
-  // 1. Check if Guidance is Completed
-  const hasCompletedAppt = appointments.some((a) => {
-    const aClean = cleanSchoolName(a.schoolName);
-    const isMatch =
-      a.schoolId === school.id ||
-      aClean === schoolClean ||
-      (aClean && schoolClean && (aClean.includes(schoolClean) || schoolClean.includes(aClean)));
-    return (
-      isMatch &&
-      (a.status === 'COMPLETED' ||
-        (a.photos && a.photos.length > 0) ||
-        (a.note && a.note.includes('แนะแนวแล้ว')))
-    );
-  });
-
-  const hasFieldTrip = fieldTrips.some((ft) => {
-    return ft.schools?.some((s) => {
-      const sClean = cleanSchoolName(s.schoolName);
-      return (
-        s.schoolId === school.id ||
-        sClean === schoolClean ||
-        (sClean && schoolClean && (sClean.includes(schoolClean) || schoolClean.includes(sClean)))
-      );
-    });
-  });
-
-  if (hasCompletedAppt || hasFieldTrip || school.currentStatus === 'GUIDANCE_COMPLETED') {
-    return 'GUIDANCE_COMPLETED';
-  }
-
-  // 2. Check if Scheduled / Appointed (upcoming active appointment)
-  const hasActiveAppt = appointments.some((a) => {
-    const aClean = cleanSchoolName(a.schoolName);
-    const isMatch =
-      a.schoolId === school.id ||
-      aClean === schoolClean ||
-      (aClean && schoolClean && (aClean.includes(schoolClean) || schoolClean.includes(aClean)));
-    return isMatch && a.status !== 'CANCELLED';
-  });
-
-  if (hasActiveAppt || school.currentStatus === 'APPOINTED') {
-    return 'APPOINTED';
-  }
-
-  // 3. Check if Document Submitted
-  const matchedSubmissions = submissions.filter((sub) => {
-    const subClean = cleanSchoolName(sub.schoolName);
-    return (
-      sub.schoolId === school.id ||
-      subClean === schoolClean ||
-      (subClean && schoolClean && (subClean.includes(schoolClean) || schoolClean.includes(subClean)))
-    );
-  });
-
-  if (matchedSubmissions.length > 0) {
-    const latest = matchedSubmissions[0];
-    if (latest.status === 'WAITING_CONTACT' || latest.status === 'CALL_LATER') {
-      return 'WAITING_CONTACT';
-    }
-    if (latest.status === 'WAITING_APPOINTMENT') {
-      return 'WAITING_APPOINTMENT';
-    }
-    return 'DOCUMENT_SUBMITTED';
-  }
-
-  if (school.currentStatus === 'WAITING_CONTACT') return 'WAITING_CONTACT';
-  if (school.currentStatus === 'WAITING_APPOINTMENT') return 'WAITING_APPOINTMENT';
-  if (school.currentStatus === 'DOCUMENT_SUBMITTED') return 'DOCUMENT_SUBMITTED';
-  if (school.currentStatus === 'CANCELLED') return 'CANCELLED';
-
-  return 'NOT_STARTED';
+  return getSchoolWorkflow(school, submissions, appointments, fieldTrips, schools).status;
 }
 
 /**

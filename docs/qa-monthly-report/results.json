@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "errors": [],
+  "blocked": [],
+  "viewports": [
+    "1366x768",
+    "1920x1080",
+    "390x844"
+  ],
+  "rows": 6,
+  "sourceDetails": [
+    "SUBMISSION",
+    "GUIDANCE"
+  ],
+  "export": "Excel + A4 landscape PDF"
+}

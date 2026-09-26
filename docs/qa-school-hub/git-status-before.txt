@@ -1,0 +1,34 @@
+ M package.json
+ M src/App.tsx
+ M src/components/appointments/AppointmentFormModal.tsx
+ M src/components/dashboard/DashboardView.tsx
+ M src/components/reports/MonthlyReportsView.tsx
+ M src/components/schools/SchoolDetailModal.tsx
+ M src/components/schools/SchoolFormModal.tsx
+ M src/components/schools/SchoolsView.tsx
+ M src/components/submissions/SubmissionFormModal.tsx
+ M src/components/submissions/SubmissionsView.tsx
+ M src/components/trips/FieldTripFormModal.tsx
+ M src/components/trips/FieldTripsView.tsx
+ M src/utils/excelExport.ts
+ M src/utils/schoolStatus.ts
+ M src/utils/submissionUtils.ts
+?? .firebaserc
+?? docs/MONTHLY_REPORT_LOCAL_REVIEW.md
+?? docs/qa-monthly-report/
+?? src/components/reports/monthlyReports.css
+?? src/components/schools/DataReviewPanel.tsx
+?? src/components/submissions/SubmissionDetailModal.tsx
+?? src/components/trips/FieldTripDetailModal.tsx
+?? src/utils/dataCompleteness.ts
+?? src/utils/guidanceResults.ts
+?? src/utils/monthlyReport.ts
+?? src/utils/monthlyReportExport.ts
+?? src/utils/sourceRecords.ts
+?? src/utils/submissionWorkflow.ts
+?? tests/browser/
+?? tests/dataCompleteness.test.ts
+?? tests/guidanceResults.test.ts
+?? tests/monthlyReport.test.ts
+?? tests/schoolWorkflowStatus.test.ts
+?? tests/submissionWorkflow.test.ts

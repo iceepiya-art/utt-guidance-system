@@ -68,7 +68,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(accessMessage);
       }
     } catch (error: any) {
-      const message = error.message === accessMessage ? accessMessage : 'เข้าสู่ระบบไม่สำเร็จ ตรวจสอบอีเมล รหัสผ่าน และการเชื่อมต่อ';
+      const messages: Record<string, string> = {
+        'auth/invalid-credential': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง หากจำรหัสไม่ได้ กดลืมรหัสผ่านด้านล่าง',
+        'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง หากจำรหัสไม่ได้ กดลืมรหัสผ่านด้านล่าง',
+        'auth/user-not-found': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง หากจำรหัสไม่ได้ กดลืมรหัสผ่านด้านล่าง',
+        'auth/network-request-failed': 'เชื่อมต่อระบบเข้าสู่ระบบไม่ได้ กรุณาตรวจอินเทอร์เน็ตแล้วลองใหม่',
+        'auth/too-many-requests': 'พยายามเข้าสู่ระบบหลายครั้ง กรุณารอสักครู่แล้วลองใหม่',
+        'auth/user-disabled': 'บัญชีนี้ถูกระงับ กรุณาติดต่อผู้ดูแลระบบ',
+      };
+      const message = error.message === accessMessage ? accessMessage : messages[error.code] || 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่หรือติดต่อผู้ดูแลระบบ';
       setAuthError(message);
       throw new Error(message);
     }

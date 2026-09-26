@@ -1,3 +1,4 @@
+import { hasActualGuidance } from '../../utils/actualGuidance';
 import React, { useState } from 'react';
 import {
   X,
@@ -14,7 +15,6 @@ import {
   Compass,
   Send,
   Image as ImageIcon,
-  Maximize2,
   FileText,
   Mail,
   UserCheck,
@@ -37,18 +37,17 @@ interface AppointmentDetailModalProps {
   fieldTrips?: FieldTrip[];
 }
 
-export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
+export const AppointmentDetailContent: React.FC<AppointmentDetailModalProps & { access: Pick<ReturnType<typeof useAuth>, "canEdit" | "currentUser" | "users"> }> = ({
   appointment,
+  access,
   onClose,
   onEdit,
   onRecordTrip,
   submissions = [],
   fieldTrips = [],
 }) => {
-  const { canEdit, currentUser, users = [] } = useAuth();
+  const { canEdit, currentUser, users = [] } = access;
   const [isCancelling, setIsCancelling] = useState(false);
-  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
-  const [fallbackSubmission, setFallbackSubmission] = useState<any | null>(null);
 
   const handleCancelAppointment = async () => {
     if (!appointment) return;
@@ -68,87 +67,9 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
 
   if (!appointment) return null;
 
-  const [fallbackPhotos, setFallbackPhotos] = useState<any[]>([]);
-
-  // 1. Fallback guidance photos
-  React.useEffect(() => {
-    if (!appointment) return;
-    fetch('/utt_full_guidance_appointments_with_photos.json')
-      .then((res) => res.json())
-      .then((data: any[]) => {
-        const clean = (s: string) => (s || '').replace(/^(โรงเรียน|รร\.)\s*/, '').trim().toLowerCase();
-        const apptClean = clean(appointment.schoolName);
-        const match =
-          data.find(
-            (d: any) =>
-              (clean(d.schoolName) === apptClean || d.schoolName === appointment.schoolName) &&
-              (!appointment.date || !d.date || d.date === appointment.date)
-          ) ||
-          data.find(
-            (d: any) => clean(d.schoolName) === apptClean || d.schoolName === appointment.schoolName
-          );
-        if (match && match.photos && match.photos.length > 0) {
-          setFallbackPhotos(match.photos);
-        }
-      })
-      .catch(() => {});
-  }, [appointment]);
-
-  // 2. Fallback lookup for linked letter submission from UTT archive
-  React.useEffect(() => {
-    if (!appointment) return;
-    fetch('/utt_full_letters_with_photos.json')
-      .then((res) => res.json())
-      .then((data: any[]) => {
-        const clean = (s: string) =>
-          (s || '')
-            .replace(/^(โรงเรียน|รร\.)\s*/, '')
-            .replace(/\s+/g, '')
-            .toLowerCase();
-        const apptClean = clean(appointment.schoolName);
-        const matches = data.filter((d: any) => {
-          const sc = clean(d.schoolName);
-          return sc.includes(apptClean) || apptClean.includes(sc);
-        });
-        if (matches.length > 0) {
-          setFallbackSubmission(matches[0]);
-        }
-      })
-      .catch(() => {});
-  }, [appointment]);
-
-  // 3. Linked Letter Submission (From active Firestore or fallback archive)
-  const linkedSubmission = React.useMemo(() => {
-    if (!submissions || !appointment) return null;
-    const clean = (s: string) =>
-      (s || '')
-        .replace(/^(โรงเรียน|รร\.)\s*/, '')
-        .replace(/\s+/g, '')
-        .toLowerCase();
-    const apptClean = clean(appointment.schoolName);
-    return (
-      submissions.find((s) => s.id === appointment.submissionId) ||
-      submissions.find((s) => clean(s.schoolName) === apptClean) ||
-      submissions.find((s) => clean(s.schoolName).includes(apptClean) || apptClean.includes(clean(s.schoolName)))
-    );
-  }, [submissions, appointment]);
-
-  const effectiveSubmission = linkedSubmission || fallbackSubmission;
-
-  // 4. Linked Counselor from Personnel (Users List in Settings)
-  const matchedCounselorUser = React.useMemo(() => {
-    if (!appointment?.counselorName || users.length === 0) return null;
-    const clean = (s: string) =>
-      (s || '').replace(/^(อ\.|อาจารย์|นาย|นาง|นางสาว)\s*/, '').trim().toLowerCase();
-    const cClean = clean(appointment.counselorName);
-    return (
-      users.find((u) => u.id === appointment.counselorId) ||
-      users.find((u) => {
-        const uClean = clean(u.displayName);
-        return uClean.includes(cClean) || cClean.includes(uClean);
-      })
-    );
-  }, [users, appointment]);
+  // Only explicit stored references; never fetch or borrow another school's archive.
+  const effectiveSubmission = submissions.find(s => s.id === appointment.submissionId || (!appointment.submissionId && s.appointmentId === appointment.id));
+  const matchedCounselorUser = users.find(u => !!appointment.counselorId && u.id === appointment.counselorId);
 
   // Inherit teacher contact from linked submission if appointment doesn't have it
   const teacherNameDisplay =
@@ -157,38 +78,6 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
     appointment.teacherPhone || effectiveSubmission?.teacherPhone || '';
   const isInheritedTeacher =
     !appointment.teacherName && !!effectiveSubmission?.teacherName;
-
-  // 5. Combined Photos (Appointment + Letter Submission)
-  const allPhotos = React.useMemo(() => {
-    const list: Array<{ id?: string; url: string; fileName?: string; tag?: string }> = [];
-
-    // Appointment photos
-    if (appointment?.photos) {
-      appointment.photos.forEach((p) => {
-        list.push({ ...p, tag: 'ภาพแนะแนว' });
-      });
-    }
-
-    // Guidance fallback photos
-    if (fallbackPhotos.length > 0) {
-      fallbackPhotos.forEach((p) => {
-        if (!list.some((existing) => existing.url === p.url)) {
-          list.push({ ...p, tag: 'ภาพแนะแนว' });
-        }
-      });
-    }
-
-    // Linked submission photos (Letter)
-    if (effectiveSubmission?.photos) {
-      effectiveSubmission.photos.forEach((p: any) => {
-        if (!list.some((existing) => existing.url === p.url)) {
-          list.push({ ...p, tag: 'หลักฐานหนังสือ' });
-        }
-      });
-    }
-
-    return list;
-  }, [appointment, fallbackPhotos, effectiveSubmission]);
 
   const isTeam1 = appointment.teamId === 'team1';
   const relativeDay = getRelativeThaiDayLabel(appointment.date);
@@ -210,7 +99,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
     const config: Record<string, { label: string; color: string }> = {
       CONFIRMED: { label: 'ยืนยันแล้ว', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
       TENTATIVE: { label: 'รอยืนยัน', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-      COMPLETED: { label: 'ออกแนะแนวแล้ว', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+      COMPLETED: { label: 'นัดหมายเสร็จแล้ว', color: 'bg-blue-50 text-blue-700 border-blue-200' },
       CANCELLED: { label: 'ยกเลิก', color: 'bg-red-50 text-red-700 border-red-200' },
     };
     const c = config[appointment.status] || config.CONFIRMED;
@@ -223,7 +112,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+      <div role="dialog" aria-modal="true" aria-label="รายละเอียดนัดหมาย" className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="p-5 border-b border-slate-100 flex items-start justify-between bg-slate-50/70 rounded-t-2xl">
           <div>
@@ -242,6 +131,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             </h2>
           </div>
           <button
+            aria-label="ปิดรายละเอียดนัดหมาย"
             onClick={onClose}
             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg"
           >
@@ -307,7 +197,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
                 <UserCheck className="w-4 h-4 text-[#087CC1]" />
-                <span>อาจารย์ผู้รับผิดชอบ (จากระบบบุคลากร)</span>
+                <span>อาจารย์ผู้รับผิดชอบตามนัดหมาย</span>
               </div>
               {matchedCounselorUser && (
                 <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">
@@ -319,7 +209,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             <div className="flex items-start justify-between gap-2 pt-1">
               <div>
                 <div className="font-bold text-slate-900 text-sm">
-                  {matchedCounselorUser ? matchedCounselorUser.displayName : appointment.counselorName}
+                  {appointment.counselorName || 'ไม่ระบุ'}
                 </div>
                 {matchedCounselorUser?.phone && (
                   <div className="flex items-center gap-1.5 text-xs text-[#087CC1] font-semibold mt-1">
@@ -346,7 +236,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
               <div className="text-right shrink-0">
                 <div className="inline-flex items-center gap-1 text-xs text-slate-600 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200">
                   <Car className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="font-medium">{formatVehicleDisplay(appointment.vehicleName || effectiveSubmission?.vehicleName)}</span>
+                  <span className="font-medium">{formatVehicleDisplay(appointment.vehicleName)}</span>
                 </div>
               </div>
             </div>
@@ -389,7 +279,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                 {effectiveSubmission.photos && effectiveSubmission.photos.length > 0 && (
                   <div className="col-span-2 text-[11px] text-sky-700 flex items-center gap-1 font-medium">
                     <ImageIcon className="w-3.5 h-3.5" />
-                    <span>มีรูปภาพหลักฐานหนังสือราชการ {effectiveSubmission.photos.length} รูป (แสดงในแกลเลอรีด้านล่าง)</span>
+                    <span>มีรูปภาพหลักฐานหนังสือราชการ {effectiveSubmission.photos.length} รูป (ดูได้จากรายละเอียดการยื่นหนังสือ)</span>
                   </div>
                 )}
               </div>
@@ -397,57 +287,12 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           )}
 
           {/* Note */}
-          {appointment.note && (
+          {appointment.status !== 'COMPLETED' && !hasActualGuidance(appointment, fieldTrips) && appointment.note && (
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700">
               <span className="font-bold">หมายเหตุ: </span>
               {appointment.note}
             </div>
           )}
-
-          {/* Photo Gallery Section */}
-          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                <ImageIcon className="w-4 h-4 text-[#087CC1]" />
-                <span>รูปภาพกิจกรรม & เอกสารหลักฐาน</span>
-              </div>
-              <span className="text-[11px] font-semibold px-2 py-0.5 bg-sky-100 text-[#075A9C] rounded-full">
-                {allPhotos.length} รูป
-              </span>
-            </div>
-            {allPhotos.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
-                {allPhotos.map((photo, i) => (
-                  <button
-                    key={photo.id || i}
-                    type="button"
-                    onClick={() => setSelectedPhotoUrl(photo.url)}
-                    className="group relative aspect-4/3 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 hover:shadow-md transition-all text-left cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-[#087CC1]"
-                    title="คลิกเพื่อดูรูปภาพขนาดใหญ่"
-                  >
-                    <img
-                      src={photo.url}
-                      alt={photo.fileName || 'รูปภาพกิจกรรม'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      loading="lazy"
-                    />
-                    {photo.tag && (
-                      <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-black/60 text-white rounded text-[9px] font-medium backdrop-blur-xs">
-                        {photo.tag}
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Maximize2 className="w-5 h-5 text-white drop-shadow-md" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="py-4 text-center text-xs text-slate-400 bg-white rounded-lg border border-dashed border-slate-200">
-                ยังไม่มีรูปภาพแนบในรายการนี้
-              </div>
-            )}
-          </div>
 
           {/* Email Reminder Box */}
           <div className="p-3.5 bg-blue-50/50 rounded-xl border border-blue-200/80 space-y-2">
@@ -480,7 +325,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
         {/* Footer Actions */}
         <div className="p-4 border-t border-slate-100 bg-slate-50/80 rounded-b-2xl flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            {canEdit && appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED' && (
+            {canEdit && appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED' && !hasActualGuidance(appointment, fieldTrips) && (
               <button
                 type="button"
                 onClick={handleCancelAppointment}
@@ -504,7 +349,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             )}
           </div>
 
-          {canEdit && appointment.status !== 'CANCELLED' && !isAppointmentGuidanceCompleted(appointment, fieldTrips) && (
+          {canEdit && appointment.status !== 'CANCELLED' && !hasActualGuidance(appointment, fieldTrips) && (
             <button
               type="button"
               onClick={() => {
@@ -514,42 +359,25 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#087CC1] hover:bg-[#075A9C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
             >
               <Compass className="w-4 h-4" />
-              <span>ออกแนะแนว</span>
+              <span>บันทึกผลแนะแนว</span>
             </button>
           )}
 
           {(appointment.status === 'COMPLETED' || isAppointmentGuidanceCompleted(appointment, fieldTrips)) && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-xl border border-emerald-200">
               <CheckCircle2 className="w-4 h-4" />
-              <span>ออกแนะแนวเรียบร้อยแล้ว (แสดงในประวัติออกแนะแนว)</span>
+              <span>{hasActualGuidance(appointment, fieldTrips) ? 'มีบันทึกผลออกแนะแนวแล้ว' : 'สถานะนัดหมายเดิม: เสร็จแล้ว'}</span>
             </span>
           )}
         </div>
       </div>
 
-      {/* Photo Lightbox Modal */}
-      {selectedPhotoUrl && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
-          onClick={() => setSelectedPhotoUrl(null)}
-        >
-          <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center">
-            <button
-              onClick={() => setSelectedPhotoUrl(null)}
-              className="absolute -top-12 right-0 p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full transition-colors cursor-pointer"
-              title="ปิด"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <img
-              src={selectedPhotoUrl}
-              alt="รูปภาพขนาดใหญ่"
-              className="max-h-[85vh] max-w-full object-contain rounded-xl shadow-2xl bg-black"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        </div>
-      )}
+
     </div>
   );
+};
+
+export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = props => {
+  const access = useAuth();
+  return <AppointmentDetailContent {...props} access={access} />;
 };

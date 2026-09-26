@@ -1,3 +1,4 @@
+import { resolveSchoolRelation } from '../../utils/schoolStatus';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
@@ -23,6 +24,7 @@ interface AppointmentImportModalProps {
 
 interface RawAppointmentItem {
   idGuide: string;
+  schoolId?: string;
   schoolName: string;
   date: string;
   time: string;
@@ -89,10 +91,7 @@ export const AppointmentImportModal: React.FC<AppointmentImportModalProps> = ({
         return sameSchool && sameDate;
       });
 
-      const matchedSchool = schools.find((s) => {
-        const sClean = cleanSchool(s.schoolName);
-        return sClean === itemClean || s.schoolName === item.schoolName;
-      });
+      const matchedSchool = resolveSchoolRelation(item.schoolId, schools);
 
       return {
         ...item,
@@ -104,7 +103,7 @@ export const AppointmentImportModal: React.FC<AppointmentImportModalProps> = ({
   }, [items, existingAppointments, schools]);
 
   const newItemsCount = useMemo(() => {
-    return itemsWithStatus.filter((i) => !i.isDuplicate).length;
+    return itemsWithStatus.filter((i) => !i.isDuplicate && !!i.schoolId).length;
   }, [itemsWithStatus]);
 
   const totalPhotosCount = useMemo(() => {
@@ -141,11 +140,15 @@ export const AppointmentImportModal: React.FC<AppointmentImportModalProps> = ({
 
   const handleStartImport = async () => {
     if (!currentUser || !canEdit || importing) return;
+    if (itemsWithStatus.some(i => !i.isDuplicate && !i.schoolId)) {
+      setError('ข้อมูลเดิมยังไม่มีรหัสโรงเรียนที่เชื่อมโยงได้ กรุณาตรวจสอบการจับคู่ก่อนนำเข้า');
+      return;
+    }
     setImporting(true);
     setError(null);
     setProgress(0);
 
-    const candidates = itemsWithStatus.filter((i) => !i.isDuplicate);
+    const candidates = itemsWithStatus.filter((i) => !i.isDuplicate && !!i.schoolId);
     let imported = 0;
     let failed = 0;
     const skipped = itemsWithStatus.length - candidates.length;
@@ -153,26 +156,7 @@ export const AppointmentImportModal: React.FC<AppointmentImportModalProps> = ({
     for (let idx = 0; idx < candidates.length; idx++) {
       const item = candidates[idx];
       try {
-        let parsedStart = '09:00';
-        let parsedEnd = '11:30';
-        if (item.time && item.time.includes('-')) {
-          const parts = item.time.split('-').map((s: string) => s.trim());
-          if (parts[0]) parsedStart = parts[0];
-          if (parts[1] && parts[1] > parsedStart) parsedEnd = parts[1];
-        } else if (item.time && item.time.trim()) {
-          parsedStart = item.time.trim();
-          const [hStr, mStr] = parsedStart.split(':');
-          const h = parseInt(hStr, 10);
-          if (!isNaN(h)) {
-            const endH = Math.min(h + 2, 23);
-            parsedEnd = `${String(endH).padStart(2, '0')}:${mStr || '00'}`;
-          }
-        }
-        if (parsedEnd <= parsedStart) {
-          const [hStr, mStr] = parsedStart.split(':');
-          const h = parseInt(hStr, 10);
-          parsedEnd = `${String(Math.min((isNaN(h) ? 9 : h) + 2, 23)).padStart(2, '0')}:${mStr || '00'}`;
-        }
+        const [parsedStart = '', parsedEnd = ''] = (item.time || '').split('-').map(part => part.trim());
 
         await createAppointment(
           {
@@ -182,7 +166,7 @@ export const AppointmentImportModal: React.FC<AppointmentImportModalProps> = ({
             startTime: parsedStart,
             endTime: parsedEnd,
             teamId: item.teamId,
-            counselorName: item.counselorName || 'อ.ประชา',
+            counselorName: item.counselorName || '',
             teacherName: '',
             teacherPhone: '',
             status: item.status || 'CONFIRMED',

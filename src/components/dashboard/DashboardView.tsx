@@ -1,3 +1,4 @@
+import { getDashboardSummary } from '../../utils/dashboardSummary';
 import { useAuth } from '../../context/AuthContext';
 import React, { useMemo } from 'react';
 import {
@@ -22,7 +23,7 @@ import {
   getBuddhistYear,
 } from '../../utils/dateUtils';
 import { getSchoolEffectiveStatus, formatSchoolDisplayName } from '../../utils/schoolStatus';
-import { formatAppointmentTime } from '../../utils/appointmentUtils';
+import { formatAppointmentTime, filterActiveAppointments } from '../../utils/appointmentUtils';
 import { ActiveTab } from '../layout/AppLayout';
 
 interface DashboardViewProps {
@@ -48,91 +49,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const { canEdit } = useAuth();
 
-  // Unified dynamic status mapping for every school from interconnected data
-  const schoolStatusMap = useMemo(() => {
-    const map = new Map<string, SchoolStatus>();
-    schools.forEach((s) => {
-      map.set(s.id, getSchoolEffectiveStatus(s, submissions, appointments, fieldTrips));
-    });
-    return map;
-  }, [schools, submissions, appointments, fieldTrips]);
-
-  // Statistics calculations from interconnected data
-  const totalSchools = schools.length;
-  const completedSchools = useMemo(
-    () => schools.filter((s) => schoolStatusMap.get(s.id) === 'GUIDANCE_COMPLETED').length,
-    [schools, schoolStatusMap]
-  );
-  const appointedSchools = useMemo(
-    () => schools.filter((s) => schoolStatusMap.get(s.id) === 'APPOINTED').length,
-    [schools, schoolStatusMap]
-  );
-  const submittedSchools = useMemo(
-    () =>
-      schools.filter((s) => {
-        const st = schoolStatusMap.get(s.id);
-        return st !== 'NOT_STARTED' && st !== 'CANCELLED';
-      }).length,
-    [schools, schoolStatusMap]
-  );
-  const pendingSchools = useMemo(
-    () =>
-      schools.filter((s) => {
-        const st = schoolStatusMap.get(s.id);
-        return st === 'NOT_STARTED' || st === 'WAITING_CONTACT' || st === 'WAITING_APPOINTMENT';
-      }).length,
-    [schools, schoolStatusMap]
-  );
-
-  // Team 1 Breakdown
-  const team1Schools = useMemo(() => schools.filter((s) => s.teamId === 'team1'), [schools]);
-  const team1Submitted = useMemo(
-    () =>
-      team1Schools.filter((s) => {
-        const st = schoolStatusMap.get(s.id);
-        return st !== 'NOT_STARTED' && st !== 'CANCELLED';
-      }).length,
-    [team1Schools, schoolStatusMap]
-  );
-  const team1Appointed = useMemo(
-    () => team1Schools.filter((s) => schoolStatusMap.get(s.id) === 'APPOINTED').length,
-    [team1Schools, schoolStatusMap]
-  );
-  const team1Completed = useMemo(
-    () => team1Schools.filter((s) => schoolStatusMap.get(s.id) === 'GUIDANCE_COMPLETED').length,
-    [team1Schools, schoolStatusMap]
-  );
-  const team1Percent =
-    team1Schools.length > 0 ? Math.round((team1Completed / team1Schools.length) * 100) : 0;
-
-  // Team 2 Breakdown
-  const team2Schools = useMemo(() => schools.filter((s) => s.teamId === 'team2'), [schools]);
-  const team2Submitted = useMemo(
-    () =>
-      team2Schools.filter((s) => {
-        const st = schoolStatusMap.get(s.id);
-        return st !== 'NOT_STARTED' && st !== 'CANCELLED';
-      }).length,
-    [team2Schools, schoolStatusMap]
-  );
-  const team2Appointed = useMemo(
-    () => team2Schools.filter((s) => schoolStatusMap.get(s.id) === 'APPOINTED').length,
-    [team2Schools, schoolStatusMap]
-  );
-  const team2Completed = useMemo(
-    () => team2Schools.filter((s) => schoolStatusMap.get(s.id) === 'GUIDANCE_COMPLETED').length,
-    [team2Schools, schoolStatusMap]
-  );
-  const team2Percent =
-    team2Schools.length > 0 ? Math.round((team2Completed / team2Schools.length) * 100) : 0;
+  const summary = useMemo(() => getDashboardSummary(schools, submissions, appointments, fieldTrips), [schools, submissions, appointments, fieldTrips]);
+  const {total:totalSchools, submitted:submittedSchools, appointed:appointedSchools, completed:completedSchools, pending:pendingSchools} = summary.all;
+  const team1Schools = schools.filter(s => s.teamId === 'team1');
+  const team2Schools = schools.filter(s => s.teamId === 'team2');
+  const {submitted:team1Submitted, appointed:team1Appointed, completed:team1Completed} = summary.team1;
+  const {submitted:team2Submitted, appointed:team2Appointed, completed:team2Completed} = summary.team2;
+  const team1Percent = summary.team1.total ? Math.round(team1Completed / summary.team1.total * 100) : 0;
+  const team2Percent = summary.team2.total ? Math.round(team2Completed / summary.team2.total * 100) : 0;
 
   // Upcoming appointments (only active upcoming appointments, not past or completed ones)
   const upcomingAppointments = useMemo(() => {
-    const active = appointments.filter((a) => a.status !== 'CANCELLED' && a.status !== 'COMPLETED');
+    const active = filterActiveAppointments(appointments, fieldTrips);
     return active
       .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime))
       .slice(0, 6);
-  }, [appointments]);
+  }, [appointments, fieldTrips]);
 
   return (
     <div className="space-y-6">
@@ -148,6 +80,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
+      <p className="text-xs text-slate-500">ยื่นหนังสือและแนะแนวนับจากประวัติจริง • นัดหมายแล้วนับเฉพาะรอบปัจจุบันที่ยังไม่มีผลแนะแนว</p>
       {/* Primary Statistics Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
         {/* Total Schools */}
@@ -164,7 +97,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="mt-2 text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
             {totalSchools}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">เป้าหมายในจังหวัดอุตรดิตถ์</p>
+          <p className="text-[11px] text-slate-400 mt-1">เป้าหมายทั้งสองสาย</p>
         </div>
 
         {/* Submitted */}
@@ -201,7 +134,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {appointedSchools}
           </div>
           <p className="text-[11px] text-amber-600 font-medium mt-1">
-            มีกำหนดการลงปฏิทินแล้ว
+            นัดหมายที่ยังไม่มีผลแนะแนว
           </p>
         </div>
 
@@ -211,7 +144,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs hover:border-[#087CC1] transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">ออกแนะแนวแล้ว</span>
+            <span className="text-xs font-semibold text-slate-500">แนะแนวเรียบร้อยแล้ว</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </div>
@@ -238,7 +171,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="mt-2 text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
             {pendingSchools}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">ยังไม่ยื่น / รอวันนัด</p>
+          <p className="text-[11px] text-slate-400 mt-1">ยังไม่ยื่น / รอติดต่อกลับ / ยกเลิกนัด</p>
         </div>
       </div>
 

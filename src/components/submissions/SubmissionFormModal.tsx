@@ -16,9 +16,9 @@ import {
   cleanTeacherName,
   SelectablePersonnel,
 } from '../../utils/personnelSelector';
-import { isNormalGuidanceActivity } from '../../utils/submissionUtils';
+import { isNormalGuidanceActivity, getSubmissionEditStatus } from '../../utils/submissionUtils';
 import { isTimeRangeValid } from '../../utils/appointmentUtils';
-import { formatSchoolDisplayName, getCleanSchoolCode } from '../../utils/schoolStatus';
+import { resolveSchoolRelation, formatSchoolDisplayName, getCleanSchoolCode } from '../../utils/schoolStatus';
 
 export const normalizeTeacherName = (name: string, choices: string[]): string => {
   if (!name || !name.trim()) return '';
@@ -134,7 +134,7 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     const data = submissionToEdit;
     setVehicleId(data.vehicleId || '');
     setVehicleName(data.vehicleName || '');
-    setSelectedSchoolId(data.schoolId);
+    setSelectedSchoolId(resolveSchoolRelation(data.schoolId, schools)?.id || data.schoolId);
     setDocumentNumber(data.documentNumber);
     setSubmissionDate(data.submissionDate);
     setSubmissionTime(data.submissionTime || '');
@@ -142,21 +142,22 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
     const rawNames: string[] =
       data.submittedByNames && data.submittedByNames.length > 0
         ? data.submittedByNames
-        : (data.submittedByName ? data.submittedByName.split(/[,+]/).map(s => s.trim()).filter(Boolean) : defaultSubmitters(data.teamId));
+        : (data.submittedByName ? data.submittedByName.split(/[,+]/).map(s => s.trim()).filter(Boolean) : ['']);
 
     // Resolve known verified legacy aliases directly to standard profile name without modifying count or adding extra people
     const resolvedNames = rawNames.map(name => {
       const resolved = resolvePersonnelDisplayName(name, selectablePersonnel);
       return resolved.matched ? resolved.displayName : name;
     });
-    setSubmitterNames(resolvedNames.length > 0 ? resolvedNames : defaultSubmitters(data.teamId));
+    setSubmitterNames(resolvedNames.length > 0 ? resolvedNames : ['']);
     setCustomIndices({});
     setTeacherName(data.teacherName || ''); setTeacherPhone(data.teacherPhone || '');
     setTeacherPosition(data.teacherPosition || ''); setTeacherLine(data.teacherLine || '');
     setPreferredContactTime(data.preferredContactTime || '');
-    setStatus(data.status || 'WAITING_APPOINTMENT');
+    const editStatus = getSubmissionEditStatus(data);
+    setStatus(editStatus);
     setOtherActivityDetails(data.otherActivityDetails || (data.activities && data.activities.length > 0 ? data.activities.join(', ') : ''));
-    setNote(data.note || (data.status === 'APPOINTED' ? '' : 'รอติดต่อกลับ'));
+    setNote(data.note || (editStatus === 'APPOINTED' || editStatus === 'OTHER_ACTIVITY' ? '' : 'รอติดต่อกลับ'));
     setPhotos(data.photos || []);
     setAppointmentDate(data.appointmentDate || '');
     setAppointmentStart(data.appointmentStartTime || '');
@@ -687,17 +688,17 @@ export const SubmissionFormModal: React.FC<SubmissionFormModalProps> = ({
                   if (next === 'WAITING_APPOINTMENT' || next === 'DOCUMENT_SUBMITTED') {
                     if (!note.trim()) setNote('รอติดต่อกลับ');
                   } else if (next === 'APPOINTED') {
-                    if (note === 'รอติดต่อกลับ') setNote('');
+                    if ((note === 'รอติดต่อกลับ' || note === 'รอนัดหมาย')) setNote('');
                     if (!appointmentDate) setAppointmentDate(getTodayISO());
                     if (!appointmentStart) setAppointmentStart('09:00');
                     if (!appointmentEnd) setAppointmentEnd('11:30');
-                  } else if (next === 'OTHER_ACTIVITY' && note === 'รอติดต่อกลับ') {
+                  } else if (next === 'OTHER_ACTIVITY' && (note === 'รอติดต่อกลับ' || note === 'รอนัดหมาย')) {
                     setNote('');
                   }
                 }}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#087CC1]"
               >
-                <option value="WAITING_APPOINTMENT">ยื่นหนังสือแล้ว / รอนัดหมาย</option>
+                <option value="WAITING_APPOINTMENT">ยื่นหนังสือแล้ว</option>
                 <option value="APPOINTED">นัดหมายแล้ว (ระบุวันเวลานัด)</option>
                 <option value="OTHER_ACTIVITY">กิจกรรมอื่นๆ</option>
                 {submissionToEdit?.status &&

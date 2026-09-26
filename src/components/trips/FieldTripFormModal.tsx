@@ -12,7 +12,7 @@ import { subscribeVehicles } from '../../firebase/dbService';
 import { getSelectablePersonnel, isEligiblePersonnel, resolveResponsibleCounselor } from '../../utils/personnelSelector';
 import { getDefaultVehicleForPersonnel } from '../../utils/vehicleMapping';
 import { isTimeRangeValid, isValidTimeRange, formatAppointmentTime } from '../../utils/appointmentUtils';
-import { formatSchoolDisplayName } from '../../utils/schoolStatus';
+import { resolveSchoolRelation, formatSchoolDisplayName } from '../../utils/schoolStatus';
 
 interface FieldTripFormModalProps {
   isOpen: boolean;
@@ -265,7 +265,7 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
 
     if (tripToEdit) {
       setDate(tripToEdit.date);
-      setDepartureTime(tripToEdit.departureTime || '08:00');
+      setDepartureTime(tripToEdit.departureTime || '');
       setReturnTime(tripToEdit.returnTime || '');
       setTeamId(tripToEdit.teamId);
 
@@ -280,22 +280,15 @@ export const FieldTripFormModal: React.FC<FieldTripFormModalProps> = ({
 
       setTeamMemberNames(tripToEdit.teamMemberNames || '');
       setWorkType(tripToEdit.workType);
-      // Priority: 1. Stored vehicle, 2. Personnel default, 3. Empty
-      let editVehId = tripToEdit.vehicleId || '';
-      let editVehName = tripToEdit.vehicleName || '';
-      if (!editVehId) {
-        const defVeh = getDefaultVehicleForPersonnel(resolved.id, resolved.name);
-        if (defVeh) {
-          editVehId = defVeh.id;
-          editVehName = defVeh.name;
-        }
-      }
-      setVehicleId(editVehId);
-      setVehicleName(editVehName);
+      setVehicleId(tripToEdit.vehicleId || '');
+      setVehicleName(tripToEdit.vehicleName || '');
       setSummary(tripToEdit.summary || '');
       setIssues(tripToEdit.issues || '');
       setPhotos(tripToEdit.photos || []);
-      setTripSchools(tripToEdit.schools || []);
+      setTripSchools((tripToEdit.schools || []).map(entry => {
+        const school = resolveSchoolRelation(entry.schoolId, schools);
+        return school ? { ...entry, schoolId: school.id, schoolName: school.schoolName } : entry;
+      }));
       setApprovalStatus(tripToEdit.approvalStatus || 'APPROVED');
       setAcademicYear(tripToEdit.academicYear || '2569');
       setBudgetAllowance(tripToEdit.budgetAllowance || 0);

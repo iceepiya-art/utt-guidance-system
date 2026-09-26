@@ -1,0 +1,401 @@
+{
+  "provenance": "user-provided-review",
+  "team": "team2",
+  "month": "2026-08",
+  "productionApplied": false,
+  "vehicleConfirmation": "user-confirmed-per-date",
+  "notes": [
+    "จัดจากตารางที่ผู้ใช้ส่ง ไม่ใช่ข้อมูลที่ตรวจยืนยันจากฐานข้อมูลจริง และยังไม่ได้บันทึก Firestore",
+    "ผู้ใช้ยืนยันรถตามตารางเดือนสิงหาคมแล้ว: 7 และ 17 ส.ค. ใช้ VIGO กข 9914; 25–31 ส.ค. ใช้ MITSU บน 6739; วันอื่นในตารางใช้ MITSU บน 6738 ให้ใช้ค่ารายวันนี้แทนกฎรถเริ่มต้นของสาย 2 สำหรับรายงานเดือนนี้",
+    "วันที่ 7 ส.ค. ย้ายชื่อ อ.ณิชชัยกุญช์ ที่อยู่ในช่องรถมาเป็นผู้ร่วมงานทั้งสองโรงเรียน ตามกฎผู้ร่วมงานรายวันที่ยืนยันก่อนหน้า",
+    "วันที่ 17 ส.ค. มีชื่องานและผู้รับผิดชอบแยกแต่ละแถว จึงเก็บ อ.ปิยะ กับวิไลเกียรติ และ อ.ณิชชัยกุญช์ กับชุมชนบ้านหัวหิน ยังไม่ขยายให้ทั้งสองคนอยู่ทั้งสองรายการ",
+    "ย้ายคำว่ายื่นหนังสือ/แนะแนวที่อยู่ในช่องรถของแถวต่อเนื่องไปช่องงาน และใช้รถจากกลุ่มวันเดียวกัน",
+    "18 ส.ค. 2569 เป็นวันอังคาร; 28 ส.ค. เป็นวันศุกร์ แก้เฉพาะวันในสัปดาห์",
+    "คงชื่อโรงเรียนตามตาราง รวมชื่อสะกดต่าง เช่น สวรรค์อนันวิทยา 2, บ้านโคนพิยา ไม่จับคู่หรือรวมโรงเรียนด้วยการเดาชื่อ",
+    "ไม่มี source IDs หรือรูปที่สร้างเพิ่ม ไม่แก้ archive/ฐานข้อมูลจริง ไม่ลบรายการ ไม่ commit/push/deploy"
+  ],
+  "rows": [
+    {
+      "date": "2026-08-03",
+      "weekday": "จันทร์",
+      "schoolName": "เมืองเชลียง",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-03",
+      "weekday": "จันทร์",
+      "schoolName": "บ้านดงคู่",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-03",
+      "weekday": "จันทร์",
+      "schoolName": "บ้านห้วยไคร้",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-03",
+      "weekday": "จันทร์",
+      "schoolName": "เมืองด้งวิทยา",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-04",
+      "weekday": "อังคาร",
+      "schoolName": "บ้านป่ากล้วย",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-04",
+      "weekday": "อังคาร",
+      "schoolName": "ท่าชัยวิทยา",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-04",
+      "weekday": "อังคาร",
+      "schoolName": "ไชยะวิทยา",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-04",
+      "weekday": "อังคาร",
+      "schoolName": "บ้านป่ากุมเกาะ",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-07",
+      "weekday": "ศุกร์",
+      "schoolName": "บ้านนาไพร",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-07",
+      "weekday": "ศุกร์",
+      "schoolName": "บ้านห้วยสูน",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-10",
+      "weekday": "จันทร์",
+      "schoolName": "ไชยะวิทยา",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-11",
+      "weekday": "อังคาร",
+      "schoolName": "เมืองด้งวิทยา",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-13",
+      "weekday": "พฤหัสบดี",
+      "schoolName": "บ้านป่ากล้วย",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "weekday": "ศุกร์",
+      "schoolName": "นาอินวิทยาคม",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "weekday": "ศุกร์",
+      "schoolName": "บ้านนาอิซาง",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "weekday": "ศุกร์",
+      "schoolName": "บ้านนายาง",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-17",
+      "weekday": "จันทร์",
+      "schoolName": "วิไลเกียรติ",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-17",
+      "weekday": "จันทร์",
+      "schoolName": "ชุมชนบ้านหัวหิน",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-18",
+      "weekday": "อังคาร",
+      "schoolName": "บ้านป่ากุมเกาะ",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-18",
+      "weekday": "อังคาร",
+      "schoolName": "สวรรค์อนันต์วิทยา 2",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-19",
+      "weekday": "พุธ",
+      "schoolName": "สวรรค์อนันต์วิทยา",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-19",
+      "weekday": "พุธ",
+      "schoolName": "มัธยมศึกษาเทศบาลเมืองสวรรคโลก",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-19",
+      "weekday": "พุธ",
+      "schoolName": "เทศบาลสวรรคโลกประชาสรรค์",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-24",
+      "weekday": "จันทร์",
+      "schoolName": "บ้านวังแร่",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-24",
+      "weekday": "จันทร์",
+      "schoolName": "สวรรค์อนันวิทยา 2",
+      "vehicleName": "MITSU บน 6738",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-25",
+      "weekday": "อังคาร",
+      "schoolName": "หนองปลาหมอ",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-25",
+      "weekday": "อังคาร",
+      "schoolName": "บ้านดงไทยวิทยา",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-25",
+      "weekday": "อังคาร",
+      "schoolName": "อนุบาลสวรรคโลก",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-26",
+      "weekday": "พุธ",
+      "schoolName": "บ้านดงไทยวิิทยา",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-27",
+      "weekday": "พฤหัสบดี",
+      "schoolName": "อนุบาลท่าปลา",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-27",
+      "weekday": "พฤหัสบดี",
+      "schoolName": "พิชัย",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-28",
+      "weekday": "ศุกร์",
+      "schoolName": "บ้านวังแดง",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-28",
+      "weekday": "ศุกร์",
+      "schoolName": "บ้านโคนพิยา",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-28",
+      "weekday": "ศุกร์",
+      "schoolName": "พิชัย",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-31",
+      "weekday": "จันทร์",
+      "schoolName": "บ้านเกาะตาเลี้ยง",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-31",
+      "weekday": "จันทร์",
+      "schoolName": "บ้านเตว็ดนอก",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-31",
+      "weekday": "จันทร์",
+      "schoolName": "ศรีสำโรงชนูปถัมภ์์",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    },
+    {
+      "date": "2026-08-31",
+      "weekday": "จันทร์",
+      "schoolName": "อนุบาลสวรรคโลก",
+      "vehicleName": "MITSU บน 6739",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ปิยะ"
+      ]
+    }
+  ]
+}

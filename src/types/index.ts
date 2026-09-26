@@ -78,6 +78,7 @@ export type PostSubmissionStatus =
   | 'NOT_READY';           // โรงเรียนยังไม่พร้อม
 
 export interface DocumentSubmission {
+  mergedIntoId?: string; // Explicitly verified duplicate; original remains in storage.
   vehicleId?: string;
   vehicleName?: string;
   appointmentId?: string;

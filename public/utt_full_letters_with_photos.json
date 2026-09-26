@@ -2183,11 +2183,13 @@
       }
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=46",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "45",
@@ -2210,11 +2212,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=45",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "42",
@@ -2264,11 +2268,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=44",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "41",
@@ -2345,11 +2351,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=40",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "38",
@@ -2371,11 +2379,13 @@
       }
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=38",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "36",
@@ -2398,11 +2408,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=36",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "35",
@@ -2451,11 +2463,13 @@
       }
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=37",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "33",
@@ -2490,11 +2504,11 @@
     "documentNumber": "ว.334",
     "submissionDate": "2026-07-20",
     "submissionTime": "14:37",
-    "status": "WAITING_APPOINTMENT",
+    "status": "OTHER_ACTIVITY",
     "statusDetail": "",
     "counselor": "อ.ปิยะ",
     "teamId": "team2",
-    "note": "ยื่นหนังสือแนะแนว",
+    "note": "ยื่นหนังสือเทคโนคัพ",
     "photos": [
       {
         "id": "utt_photo_32_1",
@@ -2504,11 +2518,14 @@
       }
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=32",
-    "submittedByName": "อ.ปิยะ",
+    "submittedByName": "อ.ปิยะ, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ปิยะ"
+      "อ.ปิยะ",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "otherActivityDetails": "ยื่นหนังสือเทคโนคัพ",
+    "vehicleName": "MITSU บน 6738"
   },
   {
     "idGuide": "39",
@@ -2531,11 +2548,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=39",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "29",
@@ -2547,7 +2566,7 @@
     "statusDetail": "",
     "counselor": "อ.ปิยะ",
     "teamId": "team2",
-    "note": "ยื่นหนังสือแนะแนว",
+    "note": "ยื่นหนังสือเทคโนคัพ",
     "photos": [
       {
         "id": "utt_photo_29_1",
@@ -2557,12 +2576,14 @@
       }
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=29",
-    "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ปิยะ",
+    "otherActivityDetails": "ยื่นหนังสือเทคโนคัพ",
+    "submittedByName": "อ.ปิยะ, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ปิยะ"
+      "อ.ปิยะ",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "MITSU บน 6738"
   },
   {
     "idGuide": "31",
@@ -2574,7 +2595,7 @@
     "statusDetail": "",
     "counselor": "อ.ปิยะ",
     "teamId": "team2",
-    "note": "ยื่นหนังสือแนะแนว",
+    "note": "ยื่นหนังสือเทคโนคัพ",
     "photos": [
       {
         "id": "utt_photo_31_1",
@@ -2584,12 +2605,14 @@
       }
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=31",
-    "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ปิยะ",
+    "otherActivityDetails": "ยื่นหนังสือเทคโนคัพ",
+    "submittedByName": "อ.ปิยะ, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ปิยะ"
+      "อ.ปิยะ",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "MITSU บน 6738"
   },
   {
     "idGuide": "30",
@@ -2597,11 +2620,11 @@
     "documentNumber": "ว.334",
     "submissionDate": "2026-07-20",
     "submissionTime": "14:22",
-    "status": "WAITING_APPOINTMENT",
+    "status": "OTHER_ACTIVITY",
     "statusDetail": "",
     "counselor": "อ.ปิยะ",
     "teamId": "team2",
-    "note": "ยื่นหนังสือแนะแนว",
+    "note": "ยื่นหนังสือเทคโนคัพ",
     "photos": [
       {
         "id": "utt_photo_30_1",
@@ -2611,11 +2634,14 @@
       }
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=30",
-    "submittedByName": "อ.ปิยะ",
+    "submittedByName": "อ.ปิยะ, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ปิยะ"
+      "อ.ปิยะ",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "otherActivityDetails": "ยื่นหนังสือเทคโนคัพ",
+    "vehicleName": "MITSU บน 6738"
   },
   {
     "idGuide": "34",
@@ -2665,11 +2691,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=28",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "27",
@@ -2692,11 +2720,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=27",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "25",
@@ -2719,11 +2749,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=25",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "24",
@@ -2746,11 +2778,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=24",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "26",
@@ -2773,11 +2807,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=26",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "22",
@@ -2800,11 +2836,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=22",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "21",
@@ -2827,11 +2865,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=21",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "20",
@@ -2854,11 +2894,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=20",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "23",
@@ -2908,11 +2950,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=19",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "18",
@@ -2935,11 +2979,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=18",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "17",
@@ -2962,11 +3008,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=17",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "16",
@@ -2989,11 +3037,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=16",
     "otherActivityDetails": "ยื่นหนังสือ open House",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "12",
@@ -3016,11 +3066,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=12",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "15",
@@ -3043,11 +3095,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=15",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "13",
@@ -3070,11 +3124,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=13",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "14",
@@ -3097,11 +3153,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=14",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "11",
@@ -3124,11 +3182,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=11",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "9",
@@ -3151,11 +3211,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=9",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "10",
@@ -3178,11 +3240,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=10",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "8",
@@ -3205,11 +3269,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=8",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "6",
@@ -3232,11 +3298,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=6",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "5",
@@ -3259,11 +3327,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=5",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "7",
@@ -3285,11 +3355,13 @@
       }
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=7",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "4",
@@ -3312,11 +3384,13 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=4",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   },
   {
     "idGuide": "2",
@@ -3324,11 +3398,11 @@
     "documentNumber": "ว.260",
     "submissionDate": "2026-07-13",
     "submissionTime": "13:24",
-    "status": "WAITING_APPOINTMENT",
+    "status": "OTHER_ACTIVITY",
     "statusDetail": "",
     "counselor": "อ.ประชา",
     "teamId": "team1",
-    "note": "ยื่นหนังสือแนะแนว เทคโนคัพ ยอดนักเรียน 60 คน",
+    "note": "ยื่นหนังสือเทคโนคัพ ยอดนักเรียน 60 คน",
     "photos": [
       {
         "id": "utt_photo_2_1",
@@ -3338,11 +3412,14 @@
       }
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=2",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914",
+    "otherActivityDetails": "ยื่นหนังสือเทคโนคัพ"
   },
   {
     "idGuide": "3",
@@ -3350,11 +3427,11 @@
     "documentNumber": "ว.260",
     "submissionDate": "2026-07-13",
     "submissionTime": "13:28",
-    "status": "WAITING_APPOINTMENT",
+    "status": "OTHER_ACTIVITY",
     "statusDetail": "",
     "counselor": "อ.ประชา",
     "teamId": "team1",
-    "note": "ยื่นหนังสือแนะแนว",
+    "note": "ยื่นหนังสือเทคโนคัพ",
     "photos": [
       {
         "id": "utt_photo_3_1",
@@ -3364,11 +3441,14 @@
       }
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=3",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914",
+    "otherActivityDetails": "ยื่นหนังสือเทคโนคัพ"
   },
   {
     "idGuide": "1",
@@ -3391,10 +3471,12 @@
     ],
     "rawUrl": "https://www.utt.ac.th/guide/letter_edit.php?id_guide=1",
     "otherActivityDetails": "ยื่นหนังสือแนะแนว",
-    "submittedByName": "อ.ประชา",
+    "submittedByName": "อ.ประชา, อ.ณิชชัยกุญช์",
     "submittedByNames": [
-      "อ.ประชา"
+      "อ.ประชา",
+      "อ.ณิชชัยกุญช์"
     ],
-    "academicYear": "2569"
+    "academicYear": "2569",
+    "vehicleName": "VIGO กข 9914"
   }
 ]

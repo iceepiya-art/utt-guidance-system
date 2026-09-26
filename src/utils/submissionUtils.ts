@@ -24,7 +24,7 @@ export interface SubmissionDisplayStatus {
  * 
  * Workflow Separation Rule:
  * - Submissions View = Submission history only!
- * - Normal guidance submissions display "ยื่นแล้ว".
+ * - Normal guidance submissions display "ยื่นหนังสือแล้ว".
  * - Genuine other activities (Open House, Techno Cup, etc.) display "กิจกรรมอื่นๆ".
  * - No cross-workflow status calculation (no "นัดหมายแล้ว", no "ออกแนะแนวแล้ว" on this page).
  */
@@ -32,10 +32,10 @@ export const getSubmissionDisplayStatus = (
   sub: DocumentSubmission
 ): SubmissionDisplayStatus => {
   if (sub.status === 'OTHER_ACTIVITY') {
-    if (isNormalGuidanceActivity(sub.otherActivityDetails)) {
+    if (isNormalGuidanceActivity(sub.otherActivityDetails || sub.activities?.join(', '))) {
       // Legacy normal guidance submission recorded as OTHER_ACTIVITY + "ยื่นหนังสือแนะแนว"
       return {
-        label: 'ยื่นแล้ว',
+        label: 'ยื่นหนังสือแล้ว',
         bg: 'bg-blue-50',
         text: 'text-blue-700',
         isOtherActivity: false,
@@ -50,21 +50,20 @@ export const getSubmissionDisplayStatus = (
     };
   }
 
-  if (sub.status === 'WAITING_CONTACT') {
-    return { label: 'รอติดต่อกลับ', bg: 'bg-amber-50', text: 'text-amber-700', isOtherActivity: false };
-  }
-  if (sub.status === 'CALL_LATER') {
-    return { label: 'ขอให้ติดต่อภายหลัง', bg: 'bg-orange-50', text: 'text-orange-700', isOtherActivity: false };
-  }
-  if (sub.status === 'NOT_READY') {
-    return { label: 'โรงเรียนยังไม่พร้อม', bg: 'bg-slate-100', text: 'text-slate-600', isOtherActivity: false };
-  }
-
+  // Contact outcomes belong to the note, not the submission badge.
   // All normal guidance submissions (DOCUMENT_SUBMITTED, WAITING_APPOINTMENT, etc.)
   return {
-    label: 'ยื่นแล้ว',
+    label: 'ยื่นหนังสือแล้ว',
     bg: 'bg-blue-50',
     text: 'text-blue-700',
     isOtherActivity: false,
   };
 };
+
+/** Interpret legacy normal-guidance activity codes consistently when editing. */
+export function getSubmissionEditStatus(sub: DocumentSubmission) {
+  const details = sub.otherActivityDetails || sub.activities?.join(', ') || '';
+  return sub.status === 'OTHER_ACTIVITY' && isNormalGuidanceActivity(details)
+    ? 'WAITING_APPOINTMENT' as const
+    : sub.status || 'WAITING_APPOINTMENT' as const;
+}

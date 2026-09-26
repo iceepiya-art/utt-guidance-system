@@ -12,11 +12,14 @@ import {
 import { Appointment, FieldTrip, School, AppNotification } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { formatThaiShortDate, getDaysDifference } from '../../utils/dateUtils';
-import { formatAppointmentTime } from '../../utils/appointmentUtils';
+import { formatAppointmentTime, filterActiveAppointments } from '../../utils/appointmentUtils';
+import { getSchoolWorkflow } from '../../utils/schoolStatus';
+import type { DocumentSubmission } from '../../types';
 import { formatSchoolDisplayName } from '../../utils/schoolStatus';
 import { ActiveTab } from './AppLayout';
 
 interface NotificationDropdownProps {
+  submissions?: DocumentSubmission[];
   appointments: Appointment[];
   fieldTrips: FieldTrip[];
   schools: School[];
@@ -24,6 +27,7 @@ interface NotificationDropdownProps {
 }
 
 export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
+  submissions = [],
   appointments,
   fieldTrips,
   schools,
@@ -40,7 +44,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
     // 1. Pending Approvals for Managers & Admins
     if (isAdmin || isManager) {
-      const pendingAppts = appointments.filter((a) => a.approvalStatus === 'PENDING_APPROVAL');
+      const pendingAppts = filterActiveAppointments(appointments, fieldTrips).filter((a) => a.approvalStatus === 'PENDING_APPROVAL');
       if (pendingAppts.length > 0) {
         list.push({
           id: 'notif-pending-appts',
@@ -70,7 +74,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     }
 
     // 2. Upcoming appointments within 48 hours
-    appointments.forEach((appt) => {
+    filterActiveAppointments(appointments, fieldTrips).forEach((appt) => {
       if (appt.status !== 'CANCELLED' && appt.date >= today) {
         const diffDays = getDaysDifference(today, appt.date);
         if (diffDays >= 0 && diffDays <= 2) {
@@ -90,7 +94,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
     // 3. Stalled submissions (> 7 days without appointment)
     const waitingSchools = schools.filter(
-      (s) => s.currentStatus === 'DOCUMENT_SUBMITTED' || s.currentStatus === 'WAITING_APPOINTMENT'
+      (s) => ['WAITING_CONTACT', 'WAITING_APPOINTMENT'].includes(getSchoolWorkflow(s, submissions, appointments, fieldTrips, schools).status)
     );
     if (waitingSchools.length > 0) {
       list.push({
@@ -106,7 +110,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     }
 
     return list;
-  }, [appointments, fieldTrips, schools, isAdmin, isManager]);
+  }, [appointments, fieldTrips, schools, submissions, isAdmin, isManager]);
 
   const unreadCount = notifications.filter((n) => !readIds.has(n.id)).length;
 

@@ -1,3 +1,4 @@
+import { buildGallerySources, type GallerySourcePhoto } from '../../utils/gallerySources';
 import React, { useState, useMemo } from 'react';
 import {
   Image as ImageIcon,
@@ -24,15 +25,7 @@ interface ActivityGalleryViewProps {
 export type GalleryCategory = 'all' | 'guidance' | 'submission' | 'legacy';
 export type GallerySourceType = 'SUBMISSION' | 'GUIDANCE' | 'LEGACY_APPOINTMENT';
 
-interface GalleryPhotoWithMeta extends PhotoItem {
-  sourceType: GallerySourceType;
-  sourceId: string;
-  sourceTitle: string;
-  sourceDate: string;
-  teamId: TeamId;
-  activityTitle: string;
-  category: 'guidance' | 'submission' | 'legacy';
-}
+type GalleryPhotoWithMeta = GallerySourcePhoto;
 
 export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
   fieldTrips = [],
@@ -56,105 +49,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
     });
   };
 
-  // Unified photo repository with clear Source of Truth hierarchy
-  const allPhotos = useMemo(() => {
-    const list: GalleryPhotoWithMeta[] = [];
-    const seenNormalizedUrls = new Set<string>();
-    const seenFileSignature = new Set<string>(); // schoolId + baseFilename to prevent twin duplicates
-
-    const normalizeUrl = (url: string) => {
-      if (!url) return '';
-      return url.split('?')[0].replace(/\/+$/, '').trim().toLowerCase();
-    };
-
-    const getBaseFileName = (url: string, name?: string) => {
-      const raw = name || url.split('/').pop() || '';
-      return raw.replace(/^\d+_+/, '').trim().toLowerCase();
-    };
-
-    // 1. PRIMARY SOURCE 1: Document Submissions (Letter submission evidence)
-    submissions.forEach((sub) => {
-      if (sub.photos && sub.photos.length > 0) {
-        sub.photos.forEach((photo) => {
-          if (!photo.url) return;
-          const norm = normalizeUrl(photo.url);
-          if (norm && seenNormalizedUrls.has(norm)) return;
-          if (norm) seenNormalizedUrls.add(norm);
-
-          const schId = photo.schoolId || sub.schoolId || 'sub';
-          const sig = `${schId}_${getBaseFileName(photo.url, photo.fileName)}`;
-          if (sig) seenFileSignature.add(sig);
-
-          list.push({
-            ...photo,
-            sourceType: 'SUBMISSION',
-            sourceId: sub.id,
-            sourceTitle: formatSchoolDisplayName(sub.schoolName) || 'ยื่นหนังสือ',
-            sourceDate: sub.submissionDate,
-            teamId: sub.teamId,
-            activityTitle: `ยื่นหนังสือ (${sub.documentNumber || 'มีหลักฐาน'})`,
-            schoolId: schId,
-            category: 'submission',
-          });
-        });
-      }
-    });
-
-    // 2. PRIMARY SOURCE 2: Field Trips (Live guidance activities)
-    fieldTrips.forEach((trip) => {
-      if (trip.photos && trip.photos.length > 0) {
-        trip.photos.forEach((photo) => {
-          if (!photo.url) return;
-          const norm = normalizeUrl(photo.url);
-          if (norm && seenNormalizedUrls.has(norm)) return;
-          if (norm) seenNormalizedUrls.add(norm);
-
-          const schId = photo.schoolId || trip.schools?.[0]?.schoolId || 'trip';
-          const sig = `${schId}_${getBaseFileName(photo.url, photo.fileName)}`;
-          if (sig) seenFileSignature.add(sig);
-
-          list.push({
-            ...photo,
-            sourceType: 'GUIDANCE',
-            sourceId: trip.id,
-            sourceTitle: trip.schools?.map((s) => formatSchoolDisplayName(s.schoolName)).join(', ') || 'กิจกรรมแนะแนว',
-            sourceDate: trip.date,
-            teamId: trip.teamId,
-            activityTitle: trip.workType || 'ออกแนะแนว',
-            schoolId: schId,
-            category: 'guidance',
-          });
-        });
-      }
-    });
-
-    // 3. SECONDARY ARCHIVE: Legacy Appointments Photos (Preserves 156 historical photos safely)
-    appointments.forEach((app) => {
-      if (app.photos && app.photos.length > 0) {
-        app.photos.forEach((photo) => {
-          if (!photo.url) return;
-          const norm = normalizeUrl(photo.url);
-          if (norm && seenNormalizedUrls.has(norm)) return;
-          if (norm) seenNormalizedUrls.add(norm);
-
-          const schId = photo.schoolId || app.schoolId || 'appt';
-          list.push({
-            ...photo,
-            sourceType: 'LEGACY_APPOINTMENT',
-            sourceId: app.id,
-            sourceTitle: formatSchoolDisplayName(app.schoolName) || 'กิจกรรมแนะแนว (ย้อนหลัง)',
-            sourceDate: app.date,
-            teamId: app.teamId,
-            activityTitle: app.workType || 'ออกแนะแนวการศึกษา (ข้อมูลเดิม)',
-            schoolId: schId,
-            category: 'legacy',
-          });
-        });
-      }
-    });
-
-    return list.sort((a, b) => (b.sourceDate || '').localeCompare(a.sourceDate || ''));
-  }, [appointments, fieldTrips, submissions]);
+  const allPhotos = useMemo(() => buildGallerySources(schools, submissions, appointments, fieldTrips), [schools, submissions, appointments, fieldTrips]);
 
   // Counts for category badges
   const categoryCounts = useMemo(() => {
@@ -180,7 +75,7 @@ export const ActivityGalleryView: React.FC<ActivityGalleryViewProps> = ({
     return allPhotos.filter((item) => {
       if (categoryFilter !== 'all' && item.category !== categoryFilter) return false;
       if (teamFilter !== 'all' && item.teamId !== teamFilter) return false;
-      if (selectedSchoolId !== 'all' && item.schoolId !== selectedSchoolId) return false;
+      if (selectedSchoolId !== 'all' && !item.schoolIds.includes(selectedSchoolId)) return false;
       if (q) {
         const matchTitle = item.sourceTitle.toLowerCase().includes(q);
         const matchActivity = item.activityTitle.toLowerCase().includes(q);

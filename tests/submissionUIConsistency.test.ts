@@ -31,16 +31,16 @@ describe('Workflow Separation & Submission UI Consistency (13 Business Rules)', 
     updatedAt: '2026-09-01T00:00:00Z',
   };
 
-  // TEST 1: Submission ปกติ ไม่มี Appointment -> ยื่นแล้ว
-  it('TEST 1: normal submission without appointment displays "ยื่นแล้ว"', () => {
+  // TEST 1: Submission ปกติ ไม่มี Appointment -> ยื่นหนังสือแล้ว
+  it('TEST 1: normal submission without appointment displays "ยื่นหนังสือแล้ว"', () => {
     const sub = { ...baseSubmission, status: 'WAITING_APPOINTMENT' as const };
     const status = getSubmissionDisplayStatus(sub);
-    expect(status.label).toBe('ยื่นแล้ว');
+    expect(status.label).toBe('ยื่นหนังสือแล้ว');
     expect(status.isOtherActivity).toBe(false);
   });
 
-  // TEST 2: Submission ปกติ + CONFIRMED Appointment -> หน้า Submission ยังแสดง "ยื่นแล้ว"
-  it('TEST 2: normal submission with CONFIRMED appointment still displays "ยื่นแล้ว" on Submission page', () => {
+  // TEST 2: Submission ปกติ + CONFIRMED Appointment -> หน้า Submission ยังแสดง "ยื่นหนังสือแล้ว"
+  it('TEST 2: normal submission with CONFIRMED appointment still displays "ยื่นหนังสือแล้ว" on Submission page', () => {
     const sub = { ...baseSubmission, status: 'WAITING_APPOINTMENT' as const };
     const appt: Appointment = {
       id: 'appt_001',
@@ -68,12 +68,12 @@ describe('Workflow Separation & Submission UI Consistency (13 Business Rules)', 
 
     // Submissions page never calculates cross-workflow status from appointment
     const status = getSubmissionDisplayStatus(sub);
-    expect(status.label).toBe('ยื่นแล้ว');
+    expect(status.label).toBe('ยื่นหนังสือแล้ว');
     expect(status.isOtherActivity).toBe(false);
   });
 
-  // TEST 3: Submission ปกติ + COMPLETED Appointment -> หน้า Submission ยังแสดง "ยื่นแล้ว"
-  it('TEST 3: normal submission with COMPLETED appointment still displays "ยื่นแล้ว" on Submission page', () => {
+  // TEST 3: Submission ปกติ + COMPLETED Appointment -> หน้า Submission ยังแสดง "ยื่นหนังสือแล้ว"
+  it('TEST 3: normal submission with COMPLETED appointment still displays "ยื่นหนังสือแล้ว" on Submission page', () => {
     const sub = { ...baseSubmission, status: 'WAITING_APPOINTMENT' as const };
     const appt: Appointment = {
       id: 'appt_002',
@@ -100,12 +100,12 @@ describe('Workflow Separation & Submission UI Consistency (13 Business Rules)', 
     };
 
     const status = getSubmissionDisplayStatus(sub);
-    expect(status.label).toBe('ยื่นแล้ว');
+    expect(status.label).toBe('ยื่นหนังสือแล้ว');
     expect(status.isOtherActivity).toBe(false);
   });
 
-  // TEST 4: Submission ปกติ + FieldTrip -> หน้า Submission ยังแสดง "ยื่นแล้ว"
-  it('TEST 4: normal submission with FieldTrip still displays "ยื่นแล้ว" on Submission page', () => {
+  // TEST 4: Submission ปกติ + FieldTrip -> หน้า Submission ยังแสดง "ยื่นหนังสือแล้ว"
+  it('TEST 4: normal submission with FieldTrip still displays "ยื่นหนังสือแล้ว" on Submission page', () => {
     const sub = { ...baseSubmission, status: 'WAITING_APPOINTMENT' as const };
     const trip: FieldTrip = {
       id: 'ft_001',
@@ -127,12 +127,12 @@ describe('Workflow Separation & Submission UI Consistency (13 Business Rules)', 
     };
 
     const status = getSubmissionDisplayStatus(sub);
-    expect(status.label).toBe('ยื่นแล้ว');
+    expect(status.label).toBe('ยื่นหนังสือแล้ว');
     expect(status.isOtherActivity).toBe(false);
   });
 
-  // TEST 5: legacy OTHER_ACTIVITY + "ยื่นหนังสือแนะแนว" -> หน้า Submission แสดง "ยื่นแล้ว" -> ไม่แสดงกิจกรรมอื่น
-  it('TEST 5: legacy OTHER_ACTIVITY + "ยื่นหนังสือแนะแนว" normalizes to "ยื่นแล้ว" and hides other activity note', () => {
+  // TEST 5: legacy OTHER_ACTIVITY + "ยื่นหนังสือแนะแนว" -> หน้า Submission แสดง "ยื่นหนังสือแล้ว" -> ไม่แสดงกิจกรรมอื่น
+  it('TEST 5: legacy OTHER_ACTIVITY + "ยื่นหนังสือแนะแนว" normalizes to "ยื่นหนังสือแล้ว" and hides other activity note', () => {
     const sub: DocumentSubmission = {
       ...baseSubmission,
       status: 'OTHER_ACTIVITY',
@@ -141,7 +141,7 @@ describe('Workflow Separation & Submission UI Consistency (13 Business Rules)', 
 
     expect(isNormalGuidanceActivity(sub.otherActivityDetails)).toBe(true);
     const status = getSubmissionDisplayStatus(sub);
-    expect(status.label).toBe('ยื่นแล้ว');
+    expect(status.label).toBe('ยื่นหนังสือแล้ว');
     expect(status.isOtherActivity).toBe(false);
   });
 

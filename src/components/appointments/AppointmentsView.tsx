@@ -19,7 +19,7 @@ import {
 import { Appointment, DocumentSubmission, School, TeamId, AppointmentStatus, FieldTrip } from '../../types';
 import { formatThaiShortDate, getRelativeThaiDayLabel, THAI_MONTHS, getBuddhistYear } from '../../utils/dateUtils';
 import { isAppointmentGuidanceCompleted, ACTIVE_APPOINTMENT_STATUSES, formatVehicleDisplay, formatAppointmentTime } from '../../utils/appointmentUtils';
-import { formatSchoolDisplayName } from '../../utils/schoolStatus';
+import { resolveSchoolRelation, formatSchoolDisplayName } from '../../utils/schoolStatus';
 import { AppointmentDetailModal } from './AppointmentDetailModal';
 import { AppointmentFormModal } from './AppointmentFormModal';
 import { AppointmentImportModal } from './AppointmentImportModal';
@@ -147,7 +147,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
       CONFIRMED: { label: 'ยืนยันแล้ว', bg: 'bg-emerald-50', text: 'text-emerald-700' },
       PENDING: { label: 'รอยืนยัน', bg: 'bg-amber-50', text: 'text-amber-700' },
       TENTATIVE: { label: 'รอยืนยัน', bg: 'bg-amber-50', text: 'text-amber-700' },
-      COMPLETED: { label: 'ออกแนะแนวแล้ว', bg: 'bg-blue-50', text: 'text-blue-700' },
+      COMPLETED: { label: 'นัดหมายเสร็จแล้ว', bg: 'bg-blue-50', text: 'text-blue-700' },
       RESCHEDULED: { label: 'เลื่อนนัด', bg: 'bg-purple-50', text: 'text-purple-700' },
       CANCELLED: { label: 'ยกเลิก', bg: 'bg-red-50', text: 'text-red-700' },
     };
@@ -159,18 +159,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
     );
   };
 
-  const getApptPhotosCount = (appt: Appointment) => {
-    let count = appt.photos?.length || 0;
-    if (count === 0 && submissions) {
-      const match = submissions.find(
-        (s) =>
-          s.id === appt.submissionId ||
-          (s.schoolName === appt.schoolName && s.photos && s.photos.length > 0)
-      );
-      if (match?.photos) count += match.photos.length;
-    }
-    return count;
-  };
+  const getApptPhotosCount = (appt: Appointment) => appt.photos?.length || 0;
 
   return (
     <div className="space-y-5">
@@ -377,30 +366,21 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
                   const relativeDay = getRelativeThaiDayLabel(appt.date);
                   const photosCount = getApptPhotosCount(appt);
 
-                  const cleanSchool = (s: string) =>
-                    (s || '').replace(/^(โรงเรียน|รร\.)\s*/, '').trim().toLowerCase();
-                  const apptClean = cleanSchool(appt.schoolName);
-                  const matchedSub = submissions.find(
-                    (s) => s.id === appt.submissionId || cleanSchool(s.schoolName) === apptClean
-                  );
-                  const matchedSchool = schools.find(
-                    (s) => s.id === appt.schoolId || cleanSchool(s.schoolName) === apptClean
-                  );
+                  const matchedSub = submissions.find(s => s.id === appt.submissionId || (!appt.submissionId && s.appointmentId === appt.id));
+            const matchedSchool = resolveSchoolRelation(appt.schoolId, schools);
 
-                  const teacherDisplay =
+            const teacherDisplay =
                     appt.teacherName ||
                     matchedSub?.teacherName ||
                     matchedSchool?.teacherName ||
-                    matchedSchool?.contactPerson ||
                     '-';
                   const phoneDisplay =
                     appt.teacherPhone ||
                     matchedSub?.teacherPhone ||
-                    matchedSchool?.teacherPhone ||
-                    matchedSchool?.contactPhone;
+                    matchedSchool?.teacherPhone;
 
                   const vehicleDisplay = formatVehicleDisplay(
-                    appt.vehicleName || matchedSub?.vehicleName
+                    appt.vehicleName
                   );
 
                   return (
@@ -544,30 +524,21 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
             const relativeDay = getRelativeThaiDayLabel(appt.date);
             const photosCount = getApptPhotosCount(appt);
 
-            const cleanSchool = (s: string) =>
-              (s || '').replace(/^(โรงเรียน|รร\.)\s*/, '').trim().toLowerCase();
-            const apptClean = cleanSchool(appt.schoolName);
-            const matchedSub = submissions.find(
-              (s) => s.id === appt.submissionId || cleanSchool(s.schoolName) === apptClean
-            );
-            const matchedSchool = schools.find(
-              (s) => s.id === appt.schoolId || cleanSchool(s.schoolName) === apptClean
-            );
+            const matchedSub = submissions.find(s => s.id === appt.submissionId || (!appt.submissionId && s.appointmentId === appt.id));
+            const matchedSchool = resolveSchoolRelation(appt.schoolId, schools);
 
             const teacherDisplay =
               appt.teacherName ||
               matchedSub?.teacherName ||
               matchedSchool?.teacherName ||
-              matchedSchool?.contactPerson ||
               '-';
             const phoneDisplay =
               appt.teacherPhone ||
               matchedSub?.teacherPhone ||
-              matchedSchool?.teacherPhone ||
-              matchedSchool?.contactPhone;
+              matchedSchool?.teacherPhone;
 
             const vehicleDisplay = formatVehicleDisplay(
-              appt.vehicleName || matchedSub?.vehicleName
+              appt.vehicleName
             );
             return (
               <div

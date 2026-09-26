@@ -1,0 +1,295 @@
+{
+  "provenance": "user-provided-review",
+  "team": "team1",
+  "month": "2026-08",
+  "productionApplied": false,
+  "notes": [
+    "จัดจากตารางผู้ใช้ ไม่ใช่ข้อมูลที่อ่านยืนยันจาก Firestore และยังไม่ได้บันทึกฐานข้อมูลจริง",
+    "ใช้ VIGO กข 9914 ทุกรายการตามตาราง ช่องรถที่เป็นชื่อบุคคลหรืองานถูกย้ายเข้าช่องที่ตรงความหมาย",
+    "ใช้ อ.ประชา และ อ.ณิชชัยกุญช์ ครบโรงเรียนในวันนั้นตามหลักผู้ร่วมงานรายวันที่ผู้ใช้ยืนยันก่อนหน้า วันที่ 27 ส.ค. มี อ.ทิพรัตน์ร่วมทั้งสองโรงเรียนตามการจัดกลุ่มรายวันในตาราง",
+    "วันที่ 13 ส.ค. พนมมาศวิทยากรเป็นแนะแนว; ลับแลศรีพนมมาศ ทุ่งกะโล่ และลับแลพิทยาคมเป็นยื่นหนังสือ ตามจุดเปลี่ยนงานในตาราง",
+    "วันที่ 31 ส.ค. น้ำริดเป็นยื่นหนังสือ และน้ำปาดชนูปถัมเป็นแนะแนว",
+    "วันที่ 19 ส.ค. 2569 เป็นวันพุธ แก้เฉพาะวันในสัปดาห์ ไม่ย้ายวันที่",
+    "คงชื่อโรงเรียนตามผู้ใช้ เช่น พนมมาศวิทยากร ไทยรัฐ น้ำปาดชนูปถัม ไม่เดาชื่อเต็ม รหัสโรงเรียน หรือสร้าง relation",
+    "ไม่เพิ่มแถวจากบรรทัดที่มีเพียงชื่อผู้ร่วมงาน ไม่มี source IDs หรือรูปหลักฐานที่สร้างขึ้นใหม่ ไม่แก้ archive ไม่เขียนฐานข้อมูล ไม่ลบ ไม่ commit/push/deploy"
+  ],
+  "rows": [
+    {
+      "date": "2026-08-03",
+      "weekday": "จันทร์",
+      "schoolName": "บ้านนากล่ำ",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-10",
+      "weekday": "จันทร์",
+      "schoolName": "ป่ากั้งวิทยา",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-10",
+      "weekday": "จันทร์",
+      "schoolName": "บ้านห้วยผึ้ง",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-10",
+      "weekday": "จันทร์",
+      "schoolName": "ราชประชานุเคราะห์ 13",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-10",
+      "weekday": "จันทร์",
+      "schoolName": "บ้านปากปาด",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-11",
+      "weekday": "อังคาร",
+      "schoolName": "บ้านโคก",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-11",
+      "weekday": "อังคาร",
+      "schoolName": "เด่นเหล็ก",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-11",
+      "weekday": "อังคาร",
+      "schoolName": "สกร.บ้านโคก",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-13",
+      "weekday": "พฤหัสบดี",
+      "schoolName": "พนมมาศวิทยากร",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-13",
+      "weekday": "พฤหัสบดี",
+      "schoolName": "ลับแลศรีพนมมาศ",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-13",
+      "weekday": "พฤหัสบดี",
+      "schoolName": "ทุ่งกะโล่",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-13",
+      "weekday": "พฤหัสบดี",
+      "schoolName": "ลับแลพิทยาคม",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "weekday": "ศุกร์",
+      "schoolName": "บ้านห้วยผึ้ง",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-19",
+      "weekday": "พุธ",
+      "schoolName": "บ้านปากปาด",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-19",
+      "weekday": "พุธ",
+      "schoolName": "บ้านวังโป่ง",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-19",
+      "weekday": "พุธ",
+      "schoolName": "บ้านร้องลึก",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-21",
+      "weekday": "ศุกร์",
+      "schoolName": "ท่าอิฐ",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-24",
+      "weekday": "จันทร์",
+      "schoolName": "บ่อเบี้ย",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-24",
+      "weekday": "จันทร์",
+      "schoolName": "สกร.น้ำปาด",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-26",
+      "weekday": "พุธ",
+      "schoolName": "แสนตอ",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-26",
+      "weekday": "พุธ",
+      "schoolName": "หาดเสือเต้น",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-27",
+      "weekday": "พฤหัสบดี",
+      "schoolName": "ไทยรัฐ",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์",
+        "อ.ทิพรัตน์"
+      ]
+    },
+    {
+      "date": "2026-08-27",
+      "weekday": "พฤหัสบดี",
+      "schoolName": "พิชัย",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์",
+        "อ.ทิพรัตน์"
+      ]
+    },
+    {
+      "date": "2026-08-31",
+      "weekday": "จันทร์",
+      "schoolName": "น้ำริด",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "ยื่นหนังสือ",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    },
+    {
+      "date": "2026-08-31",
+      "weekday": "จันทร์",
+      "schoolName": "น้ำปาดชนูปถัม",
+      "vehicleName": "VIGO กข 9914",
+      "activity": "แนะแนว",
+      "responsiblePeople": [
+        "อ.ประชา",
+        "อ.ณิชชัยกุญช์"
+      ]
+    }
+  ]
+}
